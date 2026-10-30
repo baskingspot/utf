@@ -7,6 +7,7 @@ const result = @import("result.zig");
 pub const Error = result.Error;
 pub const Result = result.Result;
 pub const scalar = @import("scalar.zig");
+pub const base64 = @import("base64.zig");
 
 test {
     std.testing.refAllDecls(@This());
