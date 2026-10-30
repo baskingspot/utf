@@ -19,6 +19,7 @@ const Bytes = simd.Block(u8);
 
 /// Reports whether `bytes` is well-formed UTF-8.
 pub fn utf8(bytes: []const u8) bool {
+    if (simd.isa == .generic) return utf8WithErrors(bytes).err == .none;
     return utf8BadBlock(bytes) == null;
 }
 
@@ -246,11 +247,13 @@ inline fn utf8Incomplete(v: Bytes) Bytes {
 
 /// The index of the first 64-byte block that fails, or null. Every byte
 /// before the returned index belongs to well-formed UTF-8, except that the
-/// last character before it may be cut short.
+/// last character before it may be cut short. On the generic path, the first
+/// block that is not ASCII.
 fn utf8BadBlock(bytes: []const u8) ?usize {
     const zero = splat(0);
     if (bytes.len < 64) {
         if (isAsciiShort(bytes)) return null;
+        if (simd.isa == .generic) return 0;
         const cur = simd.loadPartial(u8, bytes);
         // The zero padding ends any sequence the input cuts short.
         return if (!any(utf8Errors(cur, zero))) null else 0;
@@ -258,6 +261,13 @@ fn utf8BadBlock(bytes: []const u8) ?usize {
     // Leading ASCII blocks first, so ASCII text never loads the lookup
     // tables. Zero stands in for an ASCII block as context.
     var i = asciiPrefix(bytes);
+    if (simd.isa == .generic) {
+        // With no byte shuffle, emulating the three lookups ran at 0.5 GB/s
+        // on x86-64 baseline, below the scalar validator, which takes over
+        // from the first block that is not ASCII instead.
+        if (i + 64 <= bytes.len) return i;
+        return if (i < bytes.len and !isAscii(simd.load(u8, bytes[bytes.len - 64 ..]))) bytes.len - 64 else null;
+    }
     var before = zero;
     var incomplete = zero;
     while (i + 64 <= bytes.len) : (i += 64) {
