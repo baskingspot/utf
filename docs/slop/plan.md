@@ -57,7 +57,15 @@ standard, not from simdutf's source.
    (simdutf's default, which matters for binaries built for a baseline CPU,
    like distribution packages) needs per-ISA objects or a build option.
    **Measure** a baseline x86-64 build against an x86-64-v3 build first, then
-   decide whether runtime dispatch is worth its complexity.
+   decide whether runtime dispatch is worth its complexity. Base64 found:
+   `pshufb`, `pmaddubsw`, and NEON `tbl` come from LLVM intrinsics
+   (`extern fn @"llvm.x86.ssse3.pshuf.b.128"`), which only the LLVM backend
+   lowers, so x86 Debug builds (the self-hosted backend) get the generic
+   kernel and the ISA kernels are tested in ReleaseSafe. Each kernel is a
+   comptime parameter, so one test build runs every kernel the CPU has. LLVM
+   narrows partly used vector loads and merges overlapping vector stores into
+   extra shuffles; volatile loads and stores keep them whole, worth 30–40% on
+   the base64 loops ([results](results/base64-20261030.md)).
 2. **Block size.** 64 bytes per iteration on every ISA (four 16-byte vectors,
    two 32-byte, one 64-byte), so the algorithm's carries are the same code and
    only the vector width changes. **Measure** 32 vs 64 on AVX2.
@@ -79,7 +87,12 @@ Wave 1, in parallel:
   `src/scalar.zig`.
 - **Transcoding**: `src/convert.zig`, `src/length.zig`, and the scalar
   transcoders in `src/scalar_convert.zig`.
-- **Base64**: `src/base64.zig`, scalar reference included.
+- **Base64**: `src/base64.zig`, scalar reference included. Landed: AVX2,
+  SSSE3, NEON, and generic kernels, the reference in `src/scalar_base64.zig`,
+  and the [measurements](results/base64-20261030.md). Left for wave 2: an
+  AVX-512 VBMI kernel (simdutf's `icelake` is 1.5–2.6× ours at 4–64 KiB),
+  short padded decode (std and Rust lead at 16 bytes), and whitespace (70%
+  of simdutf's AVX2 kernel).
 - **Harness**: `bench/` with a Zig driver and arms for simdutf (C++, from
   nixpkgs), Rust (`simdutf8`, `base64-simd`), Go (`unicode/utf8`,
   `encoding/base64`), and Zig's std; the corpus (simdutf's benchmark texts
