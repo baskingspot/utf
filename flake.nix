@@ -28,7 +28,24 @@
             ];
 
             # Project-specific tools.
-            packages = with pkgs; [ ];
+            packages = with pkgs; [
+              # `just bench-compare` and `just oracle` (bench/README.md):
+              # simdutf is the C++ arm and the oracle, built with the shell's
+              # c++ and found with pkg-config; go and the rust toolchain build
+              # their arms; goperf is golang.org/x/perf, which supplies
+              # benchstat; util-linux supplies taskset, which pins every arm to
+              # one core; time is GNU time, for each arm's peak RSS; curl
+              # fetches the corpus.
+              simdutf
+              pkg-config
+              go
+              cargo
+              rustc
+              goperf
+              util-linux
+              time
+              curl
+            ];
           };
         };
     };

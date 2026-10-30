@@ -1,0 +1,22 @@
+# The fetched part of the benchmark corpus: name, then the URL `just bench-corpus`
+# fetches it from into bench/corpus-gen/lipsum/. simdutf's unicode_lipsum texts,
+# pinned to one commit of lemire/unicode_lipsum. SHA256SUMS pins these and every
+# file bench/zig/corpus.zig generates from them.
+Arabic-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Arabic-Lipsum.utf8.txt
+Arabic-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Arabic-Lipsum.utf16.txt
+Chinese-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Chinese-Lipsum.utf8.txt
+Chinese-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Chinese-Lipsum.utf16.txt
+Emoji-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Emoji-Lipsum.utf8.txt
+Emoji-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Emoji-Lipsum.utf16.txt
+Hebrew-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Hebrew-Lipsum.utf8.txt
+Hebrew-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Hebrew-Lipsum.utf16.txt
+Hindi-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Hindi-Lipsum.utf8.txt
+Hindi-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Hindi-Lipsum.utf16.txt
+Japanese-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Japanese-Lipsum.utf8.txt
+Japanese-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Japanese-Lipsum.utf16.txt
+Korean-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Korean-Lipsum.utf8.txt
+Korean-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Korean-Lipsum.utf16.txt
+Latin-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Latin-Lipsum.utf8.txt
+Latin-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Latin-Lipsum.utf16.txt
+Russian-Lipsum.utf8.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Russian-Lipsum.utf8.txt
+Russian-Lipsum.utf16.txt	https://raw.githubusercontent.com/lemire/unicode_lipsum/b0f1d0c1cb0cb168fc08dbf0e3b7100cdec517dc/lipsum/Russian-Lipsum.utf16.txt
