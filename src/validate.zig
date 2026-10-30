@@ -257,8 +257,7 @@ fn utf8BadBlock(bytes: []const u8) ?usize {
     }
     // Leading ASCII blocks first, so ASCII text never loads the lookup
     // tables. Zero stands in for an ASCII block as context.
-    var i: usize = 0;
-    while (i + 64 <= bytes.len and isAscii(simd.load(u8, bytes[i..]))) i += 64;
+    var i = asciiPrefix(bytes);
     var before = zero;
     var incomplete = zero;
     while (i + 64 <= bytes.len) : (i += 64) {
@@ -289,13 +288,17 @@ fn utf8BadBlock(bytes: []const u8) ?usize {
         // which the loop above checked.
         const start = bytes.len - 64;
         const cur: Bytes = simd.load(u8, bytes[start..]);
-        var b: [64]u8 = @splat(0);
-        if (start >= 3) {
-            b[61..64].* = bytes[start - 3 ..][0..3].*;
-        } else for (0..start) |j| {
-            b[64 - start + j] = bytes[j];
+        // The eight bytes before `start`, or as many as there are, in the
+        // last lanes. A stack array here would cost every call a realigned
+        // stack frame.
+        var w: u64 = 0;
+        if (start >= 8) {
+            w = std.mem.readInt(u64, bytes[start - 8 ..][0..8], .little);
+        } else for (bytes[0..start], 8 - start..) |c, j| {
+            w |= @as(u64, c) << @intCast(8 * j);
         }
-        before = b;
+        const last8: @Vector(8, u8) = @bitCast(std.mem.nativeToLittle(u64, w));
+        before = @shuffle(u8, last8, @as(@Vector(8, u8), @splat(0)), lastLanes());
         if (isAscii(cur)) return null;
         if (any(utf8Errors(cur, before))) return start;
         incomplete = utf8Incomplete(cur);
@@ -303,12 +306,30 @@ fn utf8BadBlock(bytes: []const u8) ?usize {
     return if (any(incomplete)) bytes.len else null;
 }
 
+fn lastLanes() [64]i32 {
+    var m: [64]i32 = @splat(-1);
+    for (56..64) |i| m[i] = @intCast(i - 56);
+    return m;
+}
+
+/// The offset of the first 64-byte block that is not all ASCII, or of the
+/// tail after the last whole block. Four blocks per test, so the loop costs
+/// one branch per 256 bytes.
+inline fn asciiPrefix(bytes: []const u8) usize {
+    var i: usize = 0;
+    while (i + 256 <= bytes.len) : (i += 256) {
+        const v = simd.load(u8, bytes[i..]) | simd.load(u8, bytes[i + 64 ..]) |
+            simd.load(u8, bytes[i + 128 ..]) | simd.load(u8, bytes[i + 192 ..]);
+        if (!isAscii(v)) break;
+    }
+    while (i + 64 <= bytes.len and isAscii(simd.load(u8, bytes[i..]))) i += 64;
+    return i;
+}
+
 fn asciiBadBlock(bytes: []const u8) ?usize {
     if (bytes.len < 64) return if (isAsciiShort(bytes)) null else 0;
-    var i: usize = 0;
-    while (i + 64 <= bytes.len) : (i += 64) {
-        if (!isAscii(simd.load(u8, bytes[i..]))) return i;
-    }
+    const i = asciiPrefix(bytes);
+    if (i + 64 <= bytes.len) return i;
     if (i < bytes.len and !isAscii(simd.load(u8, bytes[bytes.len - 64 ..]))) return bytes.len - 64;
     return null;
 }
@@ -400,7 +421,8 @@ fn utf32BadBlock(units: []const u32) ?usize {
 // each error kind placed at every position inside and across blocks and at
 // the end of the input. They run on whichever ISA path `-Dcpu` selects.
 
-const max_len = 3 * 64 + 8;
+// Past the 256-byte ASCII loop, so every error lands in it too.
+const max_len = 5 * 64 + 8;
 
 fn checkUtf8(bytes: []const u8) !void {
     const want = scalar.validateUtf8(bytes);
