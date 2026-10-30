@@ -85,7 +85,9 @@ Wave 1, in parallel:
   `encoding/base64`), and Zig's std; the corpus (simdutf's benchmark texts
   across scripts, fetched and pinned by hash, plus generated sizes); `just
 bench-compare`; and an oracle tool that runs inputs through simdutf so tests
-  and fuzzers can compare error kinds and positions.
+  and fuzzers can compare error kinds and positions. Landed: `just
+bench-compare`, `just oracle`, and the layout and contract in
+  [harness.md](harness.md).
 
 Wave 2: the measured decisions above, AVX-512 paths where wave 1 did AVX2,
 and a performance pass against simdutf on every operation and corpus.
