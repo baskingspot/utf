@@ -34,7 +34,21 @@ pub fn utf8WithErrors(bytes: []const u8) Result {
         start -= 1;
         if (bytes[start] & 0xC0 != 0x80) break;
     }
+    // ASCII from a character boundary is whole characters, and every error
+    // starts at a byte above 0x7F, so the scalar validator can start there.
+    start += asciiRun(bytes[start..]);
     return offset(scalar.validateUtf8(bytes[start..]), start);
+}
+
+/// The length of the ASCII prefix of `s`.
+fn asciiRun(s: []const u8) usize {
+    var i: usize = 0;
+    while (i + 16 <= s.len) : (i += 16) {
+        const m = simd.bitmask(simd.load16(s[i..]) >= @as(@Vector(16, u8), @splat(0x80)));
+        if (m != 0) return i + @ctz(m);
+    }
+    while (i < s.len and s[i] < 0x80) i += 1;
+    return i;
 }
 
 /// Reports whether every byte is below 0x80.
@@ -46,7 +60,7 @@ pub fn ascii(bytes: []const u8) bool {
 /// 0x7F.
 pub fn asciiWithErrors(bytes: []const u8) Result {
     const pos = asciiBadBlock(bytes) orelse return .ok(bytes.len);
-    return offset(scalar.validateAscii(bytes[pos..]), pos);
+    return .fail(.not_ascii, pos + asciiRun(bytes[pos..]));
 }
 
 /// Reports whether `units` is well-formed UTF-16 stored little-endian.
