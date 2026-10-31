@@ -46,41 +46,56 @@ pub inline fn call(
     args: std.meta.ArgsTuple(@TypeOf(f)),
 ) Return(f) {
     switch (role) {
-        .off => return @call(.always_inline, f, args),
+        // The result goes through words, so it is built from scalars once:
+        // returned as it is, a kernel that returns a struct from more than
+        // one place writes each into its own stack slot and the caller
+        // copies the chosen one with one 16-byte load, which cannot forward
+        // from the narrower stores that wrote it, 5-10 ns a call
+        // (docs/slop/results/dispatch-wave3-20261031.md).
+        .off => return fromWords(Return(f), toResult(@call(.always_inline, f, args))),
         .kernel => {
             comptime @export(&Entry(f).entry, .{ .name = symbol(src, simd.isa), .visibility = .hidden });
             return @call(.always_inline, f, args);
         },
         .main => {
             const c = if (pin) @intFromEnum(pinned) + 1 else cached.load(.monotonic);
-            if (c == 0) return @call(.never_inline, Init(src, f).call, .{args});
-            inline for (linked) |t| {
-                if (c == @intFromEnum(t.isa) + 1) {
-                    const name = comptime symbol(src, t.isa);
-                    const entry = @extern(*const EntryFn(Return(f)), .{ .name = name, .visibility = .hidden });
-                    var w: [6]usize = undefined;
-                    comptime var i = 0;
-                    inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
-                        i += toWords(p.type.?, &args[k], w[i..]);
-                    }
-                    return fromWords(Return(f), entry(w[0], w[1], w[2], w[3], w[4], w[5]));
-                }
+            var w: [6]usize = undefined;
+            comptime var i = 0;
+            inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
+                i += toWords(p.type.?, &args[k], w[i..]);
             }
-            // Out of line, so what inlines into the caller is only the
-            // compares and the calls.
-            return @call(.never_inline, f, args);
+            // Every path yields the result as a scalar and the struct is
+            // built once, after they join: a struct from each path would
+            // join as a choice of stack slots, copied out whole (the stall
+            // above).
+            const r: Ret(Return(f)) = r: {
+                if (c == 0) break :r @call(.never_inline, Init(src, f).call, .{ w[0], w[1], w[2], w[3], w[4], w[5] });
+                inline for (linked) |t| {
+                    if (c == @intFromEnum(t.isa) + 1) {
+                        const name = comptime symbol(src, t.isa);
+                        const entry = @extern(*const EntryFn(Return(f)), .{ .name = name, .visibility = .hidden });
+                        break :r entry(w[0], w[1], w[2], w[3], w[4], w[5]);
+                    }
+                }
+                // Out of line, so what inlines into the caller is only the
+                // compares and the calls.
+                break :r @call(.never_inline, Entry(f).entry, .{ w[0], w[1], w[2], w[3], w[4], w[5] });
+            };
+            return fromWords(Return(f), r);
         },
     }
 }
 
 /// The first dispatched call, out of line so the callers' copies of `call`
 /// keep only the hot path.
+/// It takes the words, as the entries do, so the caller keeps nothing on
+/// the stack for it.
 fn Init(comptime src: std.builtin.SourceLocation, comptime f: anytype) type {
     return struct {
-        fn call(args: std.meta.ArgsTuple(@TypeOf(f))) Return(f) {
+        fn call(w0: usize, w1: usize, w2: usize, w3: usize, w4: usize, w5: usize) callconv(.c) Ret(Return(f)) {
             @branchHint(.cold);
             _ = init();
-            return dispatch.call(src, f, args);
+            return toResult(dispatch.call(src, f, argsFromWords(f, .{ w0, w1, w2, w3, w4, w5 })));
         }
     };
 }
@@ -91,9 +106,10 @@ fn Return(comptime f: anytype) type {
     return @typeInfo(@TypeOf(f)).@"fn".return_type.?;
 }
 
-/// Two words come back in registers under the C calling convention on
-/// x86-64 System V.
-const Words = extern struct { a: usize, b: usize };
+/// Two words, the first in the low half: on x86-64 a `u128`, which comes
+/// back in two registers under the C calling convention, and which LLVM,
+/// unlike a struct of two words, keeps in registers instead of a stack slot.
+const Words = @Int(.unsigned, 2 * @bitSizeOf(usize));
 
 /// What an entry returns for a function returning `R`: `R` itself where the
 /// C calling convention has it, so the call can be a tail call, else words.
@@ -106,20 +122,22 @@ fn EntryFn(comptime R: type) type {
 }
 
 fn Entry(comptime f: anytype) type {
-    const params = @typeInfo(@TypeOf(f)).@"fn".params;
     return struct {
         fn entry(w0: usize, w1: usize, w2: usize, w3: usize, w4: usize, w5: usize) callconv(.c) Ret(Return(f)) {
-            const w = [_]usize{ w0, w1, w2, w3, w4, w5 };
-            var args: std.meta.ArgsTuple(@TypeOf(f)) = undefined;
-            comptime var i = 0;
-            inline for (params, 0..) |p, k| {
-                args[k] = argFromWords(p.type.?, w[i..]);
-                i += comptime wordCount(p.type.?);
-            }
-            comptime std.debug.assert(i <= w.len);
-            return toResult(@call(.always_inline, f, args));
+            return toResult(@call(.always_inline, f, argsFromWords(f, .{ w0, w1, w2, w3, w4, w5 })));
         }
     };
+}
+
+inline fn argsFromWords(comptime f: anytype, w: [6]usize) std.meta.ArgsTuple(@TypeOf(f)) {
+    var args: std.meta.ArgsTuple(@TypeOf(f)) = undefined;
+    comptime var i = 0;
+    inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
+        args[k] = argFromWords(p.type.?, w[i..]);
+        i += comptime wordCount(p.type.?);
+    }
+    comptime std.debug.assert(i <= w.len);
+    return args;
 }
 
 /// How an argument of type `T` travels: a slice as its pointer and length,
@@ -183,21 +201,19 @@ inline fn fromWord(comptime T: type, w: usize) T {
     };
 }
 
-const word_names = [_][]const u8{ "a", "b" };
-
 inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
     const R = @TypeOf(r);
     if (Ret(R) == R) return r;
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
             if (s.fields.len > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
-            var w: Words = .{ .a = 0, .b = 0 };
+            var w: Words = 0;
             inline for (s.fields, 0..) |field, k| {
-                @field(w, word_names[k]) = toWord(@field(r, field.name));
+                w |= @as(Words, toWord(@field(r, field.name))) << (@bitSizeOf(usize) * k);
             }
             break :blk w;
         },
-        else => .{ .a = toWord(r), .b = undefined },
+        else => toWord(r),
     };
 }
 
@@ -207,11 +223,11 @@ inline fn fromWords(comptime R: type, w: Ret(R)) R {
         .@"struct" => |s| blk: {
             var r: R = undefined;
             inline for (s.fields, 0..) |field, k| {
-                @field(r, field.name) = fromWord(field.type, @field(w, word_names[k]));
+                @field(r, field.name) = fromWord(field.type, @truncate(w >> (@bitSizeOf(usize) * k)));
             }
             break :blk r;
         },
-        else => fromWord(R, w.a),
+        else => fromWord(R, @truncate(w)),
     };
 }
 

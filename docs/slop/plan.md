@@ -289,3 +289,18 @@ oracle` compares every public function with simdutf: validation of every
   The harness's `written()` did the same with its `Out` union, which cost
   the checked forms' short rows about 4 ns; fixed in wave 3
   ([harness-wave3-20261031.md](results/harness-wave3-20261031.md)).
+
+Wave 3: the shared helpers in `simd.zig`, the result copy, and the gaps the
+wave-2 measurements left.
+
+- **Dispatch**: `src/dispatch.zig` and `src/simd.zig`. Landed: `call` no
+  longer copies a returned `Result` with one 16-byte load after two narrower
+  stores ([dispatch-wave3-20261031.md](results/dispatch-wave3-20261031.md)).
+  Two words travel as a `u128`, which LLVM keeps in registers, every path
+  of `call` (each tier, in place, the first call) yields it, and the struct
+  is built once after they join; the `.off` role rebuilds the kernel's
+  result from its fields. `WithErrors` validation 2.0-2.2× at 16-64 bytes
+  dispatched (`asciiWithErrors` 12.4 to 5.6 ns) and 1.7-2.4× native where
+  the copy was, checked conversions 1.2-1.8× dispatched; dispatch now
+  costs 0.1-3 ns over native on these rows. Kernels may return from as
+  many places as they like: no result crosses `call` whole.
