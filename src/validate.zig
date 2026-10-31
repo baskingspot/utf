@@ -39,6 +39,17 @@ pub fn utf8WithErrors(bytes: []const u8) Result {
 }
 
 fn utf8WithErrorsKernel(bytes: []const u8) Result {
+    if (bytes.len < 64 and simd.isa != .generic) {
+        // As in `utf8BadBlock`, whose block also says where the scalar
+        // validator can start: at the first byte above 0x7F.
+        if (!simd.has_masked and isAsciiShort(bytes)) return .ok(bytes.len);
+        const cur = simd.loadShort(u8, bytes);
+        const high = simd.bitmask(cur >= splat(0x80));
+        if (simd.has_masked and high == 0) return .ok(bytes.len);
+        if (!any(utf8Errors(cur, splat(0)))) return .ok(bytes.len);
+        const start = @ctz(high);
+        return offset(scalar.validateUtf8(bytes[start..]), start);
+    }
     const pos = utf8BadBlock(bytes);
     if (pos == none) return .ok(bytes.len);
     // Every byte before `pos` passed, so the character containing the byte
@@ -70,6 +81,10 @@ pub fn asciiWithErrors(bytes: []const u8) Result {
 }
 
 fn asciiWithErrorsKernel(bytes: []const u8) Result {
+    if (bytes.len >= 16 and bytes.len <= 64) {
+        const m = highMask(bytes);
+        return if (m == 0) .ok(bytes.len) else .fail(.not_ascii, @ctz(m));
+    }
     const pos = asciiBadBlock(bytes);
     if (pos == none) return .ok(bytes.len);
     return .fail(.not_ascii, firstHigh(bytes, pos));
@@ -131,9 +146,28 @@ pub fn utf32WithErrors(units: []const u32) Result {
 }
 
 fn utf32WithErrorsKernel(units: []const u32) Result {
+    const len = units.len;
+    // Up to two blocks, the first and the last, overlapping it: one test,
+    // as most input passes, then their masks say where the first bad
+    // value is and which error it is.
+    if (len <= n32) {
+        const a = if (len < n32) simd.loadShort(u32, units) else simd.load(u32, units);
+        if (!utf32Bad(a)) return .ok(len);
+        return utf32Fail(utf32Above(a), utf32Surrogates(a));
+    }
+    if (len <= 2 * n32) {
+        const a = simd.load(u32, units);
+        const b = simd.load(u32, units[len - n32 ..]);
+        const max: Units32 = @splat(0x10FFFF);
+        const d: Units32 = @splat(0xD800);
+        const w: Units32 = @splat(0x800);
+        if (!@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return .ok(len);
+        const shift: u6 = @intCast(len - n32);
+        return utf32Fail(utf32Above(a) | utf32Above(b) << shift, utf32Surrogates(a) | utf32Surrogates(b) << shift);
+    }
     const pos = utf32BadBlock(units);
     if (pos == none) return .ok(units.len);
-    const v = if (units.len < n32) simd.loadShort(u32, units) else simd.load(u32, units[pos..]);
+    const v = simd.load(u32, units[pos..]);
     // Lanes before the first bad one passed, in an overlapping last block too.
     const at = pos + @ctz(simd.bitmask(utf32Key(v) > @as(Units32, @splat(utf32_key_max))));
     return .fail(if (units[at] > 0x10FFFF) .too_large else .surrogate, at);
@@ -175,6 +209,34 @@ inline fn isAsciiShort(s: []const u8) bool {
     return x & 0x8080_8080_8080_8080 == 0;
 }
 
+/// Bit i set where byte i of 16 to 64 bytes is above 0x7F, from two or
+/// four overlapping loads, so the position comes with the test.
+inline fn highMask(s: []const u8) u64 {
+    const len = s.len;
+    std.debug.assert(len >= 16);
+    std.debug.assert(len <= 64);
+    const W = if (simd.width >= 32) 32 else 16;
+    const V = @Vector(W, u8);
+    const k: V = @splat(0x80);
+    const k16: @Vector(16, u8) = @splat(0x80);
+    if (len <= 32) {
+        const lo: u64 = simd.bitmask(simd.load16(s) >= k16);
+        const hi: u64 = simd.bitmask(simd.load16(s[len - 16 ..]) >= k16);
+        return lo | hi << @intCast(len - 16);
+    }
+    if (W == 32) {
+        const lo: u64 = simd.bitmask(@as(*align(1) const V, @ptrCast(s[0..32])).* >= k);
+        const hi: u64 = simd.bitmask(@as(*align(1) const V, @ptrCast(s[len - 32 ..][0..32])).* >= k);
+        return lo | hi << @intCast(len - 32);
+    }
+    var m: u64 = 0;
+    inline for (0..2) |j| {
+        m |= @as(u64, simd.bitmask(simd.load16(s[j * 16 ..]) >= k16)) << (j * 16);
+        m |= @as(u64, simd.bitmask(simd.load16(s[len - 32 + j * 16 ..]) >= k16)) << @intCast(len - 32 + j * 16);
+    }
+    return m;
+}
+
 /// What the `BadBlock` functions return when every block passes. They
 /// return a plain index: an optional one returned from an inline function
 /// went through memory, loaded back from the stack or a constant, which
@@ -208,6 +270,7 @@ inline fn asciiPrefix(bytes: []const u8, comptime whole: bool) usize {
         while (i + 64 <= len) : (i += 64) {
             if (!isAscii(simd.load(u8, bytes[i..]))) return i;
         }
+        if (i == len) return len;
         return if (isAscii(simd.load(u8, bytes[len - 64 ..]))) len else i;
     }
     if (!isAscii(simd.load(u8, bytes))) return 0;
@@ -368,9 +431,16 @@ inline fn utf8Incomplete(v: Bytes) Bytes {
 inline fn utf8BadBlock(bytes: []const u8) usize {
     const zero = splat(0);
     if (bytes.len < 64) {
+        // The zero padding ends any sequence the input cuts short.
+        if (simd.has_masked) {
+            // The masked load costs less than the ASCII test on
+            // overlapping loads, which non-ASCII text pays on top.
+            const cur = simd.loadShort(u8, bytes);
+            if (!any(cur & splat(0x80))) return none;
+            return if (!any(utf8Errors(cur, zero))) none else 0;
+        }
         if (isAsciiShort(bytes)) return none;
         if (simd.isa == .generic) return 0;
-        // The zero padding ends any sequence the input cuts short.
         return if (!any(utf8Errors(simd.loadShort(u8, bytes), zero))) none else 0;
     }
     // Leading ASCII blocks first, so ASCII text never loads the lookup
@@ -459,16 +529,31 @@ const n16 = @typeInfo(Units16).vector.len;
 const Mask16 = @Int(.unsigned, n16);
 
 fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Result {
-    const pos = utf16BadBlock(endian, units);
-    if (pos == none) return .ok(units.len);
     const len = units.len;
+    // Up to two blocks, the first and the last, overlapping it: one test
+    // for a surrogate, as most text has none, then their masks say where
+    // the first unpaired one is. The zero padding of a short block is not
+    // a surrogate, and nothing follows the last unit.
+    if (len < n16) {
+        const a = simd.loadShort(u16, units);
+        if (!hasSurrogate(endian, a)) return .ok(len);
+        const s = surrogateMasks(endian, a);
+        return unpaired(s.high, s.low, len);
+    }
+    if (len <= 2 * n16) {
+        const a = simd.load(u16, units);
+        const b = simd.load(u16, units[len - n16 ..]);
+        const key = @min(groupKey(endian, a), groupKey(endian, b));
+        if (!@reduce(.Or, key < @as(Units16, @splat(groupKeyMax(endian))))) return .ok(len);
+        const sa = surrogateMasks(endian, a);
+        const sb = surrogateMasks(endian, b);
+        const shift: u6 = @intCast(len - n16);
+        return unpaired(sa.high | @as(u64, sb.high) << shift, sa.low | @as(u64, sb.low) << shift, len);
+    }
+    const pos = utf16BadBlock(endian, units);
+    if (pos == none) return .ok(len);
     // A high surrogate ends the input.
     if (pos == len) return .fail(.surrogate, len - 1);
-    if (len < n16) {
-        // The zero padding is not a surrogate.
-        const s = surrogateMasks(endian, simd.loadShort(u16, units));
-        return .fail(.surrogate, @ctz((s.low & ~(s.high << 1)) | (s.high & ~(s.low >> 1))));
-    }
     // The scalar validator stops at the first low surrogate with no high
     // one before it, or high one with no low one after it. Every unit
     // before the block passed, but for a high one just before it.
@@ -486,6 +571,15 @@ fn isHigh(unit: u16) bool {
 }
 
 const Surrogates = struct { high: Mask16, low: Mask16 };
+
+/// The result for units whose high and low surrogates are marked in
+/// `high` and `low`: a failure at the first one without its partner.
+inline fn unpaired(high: u64, low: u64, len: usize) Result {
+    // Paired exactly when each low one follows a high one, and none is
+    // shifted out at the top.
+    if (low == high << 1 and high >> 63 == 0) return .ok(len);
+    return .fail(.surrogate, @ctz((low & ~(high << 1)) | (high & ~(low >> 1))));
+}
 
 /// The highs and lows of one block, each as a bit mask.
 inline fn surrogateMasks(comptime endian: std.builtin.Endian, block: Units16) Surrogates {
@@ -613,6 +707,22 @@ inline fn utf32Bad(v: Units32) bool {
     const above = v > @as(Units32, @splat(0x10FFFF));
     const surr = v -% @as(Units32, @splat(0xD800)) < @as(Units32, @splat(0x800));
     return @reduce(.Or, above) or @reduce(.Or, surr);
+}
+
+/// Bit i set where lane i of `v` is above U+10FFFF.
+inline fn utf32Above(v: Units32) u64 {
+    return simd.bitmask(v > @as(Units32, @splat(0x10FFFF)));
+}
+
+/// Bit i set where lane i of `v` is a surrogate.
+inline fn utf32Surrogates(v: Units32) u64 {
+    return simd.bitmask(v -% @as(Units32, @splat(0xD800)) < @as(Units32, @splat(0x800)));
+}
+
+/// The failure at the first value marked in `above` or `surr`.
+inline fn utf32Fail(above: u64, surr: u64) Result {
+    const at = @ctz(above | surr);
+    return .fail(if (above >> @intCast(at) & 1 != 0) .too_large else .surrogate, at);
 }
 
 inline fn utf32BadBlock(units: []const u32) usize {

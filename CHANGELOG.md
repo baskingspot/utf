@@ -17,6 +17,7 @@ All notable changes to utf are recorded here. The format follows
 
 - `base64.decode` on line-wrapped input (MIME and PEM: lines of one length, a multiple of four and at least 64 characters, each followed by the same 1–4 whitespace characters) is 1.3× faster from 4 KiB with AVX-512, 1.9× with AVX2, and 1.5× with SSSE3; with AVX-512 also 15% faster on inputs under 64 characters.
 - `base64.encode` with AVX-512 is 1.1–1.5× faster on 64 bytes to 4 KiB.
+- The `validate` `WithErrors` functions are 1.1–1.9× faster on inputs of up to 128 bytes that contain an error, and `utf8WithErrors` up to 1.16× on non-ASCII text under 64 bytes.
 - `convert` and `length` select their kernels at runtime too in generic x86-64 builds, as `validate.utf8` does; the length functions that only return the input length do not dispatch.
 - `convert` and `length` run AVX-512 kernels on CPUs with AVX-512 VBMI2 (Ice Lake and later, Zen 4 and later): from 4 KiB, UTF-8 to UTF-16 is 1.8–3.6× faster on non-Latin text than with the AVX2 kernels, UTF-16 and UTF-32 to UTF-8 1.4–1.7×, UTF-8 to Latin-1 on Latin-1 text 8×, and the checked UTF-16 byte swap on emoji 7×.
 - `convert` on AVX2 and SSE: UTF-16 to UTF-8 is 1.4–2.0× faster on CJK, Korean, and Hindi text, and UTF-8 to UTF-16 on non-Latin text 1.4–2.1× on AVX2.
