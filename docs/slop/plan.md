@@ -282,5 +282,6 @@ bench-compare`, and a per-operation geomean summary. The baseline
   their constants up front. A `Result` chosen between two built ones was
   copied out with one 16-byte load after two narrower stores, stalling store
   forwarding for 6 ns in every checked conversion; build it from scalars.
-  The harness's `written()` does the same with its `Out` union, which costs
-  the checked forms' short rows about 4 ns.
+  The harness's `written()` did the same with its `Out` union, which cost
+  the checked forms' short rows about 4 ns; fixed in wave 3
+  ([harness-wave3-20261031.md](results/harness-wave3-20261031.md)).

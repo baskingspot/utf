@@ -31,8 +31,32 @@ const impl = @import("build_options").impl;
 const corpus = "bench/corpus-gen";
 
 /// What one call returns, for the checksum: validity, the bytes written,
-/// or a count.
-const Out = union(enum) { valid: bool, len: usize, count: usize };
+/// or a count. A struct whose fields are computed, not a union whose
+/// variant is chosen: choosing between two built results made LLVM store
+/// the fields narrow and copy them out wide, which stalls store-to-load
+/// forwarding, about 4 ns a checked call on 16 bytes
+/// (docs/slop/results/convert-20261031.md).
+const Out = struct {
+    /// Validity as 0 or 1, the bytes written, or the count.
+    n: usize,
+    kind: Kind,
+
+    const Kind = enum(u8) { valid, len, count };
+
+    fn valid(v: bool) Out {
+        return .{ .n = @intFromBool(v), .kind = .valid };
+    }
+
+    /// `n` as a `kind` when `ok`, and invalid input otherwise.
+    fn checked(comptime kind: Kind, ok: bool, n: usize) Out {
+        return .{ .n = if (ok) n else 0, .kind = if (ok) kind else .valid };
+    }
+};
+
+/// Whether an error union holds a value.
+fn succeeded(r: anytype) bool {
+    return if (r) |_| true else |_| false;
+}
 
 const Fn = fn ([]align(16) const u8, []align(16) u8) Out;
 
@@ -75,41 +99,44 @@ const Std = struct {
     };
 
     fn validateUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
-        return .{ .valid = std.unicode.utf8ValidateSlice(in) };
+        return .valid(std.unicode.utf8ValidateSlice(in));
     }
     fn utf8ToUtf16le(in: []align(16) const u8, out: []align(16) u8) Out {
-        const n = std.unicode.utf8ToUtf16Le(cast([]u16, out), in) catch return .{ .valid = false };
-        return .{ .len = 2 * n };
+        const r = std.unicode.utf8ToUtf16Le(cast([]u16, out), in);
+        return .checked(.len, succeeded(r), 2 * (r catch 0));
     }
     fn utf16leToUtf8(in: []align(16) const u8, out: []align(16) u8) Out {
-        const n = std.unicode.utf16LeToUtf8(out, cast([]const u16, in)) catch return .{ .valid = false };
-        return .{ .len = n };
+        const r = std.unicode.utf16LeToUtf8(out, cast([]const u16, in));
+        return .checked(.len, succeeded(r), r catch 0);
     }
     fn utf16FromUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
-        return .{ .count = std.unicode.calcUtf16LeLen(in) catch return .{ .valid = false } };
+        const r = std.unicode.calcUtf16LeLen(in);
+        return .checked(.count, succeeded(r), r catch 0);
     }
     fn utf8FromUtf16le(in: []align(16) const u8, _: []align(16) u8) Out {
-        return .{ .count = std.unicode.calcWtf8Len(cast([]const u16, in)) };
+        return .checked(.count, true, std.unicode.calcWtf8Len(cast([]const u16, in)));
     }
     fn countUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
-        return .{ .count = std.unicode.utf8CountCodepoints(in) catch return .{ .valid = false } };
+        const r = std.unicode.utf8CountCodepoints(in);
+        return .checked(.count, succeeded(r), r catch 0);
     }
     fn countUtf16le(in: []align(16) const u8, _: []align(16) u8) Out {
-        return .{ .count = std.unicode.utf16CountCodepoints(cast([]const u16, in)) catch return .{ .valid = false } };
+        const r = std.unicode.utf16CountCodepoints(cast([]const u16, in));
+        return .checked(.count, succeeded(r), r catch 0);
     }
     fn encoder(comptime codecs: std.base64.Codecs) Fn {
         return struct {
             fn f(in: []align(16) const u8, out: []align(16) u8) Out {
-                return .{ .len = codecs.Encoder.encode(out, in).len };
+                return .checked(.len, true, codecs.Encoder.encode(out, in).len);
             }
         }.f;
     }
     fn decoder(comptime codecs: std.base64.Codecs) Fn {
         return struct {
             fn f(in: []align(16) const u8, out: []align(16) u8) Out {
-                const n = codecs.Decoder.calcSizeForSlice(in) catch return .{ .valid = false };
-                codecs.Decoder.decode(out[0..n], in) catch return .{ .valid = false };
-                return .{ .len = n };
+                const size = codecs.Decoder.calcSizeForSlice(in);
+                const n = size catch 0;
+                return .checked(.len, succeeded(size) and succeeded(codecs.Decoder.decode(out[0..n], in)), n);
             }
         }.f;
     }
@@ -117,7 +144,8 @@ const Std = struct {
     /// simdutf's decoder does.
     const mime = std.base64.standard.decoderWithIgnore(" \t\n\x0c\r");
     fn base64DecodeMime(in: []align(16) const u8, out: []align(16) u8) Out {
-        return .{ .len = mime.decode(out, in) catch return .{ .valid = false } };
+        const r = mime.decode(out, in);
+        return .checked(.len, succeeded(r), r catch 0);
     }
 };
 
@@ -255,17 +283,17 @@ const Utf = struct {
                 }
                 const r = f(src);
                 return switch (@TypeOf(r)) {
-                    bool => .{ .valid = r },
-                    utf.Result => .{ .valid = r.err == .none },
-                    usize => .{ .count = r },
+                    bool => .valid(r),
+                    utf.Result => .valid(r.err == .none),
+                    usize => .checked(.count, true, r),
                     else => @compileError("unexpected return type"),
                 };
             }
 
             fn written(comptime Unit: type, r: anytype) Out {
                 return switch (@TypeOf(r)) {
-                    usize => .{ .len = r * @sizeOf(Unit) },
-                    utf.Result => if (r.err == .none) .{ .len = r.count * @sizeOf(Unit) } else .{ .valid = false },
+                    usize => .checked(.len, true, r * @sizeOf(Unit)),
+                    utf.Result => .checked(.len, r.err == .none, r.count * @sizeOf(Unit)),
                     else => @compileError("unexpected return type"),
                 };
             }
@@ -389,13 +417,10 @@ fn opBenchmark(comptime i: usize) testingx.Function {
                 // and the call stays out of line, as a C call to simdutf
                 // is, so the loop does not keep the kernel's constants.
                 mem.doNotOptimizeAway(in.ptr);
-                // One word of the result, not the 16-byte union: reading
-                // the union back whole after the callee's narrow stores
-                // stalls store-to-load forwarding, about 6 ns a call.
-                mem.doNotOptimizeAway(switch (@call(.never_inline, f, .{ in, out })) {
-                    .valid => |v| @intFromBool(v),
-                    .count, .len => |n| n,
-                });
+                // One word of the result, not the whole struct: reading it
+                // back whole after the callee's narrow stores stalls
+                // store-to-load forwarding, about 6 ns a call.
+                mem.doNotOptimizeAway(@call(.never_inline, f, .{ in, out }).n);
             }
             b.setBytes(@intCast(in.len));
         }
@@ -457,11 +482,12 @@ pub fn main(init: std.process.Init) !u8 {
                         for (inputs[i]) |in| {
                             const out = try in.alloc();
                             defer std.heap.page_allocator.free(out);
-                            switch (f(in.data, out)) {
-                                .valid => |v| try w.print("{s}/{s}\tvalid={}\n", .{ op.row, in.name, v }),
-                                .count => |n| try w.print("{s}/{s}\tcount={d}\n", .{ op.row, in.name, n }),
-                                .len => |n| try w.print("{s}/{s}\tlen={d} fnv={x:0>16}\n", .{
-                                    op.row, in.name, n, fnv1a(out[0..n]),
+                            const r = f(in.data, out);
+                            switch (r.kind) {
+                                .valid => try w.print("{s}/{s}\tvalid={}\n", .{ op.row, in.name, r.n != 0 }),
+                                .count => try w.print("{s}/{s}\tcount={d}\n", .{ op.row, in.name, r.n }),
+                                .len => try w.print("{s}/{s}\tlen={d} fnv={x:0>16}\n", .{
+                                    op.row, in.name, r.n, fnv1a(out[0..r.n]),
                                 }),
                             }
                         }

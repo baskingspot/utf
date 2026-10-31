@@ -1,0 +1,26 @@
+docs/slop/results/harness-wave3-20261031/rows-native.txt
+  validate *Err                            16-64 B inputs         n= 10  delta ns  -0.46.. +0.76 median  -0.21  new/old geomean 0.981 range 0.93..1.09
+  validate *Err                            256 B                  n=  5  delta ns  -0.84.. +0.76 median  -0.25  new/old geomean 0.993 range 0.94..1.06
+  validate *Err                            4 KiB and up, texts    n= 52  delta ns -5231.74..+1808.77 median  +5.45  new/old geomean 1.008 range 0.96..1.10
+  checked conversions                      16-64 B inputs         n= 56  delta ns  -7.71.. -0.54 median  -2.36  new/old geomean 0.813 range 0.54..0.97
+  checked conversions                      256 B                  n= 28  delta ns  -7.91.. +0.93 median  -1.12  new/old geomean 0.914 range 0.73..1.07
+  checked conversions                      4 KiB and up, texts    n=200  delta ns -7853.40..+3771.18 median  -3.00  new/old geomean 0.998 range 0.86..1.12
+  base64 decode                            16-64 B inputs         n= 10  delta ns  -7.97.. -5.26 median  -6.58  new/old geomean 0.759 range 0.71..0.82
+  base64 decode                            256 B                  n=  5  delta ns  -8.65.. +0.02 median  -7.21  new/old geomean 0.836 range 0.74..1.00
+  base64 decode                            4 KiB and up, texts    n= 15  delta ns -4757.11..+356.97 median  -7.91  new/old geomean 0.980 range 0.94..1.00
+  controls (validate-utf8, valid forms)    16-64 B inputs         n=  8  delta ns  -2.93.. -0.19 median  -0.23  new/old geomean 0.927 range 0.80..0.98
+  controls (validate-utf8, valid forms)    256 B                  n=  4  delta ns  -0.66.. +0.18 median  +0.03  new/old geomean 0.996 range 0.96..1.02
+  controls (validate-utf8, valid forms)    4 KiB and up, texts    n= 31  delta ns -5519.72..+367.04 median  +9.85  new/old geomean 0.998 range 0.90..1.04
+docs/slop/results/harness-wave3-20261031/rows-v3.txt
+  validate *Err                            16-64 B inputs         n= 10  delta ns  -1.04.. +0.43 median  -0.47  new/old geomean 0.951 range 0.92..1.04
+  validate *Err                            256 B                  n=  5  delta ns  -1.59.. +0.14 median  +0.05  new/old geomean 0.973 range 0.90..1.02
+  validate *Err                            4 KiB and up, texts    n= 52  delta ns -3984.87..+3565.37 median  -4.07  new/old geomean 0.995 range 0.94..1.06
+  checked conversions                      16-64 B inputs         n= 56  delta ns  -3.93.. +3.68 median  -2.54  new/old geomean 0.784 range 0.64..1.22
+  checked conversions                      256 B                  n= 28  delta ns  -4.78.. -0.06 median  -1.18  new/old geomean 0.923 range 0.80..1.00
+  checked conversions                      4 KiB and up, texts    n=200  delta ns -11856.10..+10197.73 median  +0.14  new/old geomean 0.997 range 0.91..1.12
+  base64 decode                            16-64 B inputs         n= 10  delta ns  -6.87.. -3.74 median  -4.92  new/old geomean 0.819 range 0.75..0.87
+  base64 decode                            256 B                  n=  5  delta ns  -6.80.. -4.65 median  -5.36  new/old geomean 0.882 range 0.85..0.94
+  base64 decode                            4 KiB and up, texts    n= 15  delta ns -1981.85..+3338.43 median  -5.73  new/old geomean 0.994 range 0.96..1.04
+  controls (validate-utf8, valid forms)    16-64 B inputs         n=  8  delta ns  -1.15.. -0.28 median  -0.36  new/old geomean 0.926 range 0.85..0.95
+  controls (validate-utf8, valid forms)    256 B                  n=  4  delta ns  -0.82.. -0.32 median  -0.47  new/old geomean 0.948 range 0.93..0.96
+  controls (validate-utf8, valid forms)    4 KiB and up, texts    n= 31  delta ns -5363.82..+1666.92 median  +0.31  new/old geomean 0.999 range 0.95..1.05
