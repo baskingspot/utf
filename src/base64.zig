@@ -123,10 +123,10 @@ pub fn encodeWith(comptime isa: Isa, comptime alphabet: Alphabet, dst: []u8, src
     }
     // The rest, fewer than 64 bytes, in zero-padded blocks of up to 48.
     if (src.len - i > 48) {
-        o += K.encodeLast(dst[o..], src[i..][0..48], padding);
+        o += K.encodeLast(dst[o..], src, i, i + 48, padding);
         i += 48;
     }
-    return o + K.encodeLast(dst[o..], src[i..], padding);
+    return o + K.encodeLast(dst[o..], src, i, src.len, padding);
 }
 
 pub fn decodeWith(
@@ -207,7 +207,7 @@ pub fn decodeWith(
         // The last block, fewer than 64 characters, zero-padded.
         const n = t.len - i;
         const live = lowBits(n);
-        const block = K.loadPartial(src[i..t.len]);
+        const block = K.loadTail(src, i, t.len);
         const c = K.classifyBlock(block);
         const bad = c.badMask() & live;
         if (bad == 0 and w == 0) {
@@ -289,14 +289,15 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return @bitCast(out);
         }
 
-        /// Encodes `src`, at most 48 bytes, writing only its
-        /// `encodedLen` characters.
-        inline fn encodeLast(dst: []u8, src: []const u8, padding: bool) usize {
+        /// Encodes `whole[start..end]`, at most 48 bytes, writing only
+        /// its `encodedLen` characters.
+        inline fn encodeLast(dst: []u8, whole: []const u8, start: usize, end: usize, padding: bool) usize {
             if (avx512) {
-                const len = encodedLen(src.len, .{ .padding = padding });
-                if (src.len == 0) return 0;
-                return storeLast(dst, encodeBlock(loadPartial(src)), src.len, len);
+                const len = encodedLen(end - start, .{ .padding = padding });
+                if (end == start) return 0;
+                return storeLast(dst, encodeBlock(loadTail(whole, start, end)), end - start, len);
             }
+            const src = whole[start..end];
             // 12 bytes at a time with 16-byte vectors, then one or two
             // vectors from a zero-padded load of what is left.
             const N = Kernel(if (isa == .avx2) .ssse3 else isa, alphabet);
@@ -756,11 +757,23 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return @bitCast(w);
         }
 
-        /// Loads `s`, shorter than a block, zero-padded, without reading
-        /// past it.
-        inline fn loadPartial(s: []const u8) V64 {
-            if (avx512) return @"llvm.masked.load.v64i8.p0"(s.ptr, 1, @bitCast(lowBits(s.len)), @splat(0));
-            return simd.loadPartial(u8, s);
+        /// Loads `src[start..end]`, shorter than a block, zero-padded,
+        /// without reading outside `src`. With AVX-512 and at least a block
+        /// before `end`, that is the block ending there, moved down. A
+        /// masked load reads no more, but waits for any recent store to the
+        /// bytes it masks off, such as to an output placed right after the
+        /// input: that doubled the time of short calls.
+        inline fn loadTail(src: []const u8, start: usize, end: usize) V64 {
+            const n = end - start;
+            std.debug.assert(n < 64);
+            if (n == 0) return @splat(0);
+            if (avx512 and end >= 64) {
+                const block: V64 = @as(*align(1) const V64, @ptrCast(src[end - 64 ..][0..64])).*;
+                const iota = std.simd.iota(u8, 64);
+                const moved = @"llvm.x86.avx512.permvar.qi.512"(block, iota +% @as(V64, @splat(@intCast(64 - n))));
+                return @select(u8, iota < @as(V64, @splat(@intCast(n))), moved, @as(V64, @splat(0)));
+            }
+            return simd.loadPartial(u8, src[start..end]);
         }
 
         /// Stores the first `len` bytes of `v`, a vector of 16, 32, or 64
