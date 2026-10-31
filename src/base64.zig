@@ -15,6 +15,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const testing = std.testing;
 const simd = @import("simd.zig");
+const dispatch = @import("dispatch.zig");
 const result = @import("result.zig");
 const Result = result.Result;
 
@@ -29,6 +30,10 @@ pub const maxDecodedLen = scalar.maxDecodedLen;
 /// Encodes `src` into `dst` and returns the number of characters written,
 /// `encodedLen(src.len, options)`. `dst` must hold that many.
 pub fn encode(dst: []u8, src: []const u8, options: EncodeOptions) usize {
+    return dispatch.call(@src(), encodeKernel, .{ dst, src, options });
+}
+
+fn encodeKernel(dst: []u8, src: []const u8, options: EncodeOptions) usize {
     return switch (options.alphabet) {
         inline else => |a| encodeWith(native, a, dst, src, options.padding),
     };
@@ -47,6 +52,10 @@ pub fn encode(dst: []u8, src: []const u8, options: EncodeOptions) usize {
 /// `maxDecodedLen(src.len)` bytes always fits. On failure the contents of
 /// `dst` are unspecified.
 pub fn decode(dst: []u8, src: []const u8, options: DecodeOptions) Result {
+    return dispatch.call(@src(), decodeKernel, .{ dst, src, options });
+}
+
+fn decodeKernel(dst: []u8, src: []const u8, options: DecodeOptions) Result {
     return switch (options.alphabet) {
         inline else => |a| decodeWith(native, a, dst, src, options.last_chunk),
     };
@@ -78,7 +87,8 @@ pub const Isa = enum {
     }
 };
 
-/// The kernel `encode` and `decode` use: the widest the target supports.
+/// The kernel `encode` and `decode` use: the widest the target supports, or
+/// with runtime dispatch, the widest the tier they run in supports.
 pub const native: Isa = for ([_]Isa{ .avx512vbmi, .avx2, .ssse3, .neon }) |isa| {
     if (isa.supported()) break isa;
 } else .generic;
@@ -1079,4 +1089,56 @@ test "every kernel decodes line-wrapped and space-strewn input" {
             try expectSameDecode(rand.uintAtMost(usize, maxDecodedLen(m)), spaced[0..m], options);
         }
     }
+}
+
+/// Random inputs through `encode` and `decode`, on whichever kernels they
+/// dispatch to, against the scalar reference: every length to 400 bytes,
+/// clean, in MIME lines, and with a byte replaced, with room to spare and
+/// with exactly the room the result needs.
+fn publicCases(seed: u64) !void {
+    var prng: std.Random.DefaultPrng = .init(seed);
+    const rand = prng.random();
+    var raw: [400]u8 = undefined;
+    var want: [560]u8 = undefined;
+    var got: [560]u8 = undefined;
+    var lines: [600]u8 = undefined;
+    var want_out: [600]u8 = undefined;
+    var got_out: [600]u8 = undefined;
+    for (0..raw.len) |n| {
+        rand.bytes(raw[0..n]);
+        const eo: EncodeOptions = .{ .alphabet = randomAlphabet(rand), .padding = rand.boolean() };
+        const len = scalar.encode(&want, raw[0..n], eo);
+        try testing.expectEqual(len, encode(got[0..len], raw[0..n], eo));
+        try testing.expectEqualStrings(want[0..len], got[0..len]);
+        // Lines of 76 characters, as MIME writes them.
+        var m: usize = 0;
+        for (want[0..len], 1..) |c, k| {
+            lines[m] = c;
+            m += 1;
+            if (k % 76 == 0) {
+                lines[m] = if (rand.boolean()) '\n' else ' ';
+                m += 1;
+            }
+        }
+        for ([_][]u8{ want[0..len], lines[0..m] }) |text| {
+            for (0..2) |mutate| {
+                const at = if (mutate == 1 and text.len > 0) rand.uintLessThan(usize, text.len) else 0;
+                const saved = if (text.len > 0) text[at] else 0;
+                if (mutate == 1 and text.len > 0) text[at] = rand.int(u8);
+                const options: DecodeOptions = .{ .alphabet = eo.alphabet, .last_chunk = rand.enumValue(LastChunk) };
+                const r = scalar.decode(&want_out, text, options);
+                const exact = if (r.err == .none) r.count else maxDecodedLen(text.len);
+                for ([_]usize{ maxDecodedLen(text.len), exact }) |room| {
+                    const g = decode(got_out[0..room], text, options);
+                    try testing.expectEqual(r, g);
+                    if (r.err == .none) try testing.expectEqualSlices(u8, want_out[0..r.count], got_out[0..g.count]);
+                }
+                if (text.len > 0) text[at] = saved;
+            }
+        }
+    }
+}
+
+test "encode and decode match the scalar reference on every tier" {
+    try dispatch.forEachLevel(publicCases, .{testing.random_seed});
 }
