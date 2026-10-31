@@ -1,0 +1,19 @@
+utf/arm, geomean          rows  utf GB/s  simdutf      std     rust       go   slowest vs simdutf
+ValidateAscii                7     33.67     1.36        -     1.36        -   1.11 ascii-4096
+ValidateAsciiErr             7     30.84     2.02        -     1.22        -   1.16 ascii-1048576
+ValidateUtf8                15     14.75     1.32     3.35     0.74     4.53   1.07 hindi
+ValidateUtf8Err             15     11.31     1.29     2.99     0.69     3.44   1.11 russian
+ValidateUtf16le             15     35.62     1.80        -     6.39        -   1.13 ascii-1048576
+ValidateUtf16leErr          15     33.44     1.71        -     6.28        -   1.23 ascii-1048576
+ValidateUtf16be             15     31.19     1.64        -        -        -   1.06 emoji
+ValidateUtf16beErr          15     28.74     1.52        -        -        -   1.05 emoji
+ValidateUtf32               15     35.11     1.60        -        -        -   1.18 ascii-1048576
+ValidateUtf32Err            15     34.00     4.40        -        -        -   1.80 ascii-64
+Base64Encode                 6      5.18     1.00     2.83     0.99     5.14   0.92 random-4096
+Base64EncodeUrl              6      5.26     1.04     2.83     1.00     5.29   0.99 random-65536
+Base64Decode                 6      5.06     1.21     2.03     0.84     4.22   1.13 random-4096
+Base64DecodeUrl              6      4.73     1.10     1.87     0.80     3.56   1.02 random-1048576
+Base64DecodeStrict           6      4.90     1.14     1.98     0.82     4.09   1.09 random-1048576
+Base64DecodePartial          6      4.99     1.19        -        -        -   1.10 random-65536
+Base64DecodeMime             6      4.02     1.20    10.40     3.09     4.05   1.06 random-256
+all                        176     17.75     1.57     3.03     1.60     4.16

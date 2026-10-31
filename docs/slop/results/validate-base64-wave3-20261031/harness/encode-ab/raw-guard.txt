@@ -1,0 +1,126 @@
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	 8976090	        12.00 ns/op	1299.91 MB/s
+BenchmarkBase64Encode/random-64	 9699188	        12.00 ns/op	4931.65 MB/s
+BenchmarkBase64Encode/random-256	 9047638	        13.00 ns/op	18384.28 MB/s
+BenchmarkBase64Encode/random-4096	  858757	       135.0 ns/op	30127.99 MB/s
+BenchmarkBase64Encode/random-65536	   48121	      2498 ns/op	26229.75 MB/s
+BenchmarkBase64Encode/random-1048576	    1512	     78555 ns/op	13348.20 MB/s
+BenchmarkBase64EncodeUrl/random-16	 9891391	        10.00 ns/op	1475.73 MB/s
+BenchmarkBase64EncodeUrl/random-64	12433173	         9.000 ns/op	6520.44 MB/s
+BenchmarkBase64EncodeUrl/random-256	 7652938	        15.00 ns/op	16315.40 MB/s
+BenchmarkBase64EncodeUrl/random-4096	 1000000	       118.0 ns/op	34481.64 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   48148	      2491 ns/op	26308.48 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1494	     79766 ns/op	13145.64 MB/s
+BenchmarkBase64Decode/random-16	 7535898	        16.00 ns/op	1474.53 MB/s
+BenchmarkBase64Decode/random-64	 6849229	        17.00 ns/op	5074.25 MB/s
+BenchmarkBase64Decode/random-256	 5639481	        21.00 ns/op	16058.71 MB/s
+BenchmarkBase64Decode/random-4096	  856383	       144.0 ns/op	37837.87 MB/s
+BenchmarkBase64Decode/random-65536	   45514	      2647 ns/op	33011.28 MB/s
+BenchmarkBase64Decode/random-1048576	    1467	     81498 ns/op	17155.05 MB/s
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	 9240136	        15.00 ns/op	1048.98 MB/s
+BenchmarkBase64Encode/random-64	 6450304	        18.00 ns/op	3483.46 MB/s
+BenchmarkBase64Encode/random-256	 8564522	        13.00 ns/op	18301.33 MB/s
+BenchmarkBase64Encode/random-4096	  838236	       138.0 ns/op	29476.67 MB/s
+BenchmarkBase64Encode/random-65536	   47030	      2517 ns/op	26028.33 MB/s
+BenchmarkBase64Encode/random-1048576	    1461	     84939 ns/op	12344.91 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8401506	        15.00 ns/op	1038.46 MB/s
+BenchmarkBase64EncodeUrl/random-64	 9120663	        12.00 ns/op	5311.08 MB/s
+BenchmarkBase64EncodeUrl/random-256	 7092324	        17.00 ns/op	14616.62 MB/s
+BenchmarkBase64EncodeUrl/random-4096	  974949	       132.0 ns/op	30799.15 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   47258	      2634 ns/op	24880.13 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1358	     81324 ns/op	12893.68 MB/s
+BenchmarkBase64Decode/random-16	 6742124	        17.00 ns/op	1361.22 MB/s
+BenchmarkBase64Decode/random-64	 6694449	        17.00 ns/op	4932.82 MB/s
+BenchmarkBase64Decode/random-256	 4897123	        27.00 ns/op	12568.45 MB/s
+BenchmarkBase64Decode/random-4096	  837014	       145.0 ns/op	37627.23 MB/s
+BenchmarkBase64Decode/random-65536	   45424	      2646 ns/op	33023.72 MB/s
+BenchmarkBase64Decode/random-1048576	    1489	     73462 ns/op	19031.40 MB/s
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	11136169	        10.00 ns/op	1501.48 MB/s
+BenchmarkBase64Encode/random-64	 9815778	        12.00 ns/op	5222.37 MB/s
+BenchmarkBase64Encode/random-256	 9120705	        14.00 ns/op	17958.96 MB/s
+BenchmarkBase64Encode/random-4096	  867236	       135.0 ns/op	30269.95 MB/s
+BenchmarkBase64Encode/random-65536	   48057	      2497 ns/op	26240.71 MB/s
+BenchmarkBase64Encode/random-1048576	    1292	     80734 ns/op	12987.96 MB/s
+BenchmarkBase64EncodeUrl/random-16	11284474	        10.00 ns/op	1502.80 MB/s
+BenchmarkBase64EncodeUrl/random-64	12426495	         9.000 ns/op	6635.87 MB/s
+BenchmarkBase64EncodeUrl/random-256	 7671014	        15.00 ns/op	16331.20 MB/s
+BenchmarkBase64EncodeUrl/random-4096	 1000000	       119.0 ns/op	34317.70 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   48381	      2478 ns/op	26436.95 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1429	     85999 ns/op	12192.80 MB/s
+BenchmarkBase64Decode/random-16	 7477984	        15.00 ns/op	1501.66 MB/s
+BenchmarkBase64Decode/random-64	 6928359	        17.00 ns/op	5062.09 MB/s
+BenchmarkBase64Decode/random-256	 5714330	        20.00 ns/op	16397.02 MB/s
+BenchmarkBase64Decode/random-4096	  848622	       141.0 ns/op	38652.20 MB/s
+BenchmarkBase64Decode/random-65536	   45457	      2627 ns/op	33258.54 MB/s
+BenchmarkBase64Decode/random-1048576	    1516	     76698 ns/op	18228.48 MB/s
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	11202506	        10.00 ns/op	1469.49 MB/s
+BenchmarkBase64Encode/random-64	 9823888	        12.00 ns/op	5100.78 MB/s
+BenchmarkBase64Encode/random-256	 8963506	        14.00 ns/op	17939.30 MB/s
+BenchmarkBase64Encode/random-4096	  826586	       135.0 ns/op	30234.01 MB/s
+BenchmarkBase64Encode/random-65536	   48024	      2495 ns/op	26266.53 MB/s
+BenchmarkBase64Encode/random-1048576	    1363	     84765 ns/op	12370.37 MB/s
+BenchmarkBase64EncodeUrl/random-16	11282378	        10.00 ns/op	1457.78 MB/s
+BenchmarkBase64EncodeUrl/random-64	11539298	        10.00 ns/op	6238.08 MB/s
+BenchmarkBase64EncodeUrl/random-256	 7597932	        16.00 ns/op	15951.92 MB/s
+BenchmarkBase64EncodeUrl/random-4096	 1000000	       125.0 ns/op	32518.38 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   47274	      2508 ns/op	26120.56 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1407	     82168 ns/op	12761.28 MB/s
+BenchmarkBase64Decode/random-16	 7312776	        15.00 ns/op	1500.89 MB/s
+BenchmarkBase64Decode/random-64	 6862579	        17.00 ns/op	5054.04 MB/s
+BenchmarkBase64Decode/random-256	 5673466	        21.00 ns/op	16288.44 MB/s
+BenchmarkBase64Decode/random-4096	  859132	       143.0 ns/op	38159.08 MB/s
+BenchmarkBase64Decode/random-65536	   45222	      2660 ns/op	32842.78 MB/s
+BenchmarkBase64Decode/random-1048576	    1467	     80939 ns/op	17273.44 MB/s
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	 9718384	        12.00 ns/op	1309.26 MB/s
+BenchmarkBase64Encode/random-64	 7097438	        16.00 ns/op	3798.68 MB/s
+BenchmarkBase64Encode/random-256	 7344806	        16.00 ns/op	15668.00 MB/s
+BenchmarkBase64Encode/random-4096	  893650	       136.0 ns/op	30104.43 MB/s
+BenchmarkBase64Encode/random-65536	   48099	      2511 ns/op	26090.71 MB/s
+BenchmarkBase64Encode/random-1048576	    1378	     85407 ns/op	12277.31 MB/s
+BenchmarkBase64EncodeUrl/random-16	 9889503	        12.00 ns/op	1325.86 MB/s
+BenchmarkBase64EncodeUrl/random-64	 8809864	        13.00 ns/op	4687.55 MB/s
+BenchmarkBase64EncodeUrl/random-256	 6208232	        19.00 ns/op	13265.08 MB/s
+BenchmarkBase64EncodeUrl/random-4096	  982326	       123.0 ns/op	33172.42 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   47966	      2492 ns/op	26291.53 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1375	     86417 ns/op	12133.85 MB/s
+BenchmarkBase64Decode/random-16	 7531298	        15.00 ns/op	1508.94 MB/s
+BenchmarkBase64Decode/random-64	 6894714	        17.00 ns/op	5029.12 MB/s
+BenchmarkBase64Decode/random-256	 5696227	        21.00 ns/op	16337.62 MB/s
+BenchmarkBase64Decode/random-4096	  854371	       142.0 ns/op	38315.39 MB/s
+BenchmarkBase64Decode/random-65536	   45658	      2629 ns/op	33237.55 MB/s
+BenchmarkBase64Decode/random-1048576	    1527	     75928 ns/op	18413.40 MB/s
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkBase64Encode/random-16	11179898	        10.00 ns/op	1502.75 MB/s
+BenchmarkBase64Encode/random-64	 9817458	        12.00 ns/op	5234.80 MB/s
+BenchmarkBase64Encode/random-256	 9160092	        13.00 ns/op	18582.65 MB/s
+BenchmarkBase64Encode/random-4096	  858381	       134.0 ns/op	30411.84 MB/s
+BenchmarkBase64Encode/random-65536	   48140	      2492 ns/op	26296.09 MB/s
+BenchmarkBase64Encode/random-1048576	    1488	     79087 ns/op	13258.38 MB/s
+BenchmarkBase64EncodeUrl/random-16	11318810	        11.00 ns/op	1346.46 MB/s
+BenchmarkBase64EncodeUrl/random-64	12067748	         9.000 ns/op	6428.31 MB/s
+BenchmarkBase64EncodeUrl/random-256	 7501872	        17.00 ns/op	14527.50 MB/s
+BenchmarkBase64EncodeUrl/random-4096	 1000000	       118.0 ns/op	34467.91 MB/s
+BenchmarkBase64EncodeUrl/random-65536	   47653	      2506 ns/op	26141.48 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	    1400	     85510 ns/op	12262.57 MB/s
+BenchmarkBase64Decode/random-16	 6252657	        16.00 ns/op	1450.62 MB/s
+BenchmarkBase64Decode/random-64	 6835461	        17.00 ns/op	5043.13 MB/s
+BenchmarkBase64Decode/random-256	 5713478	        21.00 ns/op	16004.87 MB/s
+BenchmarkBase64Decode/random-4096	  856945	       162.0 ns/op	33611.37 MB/s
+BenchmarkBase64Decode/random-65536	   39331	      2737 ns/op	31924.08 MB/s
+BenchmarkBase64Decode/random-1048576	    1518	     77755 ns/op	17980.78 MB/s

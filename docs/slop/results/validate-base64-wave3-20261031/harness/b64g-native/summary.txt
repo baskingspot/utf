@@ -1,0 +1,9 @@
+utf/arm, geomean          rows  utf GB/s  simdutf      std     rust       go   slowest vs simdutf
+Base64Encode                 6     10.64     0.86     5.80     2.02    10.75   0.65 random-4096
+Base64EncodeUrl              6     10.99     0.92     5.89     2.07    10.98   0.73 random-4096
+Base64Decode                 6     11.26     1.13     4.50     1.88     9.41   0.95 random-4096
+Base64DecodeUrl              6     11.26     1.10     4.42     1.94     8.45   0.92 random-4096
+Base64DecodeStrict           6     11.08     1.13     4.52     1.88     9.32   0.87 random-4096
+Base64DecodePartial          6     10.98     1.14        -        -        -   0.94 random-4096
+Base64DecodeMime             6      7.67     1.15    19.75     5.93     7.80   0.98 random-1048576
+all                         42     10.47     1.06     6.27     2.35     9.38

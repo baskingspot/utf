@@ -1,0 +1,468 @@
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11962531	         9.000 ns/op	1600.86 MB/s
+BenchmarkValidateUtf8/ascii-64	20723386	         5.000 ns/op	11146.94 MB/s
+BenchmarkValidateUtf8/ascii-256	12132960	         9.000 ns/op	28010.66 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1475850	        81.00 ns/op	50375.72 MB/s
+BenchmarkValidateUtf8/ascii-65536	   95235	      1264 ns/op	51834.00 MB/s
+BenchmarkValidateUtf8/emoji	    3751	     32180 ns/op	2036.72 MB/s
+BenchmarkValidateUtf8/hebrew	     984	    122128 ns/op	 544.47 MB/s
+BenchmarkValidateUtf8/korean	    3133	     38361 ns/op	1736.14 MB/s
+BenchmarkValidateUtf8/japanese	    2889	     41306 ns/op	1641.58 MB/s
+BenchmarkValidateUtf8/chinese	    2752	     43657 ns/op	1599.72 MB/s
+BenchmarkValidateUtf8/arabic	     798	    150142 ns/op	 544.05 MB/s
+BenchmarkValidateUtf8/latin	   72136	      1679 ns/op	51755.10 MB/s
+BenchmarkValidateUtf8/hindi	    1460	     75662 ns/op	1163.01 MB/s
+BenchmarkValidateUtf8/russian	     508	    232777 ns/op	 450.09 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5619	     20566 ns/op	50985.65 MB/s
+BenchmarkValidateUtf8Err/ascii-16	11849652	        10.00 ns/op	1588.80 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7291953	        16.00 ns/op	3924.62 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 5986243	        19.00 ns/op	12813.61 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       107.0 ns/op	37994.69 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   93763	      1277 ns/op	51288.80 MB/s
+BenchmarkValidateUtf8Err/emoji	    3753	     33006 ns/op	1985.75 MB/s
+BenchmarkValidateUtf8Err/hebrew	     981	    122030 ns/op	 544.90 MB/s
+BenchmarkValidateUtf8Err/korean	    3157	     39290 ns/op	1695.05 MB/s
+BenchmarkValidateUtf8Err/japanese	    2930	     41032 ns/op	1652.55 MB/s
+BenchmarkValidateUtf8Err/chinese	    2754	     43654 ns/op	1599.83 MB/s
+BenchmarkValidateUtf8Err/arabic	     799	    150142 ns/op	 544.05 MB/s
+BenchmarkValidateUtf8Err/latin	   71859	      1672 ns/op	51968.44 MB/s
+BenchmarkValidateUtf8Err/hindi	    1449	     75514 ns/op	1165.29 MB/s
+BenchmarkValidateUtf8Err/russian	     513	    232216 ns/op	 451.17 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    4762	     21176 ns/op	49515.19 MB/s
+BenchmarkBase64Encode/random-16	 7588350	        15.00 ns/op	1020.73 MB/s
+BenchmarkBase64Encode/random-64	 3214518	        37.00 ns/op	1709.54 MB/s
+BenchmarkBase64Encode/random-256	  962455	       123.0 ns/op	2070.66 MB/s
+BenchmarkBase64Encode/random-4096	   64729	      1857 ns/op	2205.57 MB/s
+BenchmarkBase64Encode/random-65536	    4029	     29559 ns/op	2217.08 MB/s
+BenchmarkBase64Encode/random-1048576	     248	    479601 ns/op	2186.35 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8216701	        15.00 ns/op	1065.41 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3311119	        37.00 ns/op	1720.47 MB/s
+BenchmarkBase64EncodeUrl/random-256	  952015	       123.0 ns/op	2075.36 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   64002	      1890 ns/op	2166.10 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    3943	     29580 ns/op	2215.48 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     250	    477704 ns/op	2195.03 MB/s
+BenchmarkBase64Decode/random-16	 6773815	        17.00 ns/op	1360.95 MB/s
+BenchmarkBase64Decode/random-64	 3074886	        38.00 ns/op	2258.07 MB/s
+BenchmarkBase64Decode/random-256	  997018	       122.0 ns/op	2818.93 MB/s
+BenchmarkBase64Decode/random-4096	   66794	      1857 ns/op	2940.88 MB/s
+BenchmarkBase64Decode/random-65536	    4243	     33118 ns/op	2638.51 MB/s
+BenchmarkBase64Decode/random-1048576	     256	    465066 ns/op	3006.24 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7844533	        15.00 ns/op	1402.38 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3299762	        36.00 ns/op	2359.75 MB/s
+BenchmarkBase64DecodeUrl/random-256	  978340	       125.0 ns/op	2718.99 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   67234	      1825 ns/op	2991.94 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4095	     28493 ns/op	3066.68 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     260	    460790 ns/op	3034.14 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6768330	        17.00 ns/op	1339.91 MB/s
+BenchmarkBase64DecodeStrict/random-64	 3082416	        39.00 ns/op	2243.89 MB/s
+BenchmarkBase64DecodeStrict/random-256	  995421	       121.0 ns/op	2823.31 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   66349	      1802 ns/op	3030.53 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4166	     28557 ns/op	3059.95 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     254	    465986 ns/op	3000.31 MB/s
+BenchmarkBase64DecodeMime/random-16	 2100277	        57.00 ns/op	 455.74 MB/s
+BenchmarkBase64DecodeMime/random-64	  521061	       231.0 ns/op	 398.23 MB/s
+BenchmarkBase64DecodeMime/random-256	  126585	       946.0 ns/op	 373.92 MB/s
+BenchmarkBase64DecodeMime/random-4096	    8061	     15083 ns/op	 371.80 MB/s
+BenchmarkBase64DecodeMime/random-65536	     496	    241388 ns/op	 371.53 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      30	   3880184 ns/op	 369.80 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11348904	        10.00 ns/op	1567.39 MB/s
+BenchmarkValidateUtf8/ascii-64	20111370	         5.000 ns/op	10870.07 MB/s
+BenchmarkValidateUtf8/ascii-256	13142244	        10.00 ns/op	23966.88 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       118.0 ns/op	34541.44 MB/s
+BenchmarkValidateUtf8/ascii-65536	   94641	      1544 ns/op	42440.36 MB/s
+BenchmarkValidateUtf8/emoji	    3680	     36944 ns/op	1774.05 MB/s
+BenchmarkValidateUtf8/hebrew	     966	    123720 ns/op	 537.46 MB/s
+BenchmarkValidateUtf8/korean	    3124	     42811 ns/op	1555.65 MB/s
+BenchmarkValidateUtf8/japanese	    2918	     41273 ns/op	1642.90 MB/s
+BenchmarkValidateUtf8/chinese	    2758	     43663 ns/op	1599.49 MB/s
+BenchmarkValidateUtf8/arabic	     795	    150653 ns/op	 542.21 MB/s
+BenchmarkValidateUtf8/latin	   71829	      1670 ns/op	52039.10 MB/s
+BenchmarkValidateUtf8/hindi	    1550	     74920 ns/op	1174.55 MB/s
+BenchmarkValidateUtf8/russian	     511	    232446 ns/op	 450.73 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5493	     20716 ns/op	50616.02 MB/s
+BenchmarkValidateUtf8Err/ascii-16	11872293	        10.00 ns/op	1573.01 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 6888669	        16.00 ns/op	3779.49 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 5909798	        24.00 ns/op	10619.49 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       110.0 ns/op	36919.25 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   92696	      1329 ns/op	49280.68 MB/s
+BenchmarkValidateUtf8Err/emoji	    3636	     32387 ns/op	2023.67 MB/s
+BenchmarkValidateUtf8Err/hebrew	     964	    122825 ns/op	 541.38 MB/s
+BenchmarkValidateUtf8Err/korean	    3157	     39422 ns/op	1689.38 MB/s
+BenchmarkValidateUtf8Err/japanese	    2786	     41085 ns/op	1650.41 MB/s
+BenchmarkValidateUtf8Err/chinese	    2760	     43700 ns/op	1598.15 MB/s
+BenchmarkValidateUtf8Err/arabic	     796	    150291 ns/op	 543.51 MB/s
+BenchmarkValidateUtf8Err/latin	   70328	      1679 ns/op	51780.73 MB/s
+BenchmarkValidateUtf8Err/hindi	    1554	     74969 ns/op	1173.77 MB/s
+BenchmarkValidateUtf8Err/russian	     514	    232151 ns/op	 451.30 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    4693	     21788 ns/op	48126.25 MB/s
+BenchmarkBase64Encode/random-16	 7635223	        15.00 ns/op	1018.22 MB/s
+BenchmarkBase64Encode/random-64	 3200052	        38.00 ns/op	1661.07 MB/s
+BenchmarkBase64Encode/random-256	  947967	       124.0 ns/op	2063.80 MB/s
+BenchmarkBase64Encode/random-4096	   64648	      1865 ns/op	2195.17 MB/s
+BenchmarkBase64Encode/random-65536	    4032	     29523 ns/op	2219.79 MB/s
+BenchmarkBase64Encode/random-1048576	     249	    478238 ns/op	2192.58 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8242977	        14.00 ns/op	1094.33 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3321588	        36.00 ns/op	1771.50 MB/s
+BenchmarkBase64EncodeUrl/random-256	  989293	       122.0 ns/op	2093.74 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   63913	      1869 ns/op	2191.20 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    4034	     29536 ns/op	2218.85 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     250	    478857 ns/op	2189.75 MB/s
+BenchmarkBase64Decode/random-16	 6777717	        17.00 ns/op	1353.87 MB/s
+BenchmarkBase64Decode/random-64	 3072541	        38.00 ns/op	2256.83 MB/s
+BenchmarkBase64Decode/random-256	  993009	       122.0 ns/op	2819.54 MB/s
+BenchmarkBase64Decode/random-4096	   66468	      1788 ns/op	3055.07 MB/s
+BenchmarkBase64Decode/random-65536	    4168	     28542 ns/op	3061.52 MB/s
+BenchmarkBase64Decode/random-1048576	     258	    462816 ns/op	3020.86 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7820210	        15.00 ns/op	1442.80 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3302905	        36.00 ns/op	2370.05 MB/s
+BenchmarkBase64DecodeUrl/random-256	  979534	       124.0 ns/op	2754.97 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   65485	      1788 ns/op	3053.37 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4179	     28419 ns/op	3074.74 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     259	    461266 ns/op	3031.01 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6769074	        17.00 ns/op	1358.23 MB/s
+BenchmarkBase64DecodeStrict/random-64	 3060615	        39.00 ns/op	2250.98 MB/s
+BenchmarkBase64DecodeStrict/random-256	  975156	       124.0 ns/op	2771.45 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   66297	      1804 ns/op	3027.38 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4176	     28432 ns/op	3073.39 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     259	    461855 ns/op	3027.14 MB/s
+BenchmarkBase64DecodeMime/random-16	 2100142	        56.00 ns/op	 456.24 MB/s
+BenchmarkBase64DecodeMime/random-64	  511502	       231.0 ns/op	 397.56 MB/s
+BenchmarkBase64DecodeMime/random-256	  126961	       945.0 ns/op	 374.24 MB/s
+BenchmarkBase64DecodeMime/random-4096	    8065	     15151 ns/op	 370.14 MB/s
+BenchmarkBase64DecodeMime/random-65536	     493	    241571 ns/op	 371.25 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      27	   3892429 ns/op	 368.64 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11522618	        11.00 ns/op	1410.56 MB/s
+BenchmarkValidateUtf8/ascii-64	20292698	         9.000 ns/op	6703.03 MB/s
+BenchmarkValidateUtf8/ascii-256	 9050223	        12.00 ns/op	20713.54 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1433910	        93.00 ns/op	43577.61 MB/s
+BenchmarkValidateUtf8/ascii-65536	   93126	      1273 ns/op	51474.71 MB/s
+BenchmarkValidateUtf8/emoji	    3666	     32624 ns/op	2009.01 MB/s
+BenchmarkValidateUtf8/hebrew	     976	    122891 ns/op	 541.09 MB/s
+BenchmarkValidateUtf8/korean	    3120	     38776 ns/op	1717.52 MB/s
+BenchmarkValidateUtf8/japanese	    2918	     41122 ns/op	1648.94 MB/s
+BenchmarkValidateUtf8/chinese	    2719	     43760 ns/op	1595.96 MB/s
+BenchmarkValidateUtf8/arabic	     788	    150326 ns/op	 543.38 MB/s
+BenchmarkValidateUtf8/latin	   72140	      1664 ns/op	52217.17 MB/s
+BenchmarkValidateUtf8/hindi	    1508	     74625 ns/op	1179.18 MB/s
+BenchmarkValidateUtf8/russian	     511	    232300 ns/op	 451.01 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5754	     20415 ns/op	51360.50 MB/s
+BenchmarkValidateUtf8Err/ascii-16	11879223	        10.00 ns/op	1588.72 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7240862	        16.00 ns/op	3820.54 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6034594	        20.00 ns/op	12550.49 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       108.0 ns/op	37749.10 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   87800	      1286 ns/op	50928.56 MB/s
+BenchmarkValidateUtf8Err/emoji	    3702	     32223 ns/op	2033.95 MB/s
+BenchmarkValidateUtf8Err/hebrew	     980	    122003 ns/op	 545.03 MB/s
+BenchmarkValidateUtf8Err/korean	    3124	     38312 ns/op	1738.32 MB/s
+BenchmarkValidateUtf8Err/japanese	    2924	     40941 ns/op	1656.20 MB/s
+BenchmarkValidateUtf8Err/chinese	    2757	     43696 ns/op	1598.30 MB/s
+BenchmarkValidateUtf8Err/arabic	     796	    150661 ns/op	 542.18 MB/s
+BenchmarkValidateUtf8Err/latin	   71592	      1677 ns/op	51826.63 MB/s
+BenchmarkValidateUtf8Err/hindi	    1537	     75003 ns/op	1173.24 MB/s
+BenchmarkValidateUtf8Err/russian	     512	    232934 ns/op	 449.78 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5606	     20424 ns/op	51337.97 MB/s
+BenchmarkBase64Encode/random-16	 7654257	        15.00 ns/op	1019.74 MB/s
+BenchmarkBase64Encode/random-64	 3216434	        37.00 ns/op	1713.47 MB/s
+BenchmarkBase64Encode/random-256	  981754	       123.0 ns/op	2065.38 MB/s
+BenchmarkBase64Encode/random-4096	   64556	      1857 ns/op	2204.67 MB/s
+BenchmarkBase64Encode/random-65536	    4030	     29653 ns/op	2210.03 MB/s
+BenchmarkBase64Encode/random-1048576	     249	    479028 ns/op	2188.96 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8238894	        14.00 ns/op	1100.27 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3320401	        37.00 ns/op	1722.35 MB/s
+BenchmarkBase64EncodeUrl/random-256	  992614	       133.0 ns/op	1913.01 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   48316	      2297 ns/op	1782.51 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    3394	     39974 ns/op	1639.44 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     150	    751583 ns/op	1395.16 MB/s
+BenchmarkBase64Decode/random-16	 6636993	        18.00 ns/op	1319.76 MB/s
+BenchmarkBase64Decode/random-64	 3068822	        41.00 ns/op	2126.29 MB/s
+BenchmarkBase64Decode/random-256	  923544	       133.0 ns/op	2567.68 MB/s
+BenchmarkBase64Decode/random-4096	   52897	      1933 ns/op	2826.53 MB/s
+BenchmarkBase64Decode/random-65536	    4038	     29430 ns/op	2969.18 MB/s
+BenchmarkBase64Decode/random-1048576	     259	    461563 ns/op	3029.06 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7816248	        15.00 ns/op	1433.63 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3284524	        36.00 ns/op	2339.83 MB/s
+BenchmarkBase64DecodeUrl/random-256	  975235	       124.0 ns/op	2741.01 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   66165	      1802 ns/op	3029.57 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4179	     28453 ns/op	3070.99 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     240	    498139 ns/op	2806.65 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6789354	        17.00 ns/op	1341.56 MB/s
+BenchmarkBase64DecodeStrict/random-64	 3070449	        39.00 ns/op	2256.19 MB/s
+BenchmarkBase64DecodeStrict/random-256	  962757	       122.0 ns/op	2813.05 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   66422	      1805 ns/op	3026.83 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4282	     28755 ns/op	3038.83 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     259	    461334 ns/op	3030.56 MB/s
+BenchmarkBase64DecodeMime/random-16	 2107449	        56.00 ns/op	 456.63 MB/s
+BenchmarkBase64DecodeMime/random-64	  523820	       231.0 ns/op	 398.09 MB/s
+BenchmarkBase64DecodeMime/random-256	  126376	       946.0 ns/op	 373.89 MB/s
+BenchmarkBase64DecodeMime/random-4096	    8058	     15116 ns/op	 370.99 MB/s
+BenchmarkBase64DecodeMime/random-65536	     495	    241677 ns/op	 371.09 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      30	   3884232 ns/op	 369.42 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11987223	         9.000 ns/op	1601.23 MB/s
+BenchmarkValidateUtf8/ascii-64	20597431	         6.000 ns/op	10241.99 MB/s
+BenchmarkValidateUtf8/ascii-256	10453690	        11.00 ns/op	22968.37 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1256132	        91.00 ns/op	44735.83 MB/s
+BenchmarkValidateUtf8/ascii-65536	   94754	      1313 ns/op	49880.66 MB/s
+BenchmarkValidateUtf8/emoji	    3685	     33051 ns/op	1983.01 MB/s
+BenchmarkValidateUtf8/hebrew	     979	    123782 ns/op	 537.19 MB/s
+BenchmarkValidateUtf8/korean	    3099	     52489 ns/op	1268.82 MB/s
+BenchmarkValidateUtf8/japanese	    2473	     46646 ns/op	1453.65 MB/s
+BenchmarkValidateUtf8/chinese	    2484	     46379 ns/op	1505.83 MB/s
+BenchmarkValidateUtf8/arabic	     789	    150766 ns/op	 541.80 MB/s
+BenchmarkValidateUtf8/latin	   72006	      1747 ns/op	49755.11 MB/s
+BenchmarkValidateUtf8/hindi	    1543	     82191 ns/op	1070.64 MB/s
+BenchmarkValidateUtf8/russian	     507	    238190 ns/op	 439.86 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    4358	     23001 ns/op	45588.11 MB/s
+BenchmarkValidateUtf8Err/ascii-16	10295988	        10.00 ns/op	1530.96 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 6340005	        16.00 ns/op	3852.94 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 5930600	        19.00 ns/op	12872.48 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       107.0 ns/op	37997.31 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   93210	      1278 ns/op	51247.29 MB/s
+BenchmarkValidateUtf8Err/emoji	    3644	     33203 ns/op	1973.94 MB/s
+BenchmarkValidateUtf8Err/hebrew	     978	    122298 ns/op	 543.71 MB/s
+BenchmarkValidateUtf8Err/korean	    3079	     38508 ns/op	1729.51 MB/s
+BenchmarkValidateUtf8Err/japanese	    2931	     40885 ns/op	1658.50 MB/s
+BenchmarkValidateUtf8Err/chinese	    2658	     43735 ns/op	1596.86 MB/s
+BenchmarkValidateUtf8Err/arabic	     799	    150396 ns/op	 543.13 MB/s
+BenchmarkValidateUtf8Err/latin	   70374	      1691 ns/op	51396.59 MB/s
+BenchmarkValidateUtf8Err/hindi	    1522	     74598 ns/op	1179.61 MB/s
+BenchmarkValidateUtf8Err/russian	     516	    231871 ns/op	 451.84 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5277	     21398 ns/op	49001.25 MB/s
+BenchmarkBase64Encode/random-16	 7666052	        15.00 ns/op	1021.13 MB/s
+BenchmarkBase64Encode/random-64	 3219130	        37.00 ns/op	1716.88 MB/s
+BenchmarkBase64Encode/random-256	  983340	       123.0 ns/op	2074.35 MB/s
+BenchmarkBase64Encode/random-4096	   64714	      1851 ns/op	2212.43 MB/s
+BenchmarkBase64Encode/random-65536	    4008	     29466 ns/op	2224.11 MB/s
+BenchmarkBase64Encode/random-1048576	     250	    477381 ns/op	2196.52 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8070508	        14.00 ns/op	1093.24 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3318471	        36.00 ns/op	1769.99 MB/s
+BenchmarkBase64EncodeUrl/random-256	  990306	       122.0 ns/op	2092.99 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   63988	      1956 ns/op	2093.30 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    3982	     33436 ns/op	1960.04 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     250	    479864 ns/op	2185.15 MB/s
+BenchmarkBase64Decode/random-16	 6801886	        17.00 ns/op	1359.32 MB/s
+BenchmarkBase64Decode/random-64	 3080950	        38.00 ns/op	2259.89 MB/s
+BenchmarkBase64Decode/random-256	  961644	       121.0 ns/op	2821.22 MB/s
+BenchmarkBase64Decode/random-4096	   67179	      1790 ns/op	3052.49 MB/s
+BenchmarkBase64Decode/random-65536	    4275	     28466 ns/op	3069.75 MB/s
+BenchmarkBase64Decode/random-1048576	     260	    459616 ns/op	3041.89 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7861484	        15.00 ns/op	1443.03 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3307011	        36.00 ns/op	2366.43 MB/s
+BenchmarkBase64DecodeUrl/random-256	  946536	       123.0 ns/op	2759.68 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   67250	      1783 ns/op	3062.92 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4195	     28456 ns/op	3070.68 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     260	    461786 ns/op	3027.60 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6806974	        17.00 ns/op	1357.28 MB/s
+BenchmarkBase64DecodeStrict/random-64	 3075470	        39.00 ns/op	2246.60 MB/s
+BenchmarkBase64DecodeStrict/random-256	  993818	       123.0 ns/op	2786.82 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   65732	      1810 ns/op	3017.94 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4179	     28501 ns/op	3065.96 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     258	    462543 ns/op	3022.64 MB/s
+BenchmarkBase64DecodeMime/random-16	 2100633	        57.00 ns/op	 455.62 MB/s
+BenchmarkBase64DecodeMime/random-64	  512325	       231.0 ns/op	 396.80 MB/s
+BenchmarkBase64DecodeMime/random-256	  126403	       947.0 ns/op	 373.60 MB/s
+BenchmarkBase64DecodeMime/random-4096	    8046	     15125 ns/op	 370.77 MB/s
+BenchmarkBase64DecodeMime/random-65536	     495	    241554 ns/op	 371.28 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      30	   3912302 ns/op	 366.77 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11934608	        10.00 ns/op	1596.25 MB/s
+BenchmarkValidateUtf8/ascii-64	20612836	         5.000 ns/op	11106.96 MB/s
+BenchmarkValidateUtf8/ascii-256	12967548	         9.000 ns/op	27894.61 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       135.0 ns/op	30289.32 MB/s
+BenchmarkValidateUtf8/ascii-65536	   91216	      1306 ns/op	50177.39 MB/s
+BenchmarkValidateUtf8/emoji	    3748	     32445 ns/op	2020.07 MB/s
+BenchmarkValidateUtf8/hebrew	     981	    122152 ns/op	 544.36 MB/s
+BenchmarkValidateUtf8/korean	    3116	     38526 ns/op	1728.69 MB/s
+BenchmarkValidateUtf8/japanese	    2923	     41068 ns/op	1651.11 MB/s
+BenchmarkValidateUtf8/chinese	    2750	     43830 ns/op	1593.40 MB/s
+BenchmarkValidateUtf8/arabic	     794	    150432 ns/op	 543.00 MB/s
+BenchmarkValidateUtf8/latin	   71912	      1674 ns/op	51909.16 MB/s
+BenchmarkValidateUtf8/hindi	    1470	     75687 ns/op	1162.63 MB/s
+BenchmarkValidateUtf8/russian	     511	    232740 ns/op	 450.16 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5799	     20591 ns/op	50922.93 MB/s
+BenchmarkValidateUtf8Err/ascii-16	11929002	        10.00 ns/op	1578.27 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7179068	        16.00 ns/op	3869.28 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6158150	        19.00 ns/op	13021.02 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       107.0 ns/op	37952.79 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   94092	      1276 ns/op	51323.33 MB/s
+BenchmarkValidateUtf8Err/emoji	    3708	     32683 ns/op	2005.38 MB/s
+BenchmarkValidateUtf8Err/hebrew	     972	    122303 ns/op	 543.69 MB/s
+BenchmarkValidateUtf8Err/korean	    3118	     46329 ns/op	1437.53 MB/s
+BenchmarkValidateUtf8Err/japanese	    1892	     53377 ns/op	1270.36 MB/s
+BenchmarkValidateUtf8Err/chinese	    2656	     43833 ns/op	1593.29 MB/s
+BenchmarkValidateUtf8Err/arabic	     794	    150837 ns/op	 541.54 MB/s
+BenchmarkValidateUtf8Err/latin	   71566	      1862 ns/op	46686.07 MB/s
+BenchmarkValidateUtf8Err/hindi	    1468	     75432 ns/op	1166.56 MB/s
+BenchmarkValidateUtf8Err/russian	     501	    232703 ns/op	 450.23 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5382	     20627 ns/op	50834.32 MB/s
+BenchmarkBase64Encode/random-16	 7645606	        15.00 ns/op	1021.00 MB/s
+BenchmarkBase64Encode/random-64	 3200290	        37.00 ns/op	1709.60 MB/s
+BenchmarkBase64Encode/random-256	  927380	       127.0 ns/op	2012.34 MB/s
+BenchmarkBase64Encode/random-4096	   64695	      1891 ns/op	2165.89 MB/s
+BenchmarkBase64Encode/random-65536	    4005	     29970 ns/op	2186.68 MB/s
+BenchmarkBase64Encode/random-1048576	     249	    480095 ns/op	2184.10 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8224044	        14.00 ns/op	1093.32 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3258212	        36.00 ns/op	1754.10 MB/s
+BenchmarkBase64EncodeUrl/random-256	  992059	       123.0 ns/op	2078.26 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   63825	      1879 ns/op	2179.24 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    4000	     29722 ns/op	2204.95 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     248	    483364 ns/op	2169.33 MB/s
+BenchmarkBase64Decode/random-16	 6701619	        17.00 ns/op	1348.82 MB/s
+BenchmarkBase64Decode/random-64	 3063657	        39.00 ns/op	2235.42 MB/s
+BenchmarkBase64Decode/random-256	  990316	       122.0 ns/op	2815.37 MB/s
+BenchmarkBase64Decode/random-4096	   66980	      1793 ns/op	3046.04 MB/s
+BenchmarkBase64Decode/random-65536	    4164	     28469 ns/op	3069.44 MB/s
+BenchmarkBase64Decode/random-1048576	     258	    468215 ns/op	2986.03 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7857116	        15.00 ns/op	1391.21 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3294154	        36.00 ns/op	2359.87 MB/s
+BenchmarkBase64DecodeUrl/random-256	  962461	       124.0 ns/op	2737.44 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   67150	      1784 ns/op	3061.02 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4189	     28468 ns/op	3069.43 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     256	    464825 ns/op	3007.80 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6720904	        17.00 ns/op	1355.96 MB/s
+BenchmarkBase64DecodeStrict/random-64	 3070396	        39.00 ns/op	2252.65 MB/s
+BenchmarkBase64DecodeStrict/random-256	  996240	       122.0 ns/op	2813.17 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   66201	      1807 ns/op	3023.74 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4285	     28711 ns/op	3043.53 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     258	    462444 ns/op	3023.29 MB/s
+BenchmarkBase64DecodeMime/random-16	 2086862	        57.00 ns/op	 453.58 MB/s
+BenchmarkBase64DecodeMime/random-64	  506894	       231.0 ns/op	 397.03 MB/s
+BenchmarkBase64DecodeMime/random-256	  126795	       955.0 ns/op	 370.62 MB/s
+BenchmarkBase64DecodeMime/random-4096	    7993	     15141 ns/op	 370.36 MB/s
+BenchmarkBase64DecodeMime/random-65536	     494	    242950 ns/op	 369.15 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      30	   3951231 ns/op	 363.15 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+# SKIP BenchmarkBase64DecodePartial: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	11892892	        10.00 ns/op	1594.08 MB/s
+BenchmarkValidateUtf8/ascii-64	20390941	         5.000 ns/op	10878.69 MB/s
+BenchmarkValidateUtf8/ascii-256	13241834	         9.000 ns/op	27704.75 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1463150	        82.00 ns/op	49931.56 MB/s
+BenchmarkValidateUtf8/ascii-65536	   94450	      1269 ns/op	51634.78 MB/s
+BenchmarkValidateUtf8/emoji	    3708	     32276 ns/op	2030.61 MB/s
+BenchmarkValidateUtf8/hebrew	     981	    121984 ns/op	 545.11 MB/s
+BenchmarkValidateUtf8/korean	    3146	     38346 ns/op	1736.81 MB/s
+BenchmarkValidateUtf8/japanese	    2940	     40869 ns/op	1659.15 MB/s
+BenchmarkValidateUtf8/chinese	    2750	     43555 ns/op	1603.47 MB/s
+BenchmarkValidateUtf8/arabic	     789	    150372 ns/op	 543.22 MB/s
+BenchmarkValidateUtf8/latin	   72126	      1664 ns/op	52233.16 MB/s
+BenchmarkValidateUtf8/hindi	    1462	     74659 ns/op	1178.65 MB/s
+BenchmarkValidateUtf8/russian	     512	    232540 ns/op	 450.55 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5725	     20216 ns/op	51868.08 MB/s
+BenchmarkValidateUtf8Err/ascii-16	11270092	        10.00 ns/op	1568.71 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 6911499	        17.00 ns/op	3687.46 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 5975197	        20.00 ns/op	12702.77 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38664.61 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   93092	      1277 ns/op	51314.26 MB/s
+BenchmarkValidateUtf8Err/emoji	    3433	     32223 ns/op	2033.98 MB/s
+BenchmarkValidateUtf8Err/hebrew	     976	    122028 ns/op	 544.91 MB/s
+BenchmarkValidateUtf8Err/korean	    2970	     38280 ns/op	1739.79 MB/s
+BenchmarkValidateUtf8Err/japanese	    2798	     40924 ns/op	1656.92 MB/s
+BenchmarkValidateUtf8Err/chinese	    2630	     43719 ns/op	1597.47 MB/s
+BenchmarkValidateUtf8Err/arabic	     788	    150347 ns/op	 543.31 MB/s
+BenchmarkValidateUtf8Err/latin	   71226	      1676 ns/op	51860.33 MB/s
+BenchmarkValidateUtf8Err/hindi	    1501	     74747 ns/op	1177.25 MB/s
+BenchmarkValidateUtf8Err/russian	     507	    233081 ns/op	 449.50 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5451	     22372 ns/op	46868.90 MB/s
+BenchmarkBase64Encode/random-16	 7622282	        15.00 ns/op	1022.00 MB/s
+BenchmarkBase64Encode/random-64	 3220698	        37.00 ns/op	1709.01 MB/s
+BenchmarkBase64Encode/random-256	  983490	       124.0 ns/op	2053.97 MB/s
+BenchmarkBase64Encode/random-4096	   64268	      1860 ns/op	2202.02 MB/s
+BenchmarkBase64Encode/random-65536	    3855	     29647 ns/op	2210.51 MB/s
+BenchmarkBase64Encode/random-1048576	     242	    485777 ns/op	2158.55 MB/s
+BenchmarkBase64EncodeUrl/random-16	 8225830	        14.00 ns/op	1097.24 MB/s
+BenchmarkBase64EncodeUrl/random-64	 3312974	        36.00 ns/op	1760.64 MB/s
+BenchmarkBase64EncodeUrl/random-256	  866907	       123.0 ns/op	2073.11 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   63745	      1872 ns/op	2187.94 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    3939	     29771 ns/op	2201.32 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     228	    539999 ns/op	1941.81 MB/s
+BenchmarkBase64Decode/random-16	 6687778	        18.00 ns/op	1317.96 MB/s
+BenchmarkBase64Decode/random-64	 3051588	        41.00 ns/op	2099.42 MB/s
+BenchmarkBase64Decode/random-256	  980482	       122.0 ns/op	2799.95 MB/s
+BenchmarkBase64Decode/random-4096	   65800	      1811 ns/op	3015.90 MB/s
+BenchmarkBase64Decode/random-65536	    4236	     28489 ns/op	3067.20 MB/s
+BenchmarkBase64Decode/random-1048576	     258	    474162 ns/op	2948.58 MB/s
+BenchmarkBase64DecodeUrl/random-16	 7820168	        15.00 ns/op	1419.74 MB/s
+BenchmarkBase64DecodeUrl/random-64	 3222019	        36.00 ns/op	2341.60 MB/s
+BenchmarkBase64DecodeUrl/random-256	  980157	       124.0 ns/op	2743.19 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   67105	      1787 ns/op	3055.32 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    4160	     28621 ns/op	3053.03 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     256	    472307 ns/op	2960.15 MB/s
+BenchmarkBase64DecodeStrict/random-16	 6656598	        17.00 ns/op	1349.02 MB/s
+BenchmarkBase64DecodeStrict/random-64	 2292566	        46.00 ns/op	1899.46 MB/s
+BenchmarkBase64DecodeStrict/random-256	  995382	       122.0 ns/op	2805.45 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   61900	      1831 ns/op	2983.37 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    4264	     28521 ns/op	3063.84 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     244	    473039 ns/op	2955.58 MB/s
+BenchmarkBase64DecodeMime/random-16	 2102948	        57.00 ns/op	 455.24 MB/s
+BenchmarkBase64DecodeMime/random-64	  510716	       231.0 ns/op	 397.10 MB/s
+BenchmarkBase64DecodeMime/random-256	  126109	       957.0 ns/op	 369.74 MB/s
+BenchmarkBase64DecodeMime/random-4096	    8053	     15164 ns/op	 369.81 MB/s
+BenchmarkBase64DecodeMime/random-65536	     495	    242435 ns/op	 369.93 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      30	   3926809 ns/op	 365.41 MB/s

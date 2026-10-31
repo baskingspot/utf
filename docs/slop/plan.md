@@ -332,3 +332,20 @@ wave-2 measurements left.
   to an untouched page 98-142 ns to 4-7 ns, a wave-2 bug. Also: AVX2 and
   SSE UTF-16 to Latin-1 finish the last 1-31 units in two 16-unit
   vectors, 2.1-2.4× at 16 units.
+- **Validation and base64**: `src/validate.zig` and `src/base64.zig`
+  ([validate-base64-wave3-20261031.md](results/validate-base64-wave3-20261031.md)).
+  Base64 decode takes regular lines (one length, a multiple of four and
+  at least 64, the same 1-4 whitespace bytes after each, as MIME and PEM
+  have) without the ring: the block ending a line decodes from `src`,
+  overlapping what the line's earlier blocks wrote, and the gap is
+  skipped; other whitespace goes to `noinline decodeStaged`, which keeps
+  the ring. MIME 4 KiB 1.3× native, 1.9× AVX2, 1.5× SSE; harness MIME
+  0.96 to 1.15 of `icelake`, 0.99 to 1.31 of `haswell`. AVX-512 encode
+  steps 48 bytes from the 64 that end at the step's end, so one partial
+  block finishes, with the index hidden from LLVM's unroller. The
+  `WithErrors` validators up to two blocks take the error position from
+  the masks of the blocks they test (inputs with an error 1.1-1.9×); on
+  AVX-512 short UTF-8 tests ASCII on its masked load. Rejected, measured:
+  a `vpermb` for the UTF-8 shift by two (0.82-0.88× at 7-45 bytes),
+  masks before the pass test in short UTF-16/32 (0.47-0.75× on valid
+  input), and inlining `decodeStaged`.
