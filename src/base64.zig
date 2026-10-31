@@ -319,8 +319,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const len = charsFor(r, padding);
             // Up to two groups and a partial one, the scalar code inline is
             // faster.
-            const options: EncodeOptions = .{ .alphabet = alphabet, .padding = padding };
-            if (r <= 7) return o + @call(.always_inline, scalar.encode, .{ dst[o..], src[i..], options });
+            if (r <= 7) return o + scalar.encodeChars(dst[o..], src[i..], chars, padding);
             const in = std.simd.extract(simd.loadPartial(u8, src[i..]), 0, 16);
             const a = N.translate(@shuffle(u8, in, undefined, N.spreadMask(false, 0)), mul);
             // Bytes 12 to 14, and zeros.

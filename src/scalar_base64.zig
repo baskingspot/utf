@@ -64,7 +64,13 @@ pub fn maxDecodedLen(n: usize) usize {
 /// `encodedLen(src.len, options)`. `dst` must hold that many.
 pub fn encode(dst: []u8, src: []const u8, options: EncodeOptions) usize {
     std.debug.assert(dst.len >= encodedLen(src.len, options));
-    const table = options.alphabet.chars();
+    return encodeChars(dst, src, options.alphabet.chars(), options.padding);
+}
+
+/// `encode` with the alphabet's characters and the padding flag apart:
+/// SIMD paths inline it, and LLVM keeps an options struct inlined into
+/// them in memory.
+pub inline fn encodeChars(dst: []u8, src: []const u8, table: *const [64]u8, padding: bool) usize {
     var i: usize = 0;
     var o: usize = 0;
     while (i + 3 <= src.len) : (i += 3) {
@@ -72,30 +78,25 @@ pub fn encode(dst: []u8, src: []const u8, options: EncodeOptions) usize {
         dst[o..][0..4].* = .{ table[w >> 18], table[w >> 12 & 63], table[w >> 6 & 63], table[w & 63] };
         o += 4;
     }
-    return o + encodeTail(dst[o..], src[i..], options);
-}
-
-/// Encodes the last one or two bytes of an input. `src.len` is below 3.
-pub fn encodeTail(dst: []u8, src: []const u8, options: EncodeOptions) usize {
-    const table = options.alphabet.chars();
-    switch (src.len) {
-        0 => return 0,
+    const rest = src[i..];
+    switch (rest.len) {
+        0 => return o,
         1 => {
-            dst[0] = table[src[0] >> 2];
-            dst[1] = table[src[0] << 4 & 63];
-            if (!options.padding) return 2;
-            dst[2..4].* = "==".*;
+            dst[o] = table[rest[0] >> 2];
+            dst[o + 1] = table[rest[0] << 4 & 63];
+            if (!padding) return o + 2;
+            dst[o + 2 ..][0..2].* = "==".*;
         },
         2 => {
-            dst[0] = table[src[0] >> 2];
-            dst[1] = table[(src[0] << 4 | src[1] >> 4) & 63];
-            dst[2] = table[src[1] << 2 & 63];
-            if (!options.padding) return 3;
-            dst[3] = '=';
+            dst[o] = table[rest[0] >> 2];
+            dst[o + 1] = table[(rest[0] << 4 | rest[1] >> 4) & 63];
+            dst[o + 2] = table[rest[1] << 2 & 63];
+            if (!padding) return o + 3;
+            dst[o + 3] = '=';
         },
         else => unreachable,
     }
-    return 4;
+    return o + 4;
 }
 
 /// A character's 6-bit value, or `space` or `invalid`.
