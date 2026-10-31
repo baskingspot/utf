@@ -1,11 +1,15 @@
 //! Validation of UTF-8, ASCII, UTF-16LE/BE, and UTF-32, with SIMD.
 //!
 //! Each function checks 64-byte blocks and stops at the first block that
-//! fails. The `WithErrors` forms then rerun the scalar validator in
-//! `scalar.zig` from the last character boundary before that block, so the
-//! error kind and position are exactly the scalar validator's. Inputs shorter
-//! than a block are zero-padded into one; a final partial block is the last
-//! 64 bytes of the input, overlapping the block before it.
+//! fails. Inputs of four blocks or more check their first block unaligned
+//! and the rest from the next 64-byte boundary, so no load splits a cache
+//! line; a final partial block is the last 64 bytes of the input,
+//! overlapping the block before it. Inputs shorter than a block are
+//! zero-padded into one. The `WithErrors` forms find the position in the
+//! failing block: ASCII, UTF-16, and UTF-32 from its lane masks, UTF-8 by
+//! rerunning the scalar validator in `scalar.zig` from the last character
+//! boundary before it, so error kinds and positions are exactly the scalar
+//! validators'.
 
 const std = @import("std");
 const builtin = @import("builtin");
@@ -25,7 +29,7 @@ pub fn utf8(bytes: []const u8) bool {
 
 fn utf8Kernel(bytes: []const u8) bool {
     if (simd.isa == .generic) return utf8WithErrorsKernel(bytes).err == .none;
-    return utf8BadBlock(bytes) == null;
+    return utf8BadBlock(bytes) == none;
 }
 
 /// Validates UTF-8. On failure `count` is the index of the first byte of the
@@ -35,7 +39,8 @@ pub fn utf8WithErrors(bytes: []const u8) Result {
 }
 
 fn utf8WithErrorsKernel(bytes: []const u8) Result {
-    const pos = utf8BadBlock(bytes) orelse return .ok(bytes.len);
+    const pos = utf8BadBlock(bytes);
+    if (pos == none) return .ok(bytes.len);
     // Every byte before `pos` passed, so the character containing the byte
     // before it starts at most four bytes back.
     var start = pos;
@@ -45,67 +50,93 @@ fn utf8WithErrorsKernel(bytes: []const u8) Result {
     }
     // ASCII from a character boundary is whole characters, and every error
     // starts at a byte above 0x7F, so the scalar validator can start there.
-    start += asciiRun(bytes[start..]);
+    start = firstHigh(bytes, start);
     return offset(scalar.validateUtf8(bytes[start..]), start);
-}
-
-/// The length of the ASCII prefix of `s`.
-fn asciiRun(s: []const u8) usize {
-    var i: usize = 0;
-    while (i + 16 <= s.len) : (i += 16) {
-        const m = simd.bitmask(simd.load16(s[i..]) >= @as(@Vector(16, u8), @splat(0x80)));
-        if (m != 0) return i + @ctz(m);
-    }
-    while (i < s.len and s[i] < 0x80) i += 1;
-    return i;
 }
 
 /// Reports whether every byte is below 0x80.
 pub fn ascii(bytes: []const u8) bool {
-    return asciiBadBlock(bytes) == null;
+    return dispatch.call(@src(), asciiKernel, .{bytes});
+}
+
+fn asciiKernel(bytes: []const u8) bool {
+    return asciiBadBlock(bytes) == none;
 }
 
 /// Validates ASCII. On failure `count` is the index of the first byte above
 /// 0x7F.
 pub fn asciiWithErrors(bytes: []const u8) Result {
-    const pos = asciiBadBlock(bytes) orelse return .ok(bytes.len);
-    return .fail(.not_ascii, pos + asciiRun(bytes[pos..]));
+    return dispatch.call(@src(), asciiWithErrorsKernel, .{bytes});
+}
+
+fn asciiWithErrorsKernel(bytes: []const u8) Result {
+    const pos = asciiBadBlock(bytes);
+    if (pos == none) return .ok(bytes.len);
+    return .fail(.not_ascii, firstHigh(bytes, pos));
 }
 
 /// Reports whether `units` is well-formed UTF-16 stored little-endian.
 pub fn utf16le(units: []const u16) bool {
-    return utf16BadBlock(.little, units) == null;
+    return dispatch.call(@src(), utf16leKernel, .{units});
+}
+
+fn utf16leKernel(units: []const u16) bool {
+    return utf16BadBlock(.little, units) == none;
 }
 
 /// Validates UTF-16 stored little-endian. On failure `count` is the index of
 /// the unpaired surrogate.
 pub fn utf16leWithErrors(units: []const u16) Result {
+    return dispatch.call(@src(), utf16leWithErrorsKernel, .{units});
+}
+
+fn utf16leWithErrorsKernel(units: []const u16) Result {
     return utf16WithErrors(.little, units);
 }
 
 /// Reports whether `units` is well-formed UTF-16 stored big-endian.
 pub fn utf16be(units: []const u16) bool {
-    return utf16BadBlock(.big, units) == null;
+    return dispatch.call(@src(), utf16beKernel, .{units});
+}
+
+fn utf16beKernel(units: []const u16) bool {
+    return utf16BadBlock(.big, units) == none;
 }
 
 /// Validates UTF-16 stored big-endian. On failure `count` is the index of
 /// the unpaired surrogate.
 pub fn utf16beWithErrors(units: []const u16) Result {
+    return dispatch.call(@src(), utf16beWithErrorsKernel, .{units});
+}
+
+fn utf16beWithErrorsKernel(units: []const u16) Result {
     return utf16WithErrors(.big, units);
 }
 
 /// Reports whether every value is a Unicode scalar value: at most U+10FFFF
 /// and not a surrogate.
 pub fn utf32(units: []const u32) bool {
-    return utf32BadBlock(units) == null;
+    return dispatch.call(@src(), utf32Kernel, .{units});
+}
+
+fn utf32Kernel(units: []const u32) bool {
+    return utf32BadBlock(units) == none;
 }
 
 /// Validates UTF-32 in native byte order. On failure `count` is the index of
 /// the first value above U+10FFFF (`too_large`) or in the surrogate range
 /// (`surrogate`).
 pub fn utf32WithErrors(units: []const u32) Result {
-    const pos = utf32BadBlock(units) orelse return .ok(units.len);
-    return offset(scalar.validateUtf32(units[pos..]), pos);
+    return dispatch.call(@src(), utf32WithErrorsKernel, .{units});
+}
+
+fn utf32WithErrorsKernel(units: []const u32) Result {
+    const pos = utf32BadBlock(units);
+    if (pos == none) return .ok(units.len);
+    const v = if (units.len < n32) loadShort(u32, units) else simd.load(u32, units[pos..]);
+    // Lanes before the first bad one passed, in an overlapping last block too.
+    const at = pos + @ctz(simd.bitmask(utf32Key(v) > @as(Units32, @splat(utf32_key_max))));
+    return .fail(if (units[at] > 0x10FFFF) .too_large else .surrogate, at);
 }
 
 fn offset(r: Result, start: usize) Result {
@@ -120,7 +151,40 @@ inline fn isAscii(v: Bytes) bool {
     return !@reduce(.Or, v >= splat(0x80));
 }
 
-/// Whether fewer than 64 bytes are all ASCII, from overlapping loads.
+inline fn any(v: Bytes) bool {
+    return @reduce(.Or, v != splat(0));
+}
+
+/// The block at `src[0]`, which must be 64-byte aligned: an aligned load
+/// can be an operand on SSE.
+inline fn loadAligned(comptime T: type, src: []const T) simd.Block(T) {
+    const n = @typeInfo(simd.Block(T)).vector.len;
+    return @as(*align(64) const simd.Block(T), @ptrCast(@alignCast(src[0..n]))).*;
+}
+
+/// Code units from `p` to the first 64-byte boundary after it, 1 to a
+/// block's worth.
+inline fn toBoundary(comptime T: type, p: [*]const T) usize {
+    return (64 - @intFromPtr(p) % 64) / @sizeOf(T);
+}
+
+/// AVX-512 loads a short input with one masked load, which reads no byte
+/// past the input; elsewhere `simd.loadPartial` builds the block in
+/// registers. The intrinsic needs the LLVM backend.
+const masked_load = simd.isa == .avx512 and builtin.zig_backend == .stage2_llvm;
+extern fn @"llvm.masked.load.v64i8.p0"(*const anyopaque, u32, @Vector(64, bool), @Vector(64, u8)) @Vector(64, u8);
+
+/// A slice shorter than a block, zero-padded.
+inline fn loadShort(comptime T: type, src: []const T) simd.Block(T) {
+    if (!masked_load) return simd.loadPartial(T, src);
+    const len = src.len * @sizeOf(T);
+    // The pointer of an empty slice may be anything.
+    if (len == 0) return @splat(0);
+    const mask: u64 = (@as(u64, 1) << @intCast(len)) - 1;
+    return @bitCast(@"llvm.masked.load.v64i8.p0"(src.ptr, 1, @bitCast(mask), @splat(0)));
+}
+
+/// Whether at most 64 bytes are all ASCII.
 inline fn isAsciiShort(s: []const u8) bool {
     const len = s.len;
     if (len >= 16) {
@@ -140,8 +204,66 @@ inline fn isAsciiShort(s: []const u8) bool {
     return x & 0x8080_8080_8080_8080 == 0;
 }
 
-inline fn any(v: Bytes) bool {
-    return @reduce(.Or, v != splat(0));
+/// What the `BadBlock` functions return when every block passes. They
+/// return a plain index: an optional one returned from an inline function
+/// went through memory, loaded back from the stack or a constant, which
+/// cost short inputs up to 10%.
+const none = std.math.maxInt(usize);
+
+/// The index of the first block that is not all ASCII, or `none`.
+inline fn asciiBadBlock(bytes: []const u8) usize {
+    if (bytes.len <= 64) return if (isAsciiShort(bytes)) none else 0;
+    const i = asciiPrefix(bytes, true);
+    return if (i == bytes.len) none else i;
+}
+
+/// The length of a prefix of `bytes`, at least 64 long, that is all ASCII:
+/// `bytes.len` when the whole input is, else an index at or before the
+/// first byte above 0x7F. Inputs longer than four blocks check their first
+/// block, then aligned groups of four blocks with one test each. Up to four
+/// blocks, `whole` tests overlapping loads of the whole input at once, for
+/// ASCII validation; else each block in turn, so UTF-8 validation of text
+/// that is not ASCII stops at its first block, which measured 11-25%
+/// faster there.
+inline fn asciiPrefix(bytes: []const u8, comptime whole: bool) usize {
+    const len = bytes.len;
+    if (len <= 256) {
+        if (whole) {
+            var acc = simd.load(u8, bytes) | simd.load(u8, bytes[len - 64 ..]);
+            if (len > 128) acc |= simd.load(u8, bytes[64..]) | simd.load(u8, bytes[len - 128 ..]);
+            return if (isAscii(acc)) len else 0;
+        }
+        var i: usize = 0;
+        while (i + 64 <= len) : (i += 64) {
+            if (!isAscii(simd.load(u8, bytes[i..]))) return i;
+        }
+        return if (isAscii(simd.load(u8, bytes[len - 64 ..]))) len else i;
+    }
+    if (!isAscii(simd.load(u8, bytes))) return 0;
+    var i = toBoundary(u8, bytes.ptr);
+    while (i + 256 <= len) : (i += 256) {
+        const v = loadAligned(u8, bytes[i..]) | loadAligned(u8, bytes[i + 64 ..]) |
+            loadAligned(u8, bytes[i + 128 ..]) | loadAligned(u8, bytes[i + 192 ..]);
+        if (!isAscii(v)) break;
+    }
+    while (i + 64 <= len) : (i += 64) {
+        if (!isAscii(loadAligned(u8, bytes[i..]))) return i;
+    }
+    return if (isAscii(simd.load(u8, bytes[len - 64 ..]))) len else i;
+}
+
+/// The index of the first byte above 0x7F at or after `from`; there must
+/// be one.
+fn firstHigh(bytes: []const u8, from: usize) usize {
+    const len = bytes.len;
+    if (len < 64) return from + @ctz(simd.bitmask(loadShort(u8, bytes) >= splat(0x80)) >> @intCast(from));
+    var i = from;
+    while (i + 64 <= len) : (i += 64) {
+        const m = simd.bitmask(simd.load(u8, bytes[i..]) >= splat(0x80));
+        if (m != 0) return i + @ctz(m);
+    }
+    const m = simd.bitmask(simd.load(u8, bytes[len - 64 ..]) >= splat(0x80));
+    return i + @ctz(m >> @intCast(i + 64 - len));
 }
 
 // Keiser and Lemire's lookup algorithm. Each byte pair (previous byte,
@@ -268,31 +390,42 @@ inline fn utf8Incomplete(v: Bytes) Bytes {
     return v -| @as(Bytes, max);
 }
 
-/// The index of the first 64-byte block that fails, or null. Every byte
+/// The index of the first 64-byte block that fails, or `none`. Every byte
 /// before the returned index belongs to well-formed UTF-8, except that the
 /// last character before it may be cut short. On the generic path, the first
 /// block that is not ASCII.
-fn utf8BadBlock(bytes: []const u8) ?usize {
+inline fn utf8BadBlock(bytes: []const u8) usize {
     const zero = splat(0);
     if (bytes.len < 64) {
-        if (isAsciiShort(bytes)) return null;
+        if (isAsciiShort(bytes)) return none;
         if (simd.isa == .generic) return 0;
-        const cur = simd.loadPartial(u8, bytes);
         // The zero padding ends any sequence the input cuts short.
-        return if (!any(utf8Errors(cur, zero))) null else 0;
+        return if (!any(utf8Errors(loadShort(u8, bytes), zero))) none else 0;
     }
     // Leading ASCII blocks first, so ASCII text never loads the lookup
-    // tables. Zero stands in for an ASCII block as context.
-    var i = asciiPrefix(bytes);
-    if (simd.isa == .generic) {
-        // With no byte shuffle, emulating the three lookups ran at 0.5 GB/s
-        // on x86-64 baseline, below the scalar validator, which takes over
-        // from the first block that is not ASCII instead.
-        if (i + 64 <= bytes.len) return i;
-        return if (i < bytes.len and !isAscii(simd.load(u8, bytes[bytes.len - 64 ..]))) bytes.len - 64 else null;
-    }
+    // tables. Zero stands in for ASCII as context.
+    var i = asciiPrefix(bytes, false);
+    if (i == bytes.len) return none;
+    // With no byte shuffle, emulating the three lookups ran at 0.5 GB/s on
+    // x86-64 baseline, below the scalar validator, which takes over from
+    // the first block that is not ASCII instead.
+    if (simd.isa == .generic) return i;
     var before = zero;
     var incomplete = zero;
+    if (i == 0 and bytes.len >= 4096) {
+        // The first block, then the rest from the next 64-byte boundary,
+        // like the ASCII prefix: 11-12% from 64 KiB, but the extra block
+        // cost 5-7% at 1 KiB. The block at the boundary rechecks the pairs
+        // it overlaps, and covers a sequence the first block cuts short,
+        // unless it starts right after it.
+        const cur: Bytes = simd.load(u8, bytes);
+        if (any(utf8Errors(cur, zero))) return 0;
+        i = toBoundary(u8, bytes.ptr);
+        if (i == 64) {
+            before = cur;
+            incomplete = utf8Incomplete(cur);
+        } else before = context(bytes, i);
+    }
     while (i + 64 <= bytes.len) : (i += 64) {
         const cur: Bytes = simd.load(u8, bytes[i..]);
         if (isAscii(cur)) {
@@ -317,26 +450,31 @@ fn utf8BadBlock(bytes: []const u8) ?usize {
         // The last 64 bytes, with the three bytes before them as context.
         // They recheck pairs already checked, which is harmless, and cover
         // the cut sequence `incomplete` was tracking. If they are all ASCII,
-        // a sequence cut before them misses a byte at or before `start`,
+        // a sequence cut before them misses a byte at or before `last`,
         // which the loop above checked.
-        const start = bytes.len - 64;
-        const cur: Bytes = simd.load(u8, bytes[start..]);
-        // The eight bytes before `start`, or as many as there are, in the
-        // last lanes. A stack array here would cost every call a realigned
-        // stack frame.
-        var w: u64 = 0;
-        if (start >= 8) {
-            w = std.mem.readInt(u64, bytes[start - 8 ..][0..8], .little);
-        } else for (bytes[0..start], 8 - start..) |c, j| {
-            w |= @as(u64, c) << @intCast(8 * j);
-        }
-        const last8: @Vector(8, u8) = @bitCast(std.mem.nativeToLittle(u64, w));
-        before = @shuffle(u8, last8, @as(@Vector(8, u8), @splat(0)), lastLanes());
-        if (isAscii(cur)) return null;
-        if (any(utf8Errors(cur, before))) return start;
+        const last = bytes.len - 64;
+        const cur: Bytes = simd.load(u8, bytes[last..]);
+        before = context(bytes, last);
+        if (isAscii(cur)) return none;
+        if (any(utf8Errors(cur, before))) return last;
         incomplete = utf8Incomplete(cur);
     }
-    return if (any(incomplete)) bytes.len else null;
+    return if (any(incomplete)) bytes.len else none;
+}
+
+/// A block whose last lanes are the eight bytes before `pos`, or as many as
+/// there are: the context for a block at `pos` that does not follow the
+/// block before it. A stack array here would cost every call a realigned
+/// stack frame.
+inline fn context(bytes: []const u8, pos: usize) Bytes {
+    var w: u64 = 0;
+    if (pos >= 8) {
+        w = std.mem.readInt(u64, bytes[pos - 8 ..][0..8], .little);
+    } else for (bytes[0..pos], 8 - pos..) |c, j| {
+        w |= @as(u64, c) << @intCast(8 * j);
+    }
+    const last8: @Vector(8, u8) = @bitCast(std.mem.nativeToLittle(u64, w));
+    return @shuffle(u8, last8, @as(@Vector(8, u8), @splat(0)), lastLanes());
 }
 
 fn lastLanes() [64]i32 {
@@ -345,117 +483,213 @@ fn lastLanes() [64]i32 {
     return m;
 }
 
-/// The offset of the first 64-byte block that is not all ASCII, or of the
-/// tail after the last whole block. Four blocks per test, so the loop costs
-/// one branch per 256 bytes.
-inline fn asciiPrefix(bytes: []const u8) usize {
-    var i: usize = 0;
-    while (i + 256 <= bytes.len) : (i += 256) {
-        const v = simd.load(u8, bytes[i..]) | simd.load(u8, bytes[i + 64 ..]) |
-            simd.load(u8, bytes[i + 128 ..]) | simd.load(u8, bytes[i + 192 ..]);
-        if (!isAscii(v)) break;
-    }
-    while (i + 64 <= bytes.len and isAscii(simd.load(u8, bytes[i..]))) i += 64;
-    return i;
-}
-
-fn asciiBadBlock(bytes: []const u8) ?usize {
-    if (bytes.len < 64) return if (isAsciiShort(bytes)) null else 0;
-    const i = asciiPrefix(bytes);
-    if (i + 64 <= bytes.len) return i;
-    if (i < bytes.len and !isAscii(simd.load(u8, bytes[bytes.len - 64 ..]))) return bytes.len - 64;
-    return null;
-}
-
 const Units16 = simd.Block(u16);
 const n16 = @typeInfo(Units16).vector.len;
 const Mask16 = @Int(.unsigned, n16);
 
 fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Result {
-    const pos = utf16BadBlock(endian, units) orelse return .ok(units.len);
-    // Every unit before `pos` passed, except a high surrogate just before it.
-    const start = if (pos > 0 and isHigh(std.mem.toNative(u16, units[pos - 1], endian))) pos - 1 else pos;
-    const r = switch (endian) {
-        .little => scalar.validateUtf16le(units[start..]),
-        .big => scalar.validateUtf16be(units[start..]),
-    };
-    return offset(r, start);
+    const pos = utf16BadBlock(endian, units);
+    if (pos == none) return .ok(units.len);
+    const len = units.len;
+    // A high surrogate ends the input.
+    if (pos == len) return .fail(.surrogate, len - 1);
+    if (len < n16) {
+        // The zero padding is not a surrogate.
+        const s = surrogateMasks(endian, loadShort(u16, units));
+        return .fail(.surrogate, @ctz((s.low & ~(s.high << 1)) | (s.high & ~(s.low >> 1))));
+    }
+    // The scalar validator stops at the first low surrogate with no high
+    // one before it, or high one with no low one after it. Every unit
+    // before the block passed, but for a high one just before it.
+    const s = surrogateMasks(endian, simd.load(u16, units[pos..]));
+    const pending = pos > 0 and isHigh(std.mem.toNative(u16, units[pos - 1], endian));
+    if (pending and s.low & 1 == 0) return .fail(.surrogate, pos - 1);
+    // A high one in the last lane pairs with the unit after the block, but
+    // the block failed on an error in an earlier lane, or a low one there.
+    const unfollowed = s.high & ~(s.low >> 1);
+    return .fail(.surrogate, pos + @ctz((s.low & ~(s.high << 1 | @intFromBool(pending))) | unfollowed));
 }
 
 fn isHigh(unit: u16) bool {
     return unit & 0xFC00 == 0xD800;
 }
 
+const Surrogates = struct { high: Mask16, low: Mask16 };
+
 /// The highs and lows of one block, each as a bit mask.
-inline fn surrogates(comptime endian: std.builtin.Endian, block: Units16) ?struct { high: Mask16, low: Mask16 } {
+inline fn surrogateMasks(comptime endian: std.builtin.Endian, block: Units16) Surrogates {
     const v = if (endian == builtin.cpu.arch.endian()) block else @byteSwap(block);
     const top = v & @as(Units16, @splat(0xFC00));
-    if (!@reduce(.Or, top & @as(Units16, @splat(0xF800)) == @as(Units16, @splat(0xD800)))) return null;
     return .{
         .high = simd.bitmask(top == @as(Units16, @splat(0xD800))),
         .low = simd.bitmask(top == @as(Units16, @splat(0xDC00))),
     };
 }
 
-/// The index of the first 32-unit block that fails, or null. Each low
-/// surrogate must follow a high one, and each high one precede a low one;
-/// `pending_high` is a high surrogate at the end of the previous block.
-fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16) ?usize {
-    if (units.len < n16) {
+inline fn hasSurrogate(comptime endian: std.builtin.Endian, block: Units16) bool {
+    return @reduce(.Or, surrogateKey(endian, block) == @as(Units16, @splat(0)));
+}
+
+/// Below `groupKeyMax(endian)` in the lanes that hold a surrogate. In
+/// native order one subtraction, which takes its block from memory, where
+/// `surrogateKey`'s AND and XOR became a ternary op that overwrites a copy
+/// of a constant: 5-17% from 4 KiB.
+inline fn groupKey(comptime endian: std.builtin.Endian, block: Units16) Units16 {
+    if (endian != builtin.cpu.arch.endian()) return surrogateKey(endian, block);
+    return block -% @as(Units16, @splat(0xD800));
+}
+fn groupKeyMax(comptime endian: std.builtin.Endian) u16 {
+    return if (endian == builtin.cpu.arch.endian()) 0x800 else 1;
+}
+
+/// Zero in the lanes that hold a surrogate, in either byte order without
+/// swapping the bytes.
+inline fn surrogateKey(comptime endian: std.builtin.Endian, block: Units16) Units16 {
+    const native = endian == builtin.cpu.arch.endian();
+    return (block & @as(Units16, @splat(if (native) 0xF800 else 0x00F8))) ^
+        @as(Units16, @splat(if (native) 0xD800 else 0x00D8));
+}
+
+/// Checks one block, given whether the unit before it is a high surrogate;
+/// returns whether its last unit is one, or `bad_block` if it fails. Each low
+/// surrogate must follow a high one, and each high one precede a low one.
+inline fn utf16Block(comptime endian: std.builtin.Endian, block: Units16, pending: Mask16) Mask16 {
+    if (!hasSurrogate(endian, block)) return if (pending != 0) bad_block else 0;
+    const s = surrogateMasks(endian, block);
+    if (s.low != (s.high << 1 | pending)) return bad_block;
+    return s.high >> (n16 - 1);
+}
+const bad_block: Mask16 = 2;
+
+/// The index of the first 32-unit block that fails, or `none`;
+/// `units.len` when the input ends in a high surrogate.
+inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16) usize {
+    const len = units.len;
+    if (len < n16) {
         // The zero padding is not a low surrogate, so a high one at the end
         // fails here.
-        const s = surrogates(endian, simd.loadPartial(u16, units)) orelse return null;
-        return if (s.low != s.high << 1) 0 else null;
+        const block = loadShort(u16, units);
+        if (!hasSurrogate(endian, block)) return none;
+        const s = surrogateMasks(endian, block);
+        return if (s.low != s.high << 1) 0 else none;
     }
-    var pending_high: Mask16 = 0;
+    if (len <= 2 * n16) {
+        // Up to two blocks, overlapping loads of the whole input with one
+        // test for a surrogate anywhere, as most text has none.
+        const max: Units16 = @splat(groupKeyMax(endian));
+        const first = groupKey(endian, simd.load(u16, units));
+        const key = @min(first, groupKey(endian, simd.load(u16, units[len - n16 ..])));
+        if (!@reduce(.Or, key < max)) return none;
+    }
+    var pending: Mask16 = 0;
     var i: usize = 0;
-    while (i + n16 <= units.len) : (i += n16) {
-        if (surrogates(endian, simd.load(u16, units[i..]))) |s| {
-            if (s.low != (s.high << 1 | pending_high)) return i;
-            pending_high = s.high >> (n16 - 1);
-        } else {
-            if (pending_high != 0) return i;
+    if (len >= 8 * n16) {
+        // The first block, then groups from the next 64-byte boundary.
+        if (utf16Block(endian, simd.load(u16, units), 0) == bad_block) return 0;
+        i = toBoundary(u16, units.ptr);
+        pending = @intFromBool(isHigh(std.mem.toNative(u16, units[i - 1], endian)));
+    }
+    // Groups of eight blocks, then one of four, with one test for a
+    // surrogate in any of them.
+    inline for ([_]usize{ 8, 4 }) |g| {
+        while (i + g * n16 <= len) : (i += g * n16) {
+            var key = groupKey(endian, simd.load(u16, units[i..]));
+            inline for (1..g) |k| key = @min(key, groupKey(endian, simd.load(u16, units[i + k * n16 ..])));
+            if (!@reduce(.Or, key < @as(Units16, @splat(groupKeyMax(endian))))) {
+                if (pending != 0) return i;
+                continue;
+            }
+            // The masks alone check a block; the test for a surrogate in
+            // it only saves work on blocks without one.
+            inline for (0..g) |k| {
+                const j = i + k * n16;
+                const s = surrogateMasks(endian, simd.load(u16, units[j..]));
+                if (s.low != (s.high << 1 | pending)) return j;
+                pending = s.high >> (n16 - 1);
+            }
         }
     }
-    if (i < units.len) {
-        // The last 32 units, overlapping the block before. If they hold no
-        // surrogate, the loop's last unit was not a high one, and the unit
-        // before them was paired by the loop.
-        const start = units.len - n16;
-        if (surrogates(endian, simd.load(u16, units[start..]))) |s| {
-            const before: Mask16 = @intFromBool(isHigh(std.mem.toNative(u16, units[start - 1], endian)));
-            if (s.low != (s.high << 1 | before)) return start;
-            pending_high = s.high >> (n16 - 1);
-        }
+    while (i + n16 <= len) : (i += n16) {
+        pending = utf16Block(endian, simd.load(u16, units[i..]), pending);
+        if (pending == bad_block) return i;
     }
-    return if (pending_high != 0) units.len else null;
+    if (i < len) {
+        // The last 32 units, overlapping the block before. A high surrogate
+        // at the loop's last unit is in them, with the unit after it.
+        const last = len - n16;
+        const before: Mask16 = @intFromBool(isHigh(std.mem.toNative(u16, units[last - 1], endian)));
+        pending = utf16Block(endian, simd.load(u16, units[last..]), before);
+        if (pending == bad_block) return last;
+    }
+    return if (pending != 0) len else none;
 }
 
 const Units32 = simd.Block(u32);
 const n32 = @typeInfo(Units32).vector.len;
 
+/// The values that are not Unicode scalar values, above U+10FFFF or
+/// surrogates, are exactly those whose key is above `utf32_key_max`: the
+/// XOR moves the surrogates to 0-0x7FF without changing which values are
+/// above U+10FFFF, and the subtraction wraps them past the top.
+inline fn utf32Key(v: Units32) Units32 {
+    return (v ^ @as(Units32, @splat(0xD800))) -% @as(Units32, @splat(0x800));
+}
+const utf32_key_max = 0x10FFFF - 0x800;
+
+/// One block: two compares, which measured 7-25% faster on one block than
+/// the key's three dependent operations.
 inline fn utf32Bad(v: Units32) bool {
-    const too_big = v > @as(Units32, @splat(0x10FFFF));
+    const above = v > @as(Units32, @splat(0x10FFFF));
     const surr = v -% @as(Units32, @splat(0xD800)) < @as(Units32, @splat(0x800));
-    return @reduce(.Or, too_big) or @reduce(.Or, surr);
+    return @reduce(.Or, above) or @reduce(.Or, surr);
 }
 
-fn utf32BadBlock(units: []const u32) ?usize {
-    if (units.len < n32) return if (utf32Bad(simd.loadPartial(u32, units))) 0 else null;
+inline fn utf32BadBlock(units: []const u32) usize {
+    const len = units.len;
+    if (len < n32) return if (utf32Bad(loadShort(u32, units))) 0 else none;
+    if (len <= 2 * n32) {
+        // One block, or the first and the last, overlapping it, with one
+        // test: the loops' setup cost a third of the time here, and so did
+        // loading the one block a second time.
+        const a = simd.load(u32, units);
+        if (len == n32) return if (utf32Bad(a)) 0 else none;
+        const b = simd.load(u32, units[len - n32 ..]);
+        const max: Units32 = @splat(0x10FFFF);
+        const d: Units32 = @splat(0xD800);
+        const w: Units32 = @splat(0x800);
+        if (!@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return none;
+        return if (utf32Bad(a)) 0 else len - n32;
+    }
     var i: usize = 0;
-    while (i + n32 <= units.len) : (i += n32) {
+    if (len >= 8 * n32) {
+        // The first block, then groups from the next 64-byte boundary.
+        if (utf32Bad(simd.load(u32, units))) return 0;
+        i = toBoundary(u32, units.ptr);
+    }
+    // Groups of four blocks with one test; the loop below finds the block
+    // in a group that fails.
+    while (i + 4 * n32 <= len) : (i += 4 * n32) {
+        var key = utf32Key(simd.load(u32, units[i..]));
+        inline for (1..4) |k| key = @max(key, utf32Key(simd.load(u32, units[i + k * n32 ..])));
+        if (@reduce(.Or, key > @as(Units32, @splat(utf32_key_max)))) break;
+    }
+    while (i + n32 <= len) : (i += n32) {
         if (utf32Bad(simd.load(u32, units[i..]))) return i;
     }
-    if (i < units.len and utf32Bad(simd.load(u32, units[units.len - n32 ..]))) return units.len - n32;
-    return null;
+    if (i < len and utf32Bad(simd.load(u32, units[len - n32 ..]))) return len - n32;
+    return none;
 }
 
 // Differential tests: every function against its scalar counterpart, with
 // each error kind placed at every position inside and across blocks and at
-// the end of the input. They run on whichever ISA path `-Dcpu` selects.
+// the end of the input, through the public functions, once per tier the CPU
+// has (`dispatch.forEachLevel`).
 
-// Past the 256-byte ASCII loop, so every error lands in it too.
-const max_len = 5 * 64 + 8;
+// Past the aligned ASCII loop, so every error lands in it too: a first
+// block, up to 64 bytes to the next boundary, two groups of four blocks, a
+// block, and the tail. Each input starts at a random offset from a 64-byte
+// boundary, so the aligned loops start at every offset.
+const max_len = 4 * 64 + 2 * 256 + 8;
 
 fn checkUtf8(bytes: []const u8) !void {
     const want = scalar.validateUtf8(bytes);
@@ -489,11 +723,16 @@ fn randomText(r: std.Random, buf: []u8, ascii_only: bool) void {
 }
 
 test "utf8 accepts random well-formed text of every length" {
+    try dispatch.forEachLevel(utf8WellFormed, .{});
+}
+
+fn utf8WellFormed() !void {
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf: [4 * 64 + 8]u8 = undefined;
-    for (0..buf.len) |len| {
+    var storage: [max_len + 64]u8 align(64) = undefined;
+    for (0..max_len) |len| {
         for (0..4) |_| {
+            const buf = storage[r.uintLessThan(usize, 64)..];
             randomText(r, buf[0..len], false);
             try testing.expectEqual(Result.ok(len), utf8WithErrors(buf[0..len]));
             try testing.expect(utf8(buf[0..len]));
@@ -502,6 +741,10 @@ test "utf8 accepts random well-formed text of every length" {
 }
 
 test "utf8 matches scalar with each error kind at every position" {
+    try dispatch.forEachLevel(utf8ErrorKinds, .{});
+}
+
+fn utf8ErrorKinds() !void {
     const Case = struct { bytes: []const u8, err: Error, at: usize = 0 };
     const cases = [_]Case{
         .{ .bytes = "\xf8", .err = .header_bits },
@@ -526,10 +769,11 @@ test "utf8 matches scalar with each error kind at every position" {
     };
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf: [max_len + 80]u8 = undefined;
+    var storage: [max_len + 80 + 64]u8 align(64) = undefined;
     for (cases) |c| {
         for ([_]bool{ true, false }) |ascii_only| {
             for (0..max_len) |p| {
+                const buf = storage[r.uintLessThan(usize, 64)..];
                 randomText(r, buf[0..p], ascii_only);
                 @memcpy(buf[p..][0..c.bytes.len], c.bytes);
                 const end = p + c.bytes.len;
@@ -544,11 +788,42 @@ test "utf8 matches scalar with each error kind at every position" {
     }
 }
 
-test "utf8 matches scalar on mutated random text" {
+test "utf8 finds a sequence cut short before ASCII at every offset" {
+    try dispatch.forEachLevel(utf8CutShort, .{});
+}
+
+fn utf8CutShort() !void {
+    // Text that is not ASCII from the start, a lead whose sequence the
+    // ASCII after it cuts short, across the first blocks and at every
+    // offset from a 64-byte boundary: the aligned loop restarts inside the
+    // first block, or right after it.
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf: [max_len]u8 = undefined;
+    var storage: [64 + 4096 + 64]u8 align(64) = undefined;
+    for (0..64) |off| {
+        const buf = storage[off..][0 .. 4096 + 64];
+        for ([_][]const u8{ "\xc3", "\xe2", "\xe2\x82", "\xf0\x9f\x98" }) |cut| {
+            for ([_]usize{ 2, 56, 120 }) |from| for (from..from + 16) |p| {
+                buf[0..2].* = "\xc3\xa9".*;
+                randomText(r, buf[2..p], false);
+                @memcpy(buf[p..][0..cut.len], cut);
+                randomText(r, buf[p + cut.len ..], true);
+                try checkUtf8(buf);
+            };
+        }
+    }
+}
+
+test "utf8 matches scalar on mutated random text" {
+    try dispatch.forEachLevel(utf8Mutated, .{});
+}
+
+fn utf8Mutated() !void {
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const r = prng.random();
+    var storage: [max_len + 64]u8 align(64) = undefined;
     for (0..20_000) |_| {
+        const buf = storage[r.uintLessThan(usize, 64)..][0..max_len];
         const len = r.uintAtMost(usize, buf.len);
         randomText(r, buf[0..len], r.boolean());
         for (0..r.uintAtMost(usize, 3)) |_| {
@@ -561,13 +836,27 @@ test "utf8 matches scalar on mutated random text" {
         }
         try checkUtf8(buf[0..len]);
     }
+    // Long enough for the aligned loop past a first block that is not ASCII.
+    var long: [5000 + 64]u8 align(64) = undefined;
+    for (0..300) |_| {
+        const buf = long[r.uintLessThan(usize, 64)..][0..5000];
+        const len = r.intRangeAtMost(usize, 4096, buf.len);
+        randomText(r, buf[0..len], false);
+        buf[r.uintLessThan(usize, len)] = 0x80 | r.uintLessThan(u8, 0x40);
+        try checkUtf8(buf[0..len]);
+    }
 }
 
 test "ascii matches scalar with a high byte at every position" {
+    try dispatch.forEachLevel(asciiHighByte, .{});
+}
+
+fn asciiHighByte() !void {
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf: [max_len + 72]u8 = undefined;
+    var storage: [max_len + 72 + 64]u8 align(64) = undefined;
     for (0..max_len) |p| {
+        const buf = storage[r.uintLessThan(usize, 64)..];
         for ([_]u8{ 0x80, 0xFF }) |high| {
             for ([_]usize{ p, p + 1, p + 1 + r.uintAtMost(usize, 72) }) |len| {
                 randomText(r, buf[0..len], true);
@@ -579,7 +868,21 @@ test "ascii matches scalar with a high byte at every position" {
             }
         }
     }
+    // A high byte at every position of every length up to two blocks, for
+    // the short paths' overlapping loads, in ASCII and UTF-8 validation.
+    for (0..2 * 64 + 8) |len| for (0..len) |p| {
+        const buf = storage[r.uintLessThan(usize, 64)..][0..len];
+        randomText(r, buf, true);
+        buf[p] = 0x80;
+        try testing.expectEqual(Result.fail(.not_ascii, p), asciiWithErrors(buf));
+        try testing.expect(!ascii(buf));
+        try checkUtf8(buf);
+    };
 }
+
+// Past the aligned UTF-16 loops: eight blocks before they start, up to a
+// block to the boundary, a group of eight blocks, one of four, and a tail.
+const utf16_max_len = 10 * n16 + 2 * 4 * n16 + 4;
 
 fn scalarUtf16(comptime endian: std.builtin.Endian, units: []const u16) Result {
     return switch (endian) {
@@ -588,20 +891,34 @@ fn scalarUtf16(comptime endian: std.builtin.Endian, units: []const u16) Result {
     };
 }
 
+fn utf16(comptime endian: std.builtin.Endian, units: []const u16) bool {
+    return switch (endian) {
+        .little => utf16le(units),
+        .big => utf16be(units),
+    };
+}
+
+fn utf16Errors(comptime endian: std.builtin.Endian, units: []const u16) Result {
+    return switch (endian) {
+        .little => utf16leWithErrors(units),
+        .big => utf16beWithErrors(units),
+    };
+}
+
 /// Checks `units`, in native order, then byte-swapped as the other order.
 fn checkUtf16(units: []u16) !void {
     const native = comptime builtin.cpu.arch.endian();
     const other: std.builtin.Endian = comptime if (native == .little) .big else .little;
     const want = scalarUtf16(native, units);
-    try testing.expectEqual(want, utf16WithErrors(native, units));
-    try testing.expectEqual(want.err == .none, utf16BadBlock(native, units) == null);
+    try testing.expectEqual(want, utf16Errors(native, units));
+    try testing.expectEqual(want.err == .none, utf16(native, units));
     for (units) |*u| u.* = @byteSwap(u.*);
     defer for (units) |*u| {
         u.* = @byteSwap(u.*);
     };
     try testing.expectEqual(want, scalarUtf16(other, units));
-    try testing.expectEqual(want, utf16WithErrors(other, units));
-    try testing.expectEqual(want.err == .none, utf16BadBlock(other, units) == null);
+    try testing.expectEqual(want, utf16Errors(other, units));
+    try testing.expectEqual(want.err == .none, utf16(other, units));
 }
 
 /// Fills `buf` with random well-formed UTF-16, in native order, ending on a
@@ -622,6 +939,10 @@ fn randomUtf16(r: std.Random, buf: []u16, pairs: bool) void {
 }
 
 test "utf16 matches scalar with each unpaired surrogate at every position" {
+    try dispatch.forEachLevel(utf16Unpaired, .{});
+}
+
+fn utf16Unpaired() !void {
     const Case = struct { units: []const u16, at: usize = 0 };
     const cases = [_]Case{
         .{ .units = &.{0xDC00} }, // a low one alone
@@ -634,11 +955,12 @@ test "utf16 matches scalar with each unpaired surrogate at every position" {
     };
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    const n = 3 * n16 + 4;
-    var buf: [n + 48]u16 = undefined;
+    const n = utf16_max_len;
+    var storage: [n + 48 + 32]u16 align(64) = undefined;
     for (cases) |c| {
         for ([_]bool{ true, false }) |pairs| {
             for (0..n) |p| {
+                const buf = storage[r.uintLessThan(usize, 32)..];
                 randomUtf16(r, buf[0..p], pairs);
                 @memcpy(buf[p..][0..c.units.len], c.units);
                 const end = p + c.units.len;
@@ -655,15 +977,21 @@ test "utf16 matches scalar with each unpaired surrogate at every position" {
 }
 
 test "utf16 matches scalar on random units and well-formed text" {
+    try dispatch.forEachLevel(utf16Random, .{});
+}
+
+fn utf16Random() !void {
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf: [3 * n16 + 4]u16 = undefined;
-    for (0..buf.len) |len| {
+    var storage: [utf16_max_len + 32]u16 align(64) = undefined;
+    for (0..utf16_max_len) |len| {
+        const buf = storage[r.uintLessThan(usize, 32)..];
         randomUtf16(r, buf[0..len], true);
         try testing.expectEqual(Result.ok(len), scalarUtf16(builtin.cpu.arch.endian(), buf[0..len]));
         try checkUtf16(buf[0..len]);
     }
     for (0..20_000) |_| {
+        const buf = storage[r.uintLessThan(usize, 32)..][0..utf16_max_len];
         const len = r.uintAtMost(usize, buf.len);
         randomUtf16(r, buf[0..len], r.boolean());
         // Rarely more than one unpaired surrogate, so later blocks still count.
@@ -676,6 +1004,10 @@ test "utf16 matches scalar on random units and well-formed text" {
 }
 
 test "utf32 matches scalar with each bad value at every position" {
+    try dispatch.forEachLevel(utf32BadValues, .{});
+}
+
+fn utf32BadValues() !void {
     const bad = [_]struct { u32, Error }{
         .{ 0xD800, .surrogate },     .{ 0xDFFF, .surrogate },
         .{ 0x110000, .too_large },   .{ 0xFFFFFFFF, .too_large },
@@ -685,10 +1017,12 @@ test "utf32 matches scalar with each bad value at every position" {
     const good = [_]u32{ 0, 0x7F, 0xD7FF, 0xE000, 0xFFFF, 0x10000, 0x10FFFF };
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    const n = 3 * n32 + 4;
-    var buf: [n + 20]u32 = undefined;
+    // Past the aligned groups, as for UTF-16.
+    const n = 10 * n32 + 2 * 4 * n32 + 4;
+    var storage: [n + 20 + 16]u32 align(64) = undefined;
     for (bad) |b| {
         for (0..n) |p| {
+            const buf = storage[r.uintLessThan(usize, 16)..];
             for ([_]usize{ p + 1, p + 1 + r.uintAtMost(usize, 20) }) |len| {
                 for (buf[0..len]) |*u| {
                     u.* = if (r.boolean()) good[r.uintLessThan(usize, good.len)] else r.uintAtMost(u32, 0xD7FF);
