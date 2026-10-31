@@ -213,7 +213,11 @@ bench-compare`, and a per-operation geomean summary. The baseline
   (0.22–0.28), UTF-16 and UTF-32 validation (0.47–0.72), and MIME base64
   (0.50). Against `haswell`: UTF-16 to UTF-8 on CJK (0.50), UTF-32 to
   Latin-1 (0.45–0.52), 16-byte Latin-1 and UTF-16-to-Latin-1 (0.44–0.50),
-  and MIME base64 (0.77).
+  and MIME base64 (0.77). Wave 3: the Zig arms build `Out` from scalars
+  ([harness-wave3-20261031.md](results/harness-wave3-20261031.md)), and `just
+oracle` compares every public function with simdutf: validation of every
+  form with errors, every checked and valid conversion, every length
+  function, and every base64 mode (no mismatches).
 - **Base64**: `src/base64.zig` and `src/scalar_base64.zig`. Landed: the
   AVX-512 VBMI kernel (`Isa.avx512vbmi`, `vpcompressb` whitespace with
   VBMI2), the big-endian fix (lane bitcasts in encode and decode; NEON on

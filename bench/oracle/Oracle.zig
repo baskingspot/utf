@@ -60,7 +60,7 @@ pub const Op = enum(u8) {
 
 /// simdutf's `error_code`, named as this package's `Error` names the same
 /// kinds, so `same` can match them by name. simdutf reports a non-ASCII byte
-/// as `too_large`, where this package says `not_ascii`.
+/// as `too_large`, where this package says `not_ascii`; `run` renames it.
 pub const Error = enum(u8) {
     none,
     header_bits,
@@ -76,6 +76,9 @@ pub const Error = enum(u8) {
     /// simdutf's OTHER, and the oracle's answer to a request it cannot
     /// run, such as UTF-16 input of odd length.
     other,
+    /// Not simdutf's: `run` reports `validate_ascii`'s `too_large` as this,
+    /// this package's name for it.
+    not_ascii,
     _,
 };
 
@@ -155,12 +158,13 @@ pub fn run(oracle: Oracle, requests: []const Request) RunError![]Response {
     const responses = try oracle.gpa.alloc(Response, requests.len + 1);
     errdefer oracle.gpa.free(responses);
     var at: usize = 0;
-    for (responses[0..requests.len]) |*resp| {
+    for (responses[0..requests.len], requests) |*resp, req| {
         if (bytes.len - at < 13) return error.BadResponse;
         const len = mem.readInt(u32, bytes[at + 9 ..][0..4], .little);
         if (bytes.len - at - 13 < len) return error.BadResponse;
+        const err: Error = @enumFromInt(bytes[at]);
         resp.* = .{
-            .err = @enumFromInt(bytes[at]),
+            .err = if (req.op == .validate_ascii and err == .too_large) .not_ascii else err,
             .count = mem.readInt(u64, bytes[at + 1 ..][0..8], .little),
             .output = bytes[at + 13 ..][0..len],
         };
