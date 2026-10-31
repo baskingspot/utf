@@ -230,8 +230,10 @@ pub fn decodeWith(
         run = i;
     }
     if (t.len - i >= 64) return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
-    // The last block, fewer than 64 characters, zero-padded.
+    // The last block, fewer than 64 characters, zero-padded. None, as at
+    // a multiple of 64 without padding, is done.
     const n = t.len - i;
+    if (n == 0 and t.padding == 0) return .ok(o);
     const live = simd.lowBits(u64, n);
     const c = K.classifyBlock(simd.loadTail(src, i, t.len));
     const bad = c.badMask() & live;
@@ -476,20 +478,21 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const n = end - start;
                 const len = charsFor(n, padding);
                 if (n == 0) return 0;
-                // From a whole block before `end`, the one ending there:
-                // the spread shuffle moves it down and zeroes the bytes past
-                // the data, one `vpermb` where `loadTail` adds another.
                 const spread: V64 = comptime blk: {
                     var v: [64]u8 = undefined;
                     for (spreadMask(false, 0), &v) |x, *y| y.* = x;
                     break :blk v;
                 };
-                const block, const off: u8 = if (end >= 64)
-                    .{ simd.load(u8, whole[end - 64 ..]), @intCast(64 - n) }
-                else
-                    .{ simd.loadPartial(u8, whole[start..end]), 0 };
-                const moved = simd.permute(block, spread +% @as(V64, @splat(off)));
-                const in = @select(u8, spread < @as(V64, @splat(@intCast(n))), moved, @as(V64, @splat(0)));
+                // From a whole block before `end`, the one ending there:
+                // the spread shuffle moves it down and zeroes the bytes past
+                // the data, one `vpermb` where `loadTail` adds another.
+                // Without one, the data zero-padded from one masked load,
+                // which the spread shuffle reads as it is.
+                const in = if (end >= 64) blk: {
+                    const off: V64 = @splat(@intCast(64 - n));
+                    const moved = simd.permute(simd.load(u8, whole[end - 64 ..]), spread +% off);
+                    break :blk @select(u8, spread < @as(V64, @splat(@intCast(n))), moved, @as(V64, @splat(0)));
+                } else simd.permute(simd.loadShort(u8, whole[start..end]), spread);
                 return storeLast(dst, translate(in, undefined), n, len);
             }
             const src = whole[start..end];
@@ -1071,6 +1074,7 @@ const big = builtin.cpu.arch.endian() == .big;
 /// A vector of `pattern` repeated.
 inline fn rep(comptime T: type, comptime pattern: anytype) T {
     return comptime blk: {
+        @setEvalBranchQuota(10_000);
         const n = @typeInfo(T).vector.len;
         const E = @typeInfo(T).vector.child;
         const p: [pattern.len]E = pattern;

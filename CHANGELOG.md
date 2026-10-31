@@ -15,6 +15,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- `base64.encode` with AVX-512 is 1.3× faster per call on 16-byte input, and `base64.decode` of unpadded input a multiple of 64 characters long skips an empty last block.
 - The `length` functions with AVX-512 are 1.1–1.4× faster on inputs of up to 64 bytes.
 - Generic x86-64 builds call each dispatched function through a pointer of its own: dispatch costs 0.9 ns a call, from 1.5 ns (simdutf's costs 2.6), and 16–64-byte inputs run 1.07× faster on geomean.
 - `base64.decode` on line-wrapped input (MIME and PEM: lines of one length, a multiple of four and at least 64 characters, each followed by the same 1–4 whitespace characters) is 1.3× faster from 4 KiB with AVX-512, 1.9× with AVX2, and 1.5× with SSSE3; with AVX-512 also 15% faster on inputs under 64 characters.
