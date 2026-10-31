@@ -302,7 +302,7 @@ fn validLatin1ToUtf32Kernel(src: []const u8, dst: []u32) usize {
     return latin1ToUnits(u32, native, false, src, dst).count;
 }
 
-// Vector helpers. Private until simd.zig lands.
+// Vector helpers.
 
 const V16 = @Vector(16, u8);
 
@@ -310,11 +310,11 @@ inline fn splat(comptime T: type, comptime x: anytype) T {
     return @splat(x);
 }
 
-/// Loads `n` UTF-16 code units in byte order `e` as native values. Volatile,
-/// as `load` is: a block and the units one past it would otherwise merge
-/// into narrow loads that rebuild both.
+/// Loads `n` UTF-16 code units in byte order `e` as native values. Volatile:
+/// a block and the units one past it would otherwise merge into narrow
+/// loads that rebuild both.
 inline fn load16(comptime e: Endian, comptime n: usize, src: []const u16, i: usize) @Vector(n, u16) {
-    const v = @as(*align(1) const volatile @Vector(n, u16), @ptrCast(src[i..][0..n])).*;
+    const v = simd.loadVolatile(@Vector(n, u16), src[i..]);
     return if (e == native) v else @byteSwap(v);
 }
 
@@ -325,22 +325,13 @@ inline fn store(comptime T: type, comptime e: Endian, dst: []T, o: usize, v: any
     const Elem = @typeInfo(@TypeOf(v)).vector.child;
     const w: @Vector(n, T) = if (@bitSizeOf(Elem) <= @bitSizeOf(T)) v else @truncate(v);
     const out = if (T == u16 and e != native) @byteSwap(w) else w;
-    // On AVX-512 volatile, so LLVM keeps each register's store whole: it
-    // splits a 64-byte store it cannot prove aligned in two. On AVX2 the
-    // same made long ASCII runs half as fast.
+    // On AVX-512 volatile, so LLVM keeps each register's store whole. On
+    // AVX2 the same made long ASCII runs half as fast.
     if (simd.isa == .avx512) {
-        @as(*align(1) volatile @Vector(n, T), @ptrCast(dst[o..][0..n])).* = out;
+        simd.storeVolatile(dst[o..], out);
     } else {
         dst[o..][0..n].* = out;
     }
-}
-
-/// Loads 16 bytes in one instruction. A shuffle table's entry, or a window
-/// of input that shuffles use only in part, otherwise gets built from
-/// several narrower loads, since LLVM can see which of their bytes matter
-/// or never change; volatile keeps the load whole.
-inline fn loadVolatile(ptr: *const [16]u8) V16 {
-    return @as(*align(1) const volatile V16, @ptrCast(ptr)).*;
 }
 
 /// Whether every lane of `v` is below `limit`, a power of two: one test of
@@ -358,10 +349,8 @@ inline fn below(comptime limit: comptime_int, v: anytype) bool {
 // Instructions" (2023). With them the kernels need no shuffle tables, and
 // masked loads and stores let one loop take every input length, so these
 // kernels replace the table-driven ones and the scalar tail on such CPUs.
-// Private until simd.zig has them.
 
-const bmi2 = builtin.cpu.arch == .x86_64 and std.Target.x86.featureSetHas(builtin.cpu.features, .bmi2);
-const v512 = fast_shuffle and simd.has_vbmi and simd.has_vbmi2 and bmi2;
+const v512 = fast_shuffle and simd.has_vbmi and simd.has_vbmi2 and simd.has_bmi2;
 
 /// The first step of a long AVX-512 loop over `s`: the units before its
 /// first 64-byte boundary, or a whole block when it starts on one or the
@@ -377,174 +366,21 @@ inline fn firstStep(comptime T: type, s: []const T, len: usize, block: usize) us
     return if (k == 0) block else k;
 }
 
-const x512 = struct {
-    const V = @Vector(64, u8);
+const V64 = @Vector(64, u8);
 
-    extern fn @"llvm.x86.avx512.mask.compress.v64i8"(V, V, @Vector(64, bool)) V;
-    extern fn @"llvm.x86.avx512.mask.compress.v32i16"(
-        @Vector(32, u16),
-        @Vector(32, u16),
-        @Vector(32, bool),
-    ) @Vector(32, u16);
-    extern fn @"llvm.x86.avx512.mask.compress.v16i32"(
-        @Vector(16, u32),
-        @Vector(16, u32),
-        @Vector(16, bool),
-    ) @Vector(16, u32);
-    extern fn @"llvm.x86.avx512.vpermi2var.qi.512"(V, V, V) V;
-    extern fn @"llvm.x86.avx512.permvar.qi.512"(V, V) V;
-    extern fn @"llvm.x86.avx512.vpermi2var.d.512"(
-        @Vector(16, u32),
-        @Vector(16, u32),
-        @Vector(16, u32),
-    ) @Vector(16, u32);
-    extern fn @"llvm.x86.avx512.pmultishift.qb.512"(V, V) V;
-    extern fn @"llvm.x86.bmi.pext.64"(u64, u64) u64;
-    extern fn @"llvm.x86.bmi.pdep.64"(u64, u64) u64;
-    extern fn @"llvm.x86.bmi.bzhi.64"(u64, u64) u64;
-    extern fn @"llvm.x86.bmi.bzhi.32"(u32, u32) u32;
-    extern fn @"llvm.masked.load.v64i8.p0"(*const anyopaque, u32, @Vector(64, bool), V) V;
-    extern fn @"llvm.masked.load.v32i16.p0"(
-        *const anyopaque,
-        u32,
-        @Vector(32, bool),
-        @Vector(32, u16),
-    ) @Vector(32, u16);
-    extern fn @"llvm.masked.load.v16i32.p0"(
-        *const anyopaque,
-        u32,
-        @Vector(16, bool),
-        @Vector(16, u32),
-    ) @Vector(16, u32);
-    extern fn @"llvm.masked.store.v64i8.p0"(V, *anyopaque, u32, @Vector(64, bool)) void;
-    extern fn @"llvm.masked.store.v32i16.p0"(@Vector(32, u16), *anyopaque, u32, @Vector(32, bool)) void;
-    extern fn @"llvm.masked.store.v16i32.p0"(@Vector(16, u32), *anyopaque, u32, @Vector(16, bool)) void;
-
-    /// The lanes of `v` that `keep` selects, in order, then zeros.
-    inline fn compress(v: anytype, keep: @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.len)) @TypeOf(v) {
-        const m: @Vector(@typeInfo(@TypeOf(v)).vector.len, bool) = @bitCast(keep);
-        return switch (@TypeOf(v)) {
-            V => @"llvm.x86.avx512.mask.compress.v64i8"(v, @splat(0), m),
-            @Vector(32, u16) => @"llvm.x86.avx512.mask.compress.v32i16"(v, @splat(0), m),
-            @Vector(16, u32) => @"llvm.x86.avx512.mask.compress.v16i32"(v, @splat(0), m),
-            else => @compileError("no compress for this vector"),
-        };
-    }
-
-    /// `table[idx[i]]` for 64-byte `table` (`vpermb`), indices mod 64.
-    inline fn permute(table: V, idx: V) V {
-        return @"llvm.x86.avx512.permvar.qi.512"(table, idx);
-    }
-
-    /// `table[idx[i]]` for a 32-entry table of 32-bit values
-    /// (`vpermi2d`), indices mod 32.
-    inline fn permute32(comptime table: [32]u32, idx: @Vector(16, u32)) @Vector(16, u32) {
-        const lo: @Vector(16, u32) = table[0..16].*;
-        const hi: @Vector(16, u32) = table[16..32].*;
-        return @"llvm.x86.avx512.vpermi2var.d.512"(lo, idx, hi);
-    }
-
-    /// Byte i of each 64-bit lane of `data`'s bits from `ctrl[i]` up
-    /// (`vpmultishiftqb`).
-    inline fn multishift(ctrl: V, data: V) V {
-        return @"llvm.x86.avx512.pmultishift.qb.512"(ctrl, data);
-    }
-
-    /// `lo ++ hi` indexed by `idx` (`vpermi2b`), indices mod 128.
-    inline fn permute2(lo: V, idx: V, hi: V) V {
-        return @"llvm.x86.avx512.vpermi2var.qi.512"(lo, idx, hi);
-    }
-
-    /// The bits of `x` where `mask` has a one, packed into the low bits.
-    inline fn pext(x: u64, mask: u64) u64 {
-        return @"llvm.x86.bmi.pext.64"(x, mask);
-    }
-
-    /// The low bits of `x` spread to where `mask` has a one.
-    inline fn pdep(x: u64, mask: u64) u64 {
-        return @"llvm.x86.bmi.pdep.64"(x, mask);
-    }
-
-    /// The low `n` bits set, all of them from `n` = the width of `M` up to
-    /// 255 (`bzhi`).
-    inline fn low(comptime M: type, n: usize) M {
-        std.debug.assert(n < 256);
-        const k: u64 = n & 0xFF;
-        if (@bitSizeOf(M) == 64) return @"llvm.x86.bmi.bzhi.64"(~@as(u64, 0), k);
-        const ones: u32 = @truncate(~@as(u64, 0));
-        return @truncate(@"llvm.x86.bmi.bzhi.32"(ones >> @intCast(32 - @bitSizeOf(M)), @truncate(k)));
-    }
-
-    /// Whether the 64 bytes at `ptr` lie in one page. A masked load or
-    /// store whose masked-off lanes reach into a page not yet touched takes
-    /// a microcode assist, on every call; across a page boundary, the
-    /// partial loads and stores go through a buffer instead.
-    inline fn withinPage(ptr: anytype) bool {
-        return @intFromPtr(ptr) % 4096 <= 4096 - 64;
-    }
-
-    /// The first `n` units of `src` in a whole vector, zeros after, reading
-    /// nothing past them.
-    inline fn loadPartial(comptime T: type, src: []const T, n: usize) @Vector(64 / @sizeOf(T), T) {
-        const lanes = 64 / @sizeOf(T);
-        if (!withinPage(src.ptr)) return loadBuffered(T, src, n);
-        const m: @Vector(lanes, bool) = @bitCast(low(@Int(.unsigned, lanes), n));
-        return switch (T) {
-            u8 => @"llvm.masked.load.v64i8.p0"(src.ptr, 1, m, @splat(0)),
-            u16 => @"llvm.masked.load.v32i16.p0"(src.ptr, 1, m, @splat(0)),
-            u32 => @"llvm.masked.load.v16i32.p0"(src.ptr, 1, m, @splat(0)),
-            else => @compileError("no masked load for this type"),
-        };
-    }
-
-    /// `loadPartial` across a page boundary, through a buffer. Out of line:
-    /// its 64-byte-aligned stack buffer would otherwise give every caller a
-    /// realigned frame and saved registers, 1-2 ns on a short input.
-    noinline fn loadBuffered(comptime T: type, src: []const T, n: usize) @Vector(64 / @sizeOf(T), T) {
-        @branchHint(.cold);
-        var buf: [64 / @sizeOf(T)]T = @splat(0);
-        const k = @min(n, buf.len);
-        @memcpy(buf[0..k], src[0..k]);
-        return buf;
-    }
-
-    /// `storePartial` across a page boundary, through a buffer.
-    noinline fn storeBuffered(comptime T: type, dst: []T, v: @Vector(64 / @sizeOf(T), T), n: usize) void {
-        @branchHint(.cold);
-        const buf: [64 / @sizeOf(T)]T = v;
-        const k = @min(n, buf.len);
-        @memcpy(dst[0..k], buf[0..k]);
-    }
-
-    /// Stores the first `n` lanes of `v` at `dst[o..]`, writing nothing
-    /// past them.
-    inline fn storePartial(comptime T: type, dst: []T, o: usize, v: @Vector(64 / @sizeOf(T), T), n: usize) void {
-        const lanes = 64 / @sizeOf(T);
-        if (!withinPage(dst.ptr + o)) return storeBuffered(T, dst[o..], v, n);
-        const m: @Vector(lanes, bool) = @bitCast(low(@Int(.unsigned, lanes), n));
-        const ptr: *anyopaque = @ptrCast(dst.ptr + o);
-        switch (T) {
-            u8 => @"llvm.masked.store.v64i8.p0"(v, ptr, 1, m),
-            u16 => @"llvm.masked.store.v32i16.p0"(v, ptr, 1, m),
-            u32 => @"llvm.masked.store.v16i32.p0"(v, ptr, 1, m),
-            else => @compileError("no masked store for this type"),
+/// Stores `n` of the 64 bytes of `v` widened to `T` (UTF-16 in byte order
+/// `e`) at `dst[o..]`, writing nothing past them.
+inline fn storeWidened(comptime T: type, comptime e: Endian, dst: []T, o: usize, v: V64, n: usize) void {
+    const lanes = 64 / @sizeOf(T);
+    const a: [64]u8 = v;
+    inline for (0..64 / lanes) |k| {
+        if (k == 0 or n > k * lanes) {
+            var w: @Vector(lanes, T) = @as(@Vector(lanes, u8), a[k * lanes ..][0..lanes].*);
+            if (T == u16 and e != native) w = @byteSwap(w);
+            simd.storePartial(dst[o + k * lanes ..], w, n - k * lanes);
         }
     }
-
-    /// Stores `n` of the 64 bytes of `v` widened to `T` (UTF-16 in byte
-    /// order `e`) at `dst[o..]`, writing nothing past them.
-    inline fn storeWidened(comptime T: type, comptime e: Endian, dst: []T, o: usize, v: V, n: usize) void {
-        const lanes = 64 / @sizeOf(T);
-        const a: [64]u8 = v;
-        inline for (0..64 / lanes) |k| {
-            if (k == 0 or n > k * lanes) {
-                var w: @Vector(lanes, T) = @as(@Vector(lanes, u8), a[k * lanes ..][0..lanes].*);
-                if (T == u16 and e != native) w = @byteSwap(w);
-                storePartial(T, dst, o + k * lanes, w, n - k * lanes);
-            }
-        }
-    }
-};
+}
 
 /// Combines a checked scalar tail at input `p` and output `o` with the
 /// work before it.
@@ -829,7 +665,7 @@ inline fn utf8Window(comptime T: type, comptime e: Endian, in: V16, ends: u64, d
         return 12;
     }
     const entry = utf8_windows.index[@as(u12, @truncate(ends))];
-    const perm = simd.lookup16(in, loadVolatile(&utf8_windows.shuffles[entry[0]]));
+    const perm = simd.lookup16(in, simd.loadVolatile(V16, &utf8_windows.shuffles[entry[0]]));
     if (entry[0] < 64) {
         const x: U16x8 = @bitCast(perm);
         store(T, e, dst, o.*, x & splat(U16x8, 0x7F) | (x & splat(U16x8, 0x1F00)) >> splat(U16x8, 2));
@@ -855,7 +691,10 @@ inline fn utf8Window(comptime T: type, comptime e: Endian, in: V16, ends: u64, d
             const s = cp -% splat(U32x4, 0x10000);
             const pair = (splat(U32x4, 0xD800) | s >> splat(U32x4, 10)) |
                 (splat(U32x4, 0xDC00) | (s & splat(U32x4, 0x3FF))) << splat(U32x4, 16);
-            const units = simd.lookup16(@bitCast(@select(u32, pairs, pair, cp)), loadVolatile(&utf16_pairs[mask]));
+            const units = simd.lookup16(
+                @bitCast(@select(u32, pairs, pair, cp)),
+                simd.loadVolatile(V16, &utf16_pairs[mask]),
+            );
             store(T, e, dst, o.*, @as(U16x8, @bitCast(units)));
             o.* += 3 + @as(usize, @popCount(mask));
         }
@@ -920,7 +759,7 @@ fn utf8ToUnitsAvx512(
     src: []const u8,
     dst: []T,
 ) struct { usize, usize } {
-    const V = x512.V;
+    const V = V64;
     const W = @Vector(32, u16);
     const zero = splat(V, 0);
     const iota = std.simd.iota(u8, 64);
@@ -939,15 +778,15 @@ fn utf8ToUnitsAvx512(
         if (rem > 64) {
             block = simd.load(u8, src[p..]);
             if (below(0x80, block) and room >= 64) {
-                x512.storeWidened(T, e, dst, o, block, 64);
+                storeWidened(T, e, dst, o, block, 64);
                 p += 64;
                 o += 64;
                 continue;
             }
         } else {
-            block = x512.loadPartial(u8, src[p..], rem);
+            block = simd.loadShort(u8, src[p..][0..rem]);
             if (below(0x80, block) and room >= rem) {
-                x512.storeWidened(T, e, dst, o, block, rem);
+                storeWidened(T, e, dst, o, block, rem);
                 return .{ src.len, o + rem };
             }
         }
@@ -958,7 +797,7 @@ fn utf8ToUnitsAvx512(
         if (checked and utf8Invalid(64, block)) break;
         const leads = leadMask(64, block);
         // Bit i set where byte i ends a character.
-        const ends = (leads >> 1 | @as(u64, 1) << 63) & x512.low(u64, take);
+        const ends = (leads >> 1 | @as(u64, 1) << 63) & simd.lowBits(u64, take);
         const m4 = simd.bitmask(block >= splat(V, 0xF0));
         const fourth = m4 << 3;
         // For UTF-16, also the third byte of each four-byte character.
@@ -975,10 +814,10 @@ fn utf8ToUnitsAvx512(
         // high halves.
         const lo = s | s1 << splat(V, 6);
         const hi = s1 >> splat(V, 2) | s2 << splat(V, 4);
-        const pos = x512.compress(iota, mend);
+        const pos = simd.compress(iota, mend);
         // Bit i set where the ith character is a low surrogate, or (for
         // UTF-32) four bytes long.
-        const fours = if (m4 != 0) x512.pext(fourth, mend) else 0;
+        const fours = if (m4 != 0) simd.pext(fourth, mend) else 0;
         // UTF-32's bits above 16: the rest of the third-last byte and the
         // lead, at the fourth byte.
         const top = if (T == u32 and m4 != 0) blk: {
@@ -989,12 +828,12 @@ fn utf8ToUnitsAvx512(
                 simd.prev(2, s, zero) >> splat(V, 4) | simd.prev(3, s, zero) << splat(V, 2),
                 zero,
             );
-            break :blk x512.permute(t, pos);
+            break :blk simd.permute(t, pos);
         } else zero;
         inline for (0..2) |half| {
             if (half == 0 or count > 32) {
                 const idx = @shuffle(u8, pos, undefined, pairsOf(half)) | @as(V, hi_table);
-                var w: W = @bitCast(x512.permute2(lo, idx, hi));
+                var w: W = @bitCast(simd.permute2(lo, idx, hi));
                 if (T == u16) {
                     if (m4 != 0) {
                         const low_s: u32 = @truncate(fours >> 32 * half);
@@ -1013,7 +852,7 @@ fn utf8ToUnitsAvx512(
                         );
                     }
                     if (e != native) w = @byteSwap(w);
-                    x512.storePartial(u16, dst, o + 32 * half, w, count - 32 * half);
+                    simd.storePartial(dst[o + 32 * half ..], w, count - 32 * half);
                 } else {
                     const ws: [32]u16 = w;
                     const ts: [64]u8 = top;
@@ -1025,7 +864,7 @@ fn utf8ToUnitsAvx512(
                                 @Vector(16, u32),
                                 @as(@Vector(16, u8), ts[k..][0..16].*),
                             ) << splat(@Vector(16, u32), 16);
-                            x512.storePartial(u32, dst, o + k, d, count - k);
+                            simd.storePartial(dst[o + k ..], d, count - k);
                         }
                     }
                 }
@@ -1116,7 +955,7 @@ inline fn utf8DecodeBlock(
     const w: [64]u16 = words;
     inline for (0..8) |g| {
         const m: u8 = @truncate(mend >> 8 * g);
-        const shuffle = loadVolatile(&compress_words[m]);
+        const shuffle = simd.loadVolatile(V16, &compress_words[m]);
         const group: V16 = @bitCast(@as(@Vector(8, u16), w[8 * g ..][0..8].*));
         const packed_words: @Vector(8, u16) = @bitCast(simd.lookup16(group, shuffle));
         if (four and T == u32) {
@@ -1142,7 +981,7 @@ inline fn utf8DecodeThree(comptime T: type, comptime e: Endian, src: []const u8,
     const U = @Vector(4, u32);
     const pick = [16]i32{ 2, 1, 0, -1, 5, 4, 3, -1, 8, 7, 6, -1, 11, 10, 9, -1 };
     inline for (0..4) |q| {
-        const x: U = @bitCast(@shuffle(u8, loadVolatile(src[12 * q ..][0..16]), splat(V16, 0), pick));
+        const x: U = @bitCast(@shuffle(u8, simd.loadVolatile(V16, src[12 * q ..][0..16]), splat(V16, 0), pick));
         store(T, e, dst, o.* + 4 * q, x & splat(U, 0x3F) | (x & splat(U, 0x3F00)) >> splat(U, 2) |
             (x & splat(U, 0x0F0000)) >> splat(U, 4));
     }
@@ -1247,13 +1086,13 @@ inline fn compress16(v: V16, keep: u16, dst: []u8, o: usize) usize {
     const lo: u8 = @truncate(keep);
     const hi: u8 = @truncate(keep >> 8);
     const n_lo: usize = @popCount(lo);
-    dst[o..][0..16].* = simd.lookup16(v, loadVolatile(&compress8[lo]));
-    dst[o + n_lo ..][0..16].* = simd.lookup16(v, loadVolatile(&compress8[hi]) +% splat(V16, 8));
+    dst[o..][0..16].* = simd.lookup16(v, simd.loadVolatile(V16, &compress8[lo]));
+    dst[o + n_lo ..][0..16].* = simd.lookup16(v, simd.loadVolatile(V16, &compress8[hi]) +% splat(V16, 8));
     return n_lo + @popCount(hi);
 }
 
 fn utf8ToLatin1Avx512(comptime checked: bool, src: []const u8, dst: []u8) struct { usize, usize } {
-    const V = x512.V;
+    const V = V64;
     // Every step takes 64 bytes, so the next load never waits on this
     // block's work. A two-byte character decodes at its continuation byte,
     // from the byte before it, which for byte 0 is the last of the block
@@ -1284,14 +1123,14 @@ fn utf8ToLatin1Avx512(comptime checked: bool, src: []const u8, dst: []u8) struct
             }
         }
         const n = @min(rem, 64);
-        const v: V = if (rem >= 64) simd.load(u8, src[p..]) else x512.loadPartial(u8, src[p..], n);
+        const v: V = if (rem >= 64) simd.load(u8, src[p..]) else simd.loadShort(u8, src[p..][0..n]);
         const before: V = if (p == 0)
             simd.prev(1, v, splat(V, 0))
         else if (rem >= 64)
             simd.load(u8, src[p - 1 ..])
         else
-            x512.loadPartial(u8, src[p - 1 ..], n);
-        const live = x512.low(u64, n);
+            simd.loadShort(u8, src[p - 1 ..][0..n]);
+        const live = simd.lowBits(u64, n);
         const lead = simd.bitmask(v >= splat(V, 0xC0));
         const cont = simd.bitmask(v & splat(V, 0xC0) == splat(V, 0x80));
         if (checked) {
@@ -1315,9 +1154,9 @@ fn utf8ToLatin1Avx512(comptime checked: bool, src: []const u8, dst: []u8) struct
         // A whole store where the buffer has room: the bytes past `count`
         // are rewritten by the next block or left past the result.
         if (dst.len - o >= 64)
-            store(u8, native, dst, o, x512.compress(decoded, keep))
+            store(u8, native, dst, o, simd.compress(decoded, keep))
         else
-            x512.storePartial(u8, dst, o, x512.compress(decoded, keep), count);
+            simd.storePartial(dst[o..], simd.compress(decoded, keep), count);
         p += n;
         o += count;
     }
@@ -1438,7 +1277,7 @@ inline fn utf8From2(v: @Vector(8, u16), dst: []u8, o: *usize) void {
     const two = (splat(U, 0xC0) | v >> splat(U, 6)) | (splat(U, 0x80) | (v & splat(U, 0x3F))) << splat(U, 8);
     const mask: u8 = simd.bitmask(ascii);
     const lanes: [16]u8 = @bitCast(@select(u16, ascii, v, two));
-    dst[o.*..][0..16].* = simd.lookup16(lanes, loadVolatile(&utf8_pack2.shuffles[mask]));
+    dst[o.*..][0..16].* = simd.lookup16(lanes, simd.loadVolatile(V16, &utf8_pack2.shuffles[mask]));
     o.* += utf8_pack2.lens[mask];
 }
 
@@ -1499,7 +1338,7 @@ inline fn utf8From16(cp: @Vector(16, u32), take: u16, dst: []u8, o: *usize) void
         const lanes: @Vector(4, u32) = b[sh..][0..4].*;
         const i = @as(usize, base5[take >> sh & 15]) + base5[m1 >> sh & 15] +
             base5[m2 >> sh & 15] + base5[m4 >> sh & 15];
-        dst[o.*..][0..16].* = simd.lookup16(@bitCast(lanes), loadVolatile(&utf8_pack4.shuffles[i]));
+        dst[o.*..][0..16].* = simd.lookup16(@bitCast(lanes), simd.loadVolatile(V16, &utf8_pack4.shuffles[i]));
         o.* += utf8_pack4.lens[i];
     }
 }
@@ -1590,11 +1429,11 @@ inline fn utf8FromBmp(v: @Vector(16, u16), dst: []u8, o: *usize) void {
     const wide = ~simd.bitmask(@as(@Vector(32, bool), @bitCast([2]@Vector(16, bool){ lt80, lt800 })));
     const groups = [4]V16{ lo[0..16].*, hi[0..16].*, lo[16..32].*, hi[16..32].* };
     inline for (groups, 0..) |lanes, g| {
-        const i: usize = if (bmi2)
-            @intCast(x512.pext(wide, @as(u64, 0x000F000F) << 4 * g))
+        const i: usize = if (simd.has_bmi2)
+            @intCast(simd.pext(wide, @as(u64, 0x000F000F) << 4 * g))
         else
             (wide >> 4 * g & 15) | (wide >> (12 + 4 * g) & 0xF0);
-        dst[o.*..][0..16].* = simd.lookup16(lanes, loadVolatile(&utf8_pack3.shuffles[i]));
+        dst[o.*..][0..16].* = simd.lookup16(lanes, simd.loadVolatile(V16, &utf8_pack3.shuffles[i]));
         o.* += utf8_pack3.lens[i];
     }
 }
@@ -1639,7 +1478,7 @@ inline fn decode16(comptime checked: bool, v: @Vector(16, u16), next: @Vector(16
 /// its four bytes, lead first, and a mask and the tag bits for the lane's
 /// length, looked up by its leading zeros, finish the bytes; a lane of fewer
 /// bytes has zeros before them.
-inline fn utf8Encode512(cp: @Vector(16, u32), take: u16) struct { x512.V, usize } {
+inline fn utf8Encode512(cp: @Vector(16, u32), take: u16) struct { V64, usize } {
     const D = @Vector(16, u32);
     const tables = comptime blk: {
         var mask: [32]u32 = undefined;
@@ -1658,48 +1497,50 @@ inline fn utf8Encode512(cp: @Vector(16, u32), take: u16) struct { x512.V, usize 
                 .{ 0x3F3F3F07, 0x808080F0 };
         }
         const ctrl: [8]u8 = .{ 18, 12, 6, 0, 50, 44, 38, 32 };
-        break :blk .{ mask, tag, ctrl ** 8 };
+        // Each table as its two halves, the operands of `vpermi2d`.
+        const halves = [2][2]D{ .{ mask[0..16].*, mask[16..].* }, .{ tag[0..16].*, tag[16..].* } };
+        break :blk .{ halves[0], halves[1], ctrl ** 8 };
     };
-    const shifted: D = @bitCast(x512.multishift(@as(x512.V, tables[2]), @bitCast(cp)));
+    const shifted: D = @bitCast(simd.multishift(@as(V64, tables[2]), @bitCast(cp)));
     const lz: D = @clz(cp);
     const live: @Vector(16, bool) = @bitCast(take);
-    const mask = @select(u32, live, x512.permute32(tables[0], lz), splat(D, 0));
-    const tag = @select(u32, live, x512.permute32(tables[1], lz), splat(D, 0));
-    const b: x512.V = @bitCast(shifted & mask | tag);
-    const keep = simd.bitmask(b != splat(x512.V, 0)) | x512.pdep(take, 0x8888888888888888);
-    return .{ x512.compress(b, keep), @popCount(keep) };
+    const mask = @select(u32, live, simd.permute2(tables[0][0], lz, tables[0][1]), splat(D, 0));
+    const tag = @select(u32, live, simd.permute2(tables[1][0], lz, tables[1][1]), splat(D, 0));
+    const b: V64 = @bitCast(shifted & mask | tag);
+    const keep = simd.bitmask(b != splat(V64, 0)) | simd.pdep(take, 0x8888888888888888);
+    return .{ simd.compress(b, keep), @popCount(keep) };
 }
 
 /// The UTF-8 of up to 32 code points below U+0800 in `v`, the first `n`,
 /// packed, and its length.
-inline fn utf8Encode512Two(v: @Vector(32, u16), n: usize) struct { x512.V, usize } {
+inline fn utf8Encode512Two(v: @Vector(32, u16), n: usize) struct { V64, usize } {
     const W = @Vector(32, u16);
     const two = (splat(W, 0xC0) | v >> splat(W, 6)) | (splat(W, 0x80) | (v & splat(W, 0x3F))) << splat(W, 8);
-    const b: x512.V = @bitCast(@select(u16, v < splat(W, 0x80), v, two));
-    const keep = (simd.bitmask(b != splat(x512.V, 0)) | 0x5555555555555555) & x512.low(u64, 2 * n);
-    return .{ x512.compress(b, keep), @popCount(keep) };
+    const b: V64 = @bitCast(@select(u16, v < splat(W, 0x80), v, two));
+    const keep = (simd.bitmask(b != splat(V64, 0)) | 0x5555555555555555) & simd.lowBits(u64, 2 * n);
+    return .{ simd.compress(b, keep), @popCount(keep) };
 }
 
 /// UTF-8 for the first `n` of 32 Latin-1 bytes, packed, and its length.
 /// Which bytes to keep comes from the high bits by `pdep`, not from a
 /// compare of the result: the shuffle port, which the compress and the
 /// widening need, is the bottleneck.
-inline fn latin1Encode512(x: @Vector(32, u8), n: usize) struct { x512.V, usize } {
+inline fn latin1Encode512(x: @Vector(32, u8), n: usize) struct { V64, usize } {
     const W = @Vector(32, u16);
     const v: W = x;
     const two = (splat(W, 0xC0) | v >> splat(W, 6)) | (splat(W, 0x80) | (v & splat(W, 0x3F))) << splat(W, 8);
     const high: u32 = simd.bitmask(x >= splat(@Vector(32, u8), 0x80));
-    const b: x512.V = @bitCast(@select(u16, @as(@Vector(32, bool), @bitCast(high)), two, v));
-    const keep = (x512.pdep(high, 0xAAAAAAAAAAAAAAAA) | 0x5555555555555555) & x512.low(u64, 2 * n);
-    return .{ x512.compress(b, keep), @popCount(keep) };
+    const b: V64 = @bitCast(@select(u16, @as(@Vector(32, bool), @bitCast(high)), two, v));
+    const keep = (simd.pdep(high, 0xAAAAAAAAAAAAAAAA) | 0x5555555555555555) & simd.lowBits(u64, 2 * n);
+    return .{ simd.compress(b, keep), @popCount(keep) };
 }
 
 /// UTF-8 for 64 Latin-1 bytes, as two packed halves and their lengths.
 /// The lead and continuation bytes are computed in byte lanes and
 /// interleaved by a two-source byte permute, not widened to 16-bit lanes,
 /// which takes fewer shuffle-port operations.
-inline fn latin1Encode512Block(v: x512.V) [2]struct { x512.V, usize } {
-    const V = x512.V;
+inline fn latin1Encode512Block(v: V64) [2]struct { V64, usize } {
+    const V = V64;
     const high = simd.bitmask(v >= splat(V, 0x80));
     const lead = @select(u8, @as(@Vector(64, bool), @bitCast(high)), v >> splat(V, 6) | splat(V, 0xC0), v);
     const cont = (v & splat(V, 0x3F)) | splat(V, 0x80);
@@ -1710,18 +1551,18 @@ inline fn latin1Encode512Block(v: x512.V) [2]struct { x512.V, usize } {
             for (&m, 0..) |*x, j| x.* = if (j % 2 == 0) 32 * h + j / 2 else ~@as(i32, 32 * h + j / 2);
             break :blk m;
         });
-        const keep = x512.pdep(@as(u32, @truncate(high >> 32 * h)), 0xAAAAAAAAAAAAAAAA) | 0x5555555555555555;
-        out[h] = .{ x512.compress(pairs, keep), @popCount(keep) };
+        const keep = simd.pdep(@as(u32, @truncate(high >> 32 * h)), 0xAAAAAAAAAAAAAAAA) | 0x5555555555555555;
+        out[h] = .{ simd.compress(pairs, keep), @popCount(keep) };
     }
     return out;
 }
 
 /// Stores packed UTF-8 at `dst[o.*..]` and advances `o`; false, storing
 /// nothing, if it does not fit.
-inline fn put512(dst: []u8, o: *usize, packed_bytes: struct { x512.V, usize }) bool {
+inline fn put512(dst: []u8, o: *usize, packed_bytes: struct { V64, usize }) bool {
     const bytes, const n = packed_bytes;
     if (n > dst.len - o.*) return false;
-    x512.storePartial(u8, dst, o.*, bytes, n);
+    simd.storePartial(dst[o.*..], bytes, n);
     o.* += n;
     return true;
 }
@@ -1738,7 +1579,7 @@ inline fn decodePairs512(comptime e: Endian, comptime checked: bool, src: []cons
     const U = @Vector(32, u16);
     const D = @Vector(16, u32);
     const n = @min(src.len, 32);
-    const live = x512.low(u32, n);
+    const live = simd.lowBits(u32, n);
     const hi = simd.bitmask(v & splat(U, 0xFC00) == splat(U, 0xD800)) & live;
     const lo = simd.bitmask(v & splat(U, 0xFC00) == splat(U, 0xDC00)) & live;
     const more = src.len > 32;
@@ -1781,7 +1622,7 @@ fn utf16ToUtf8Avx512(comptime e: Endian, comptime checked: bool, src: []const u1
     while (p < src.len) {
         const rem = src.len - p;
         const n = @min(rem, 32);
-        var v: U = if (rem >= 32) simd.load(u16, src[p..]) else x512.loadPartial(u16, src[p..], n);
+        var v: U = if (rem >= 32) simd.load(u16, src[p..]) else simd.loadShort(u16, src[p..][0..n]);
         if (e != native) v = @byteSwap(v);
         if (below(0x80, v)) {
             if (n > dst.len - o) break;
@@ -1789,7 +1630,7 @@ fn utf16ToUtf8Avx512(comptime e: Endian, comptime checked: bool, src: []const u1
             if (n == 32) {
                 dst[o..][0..32].* = narrow;
             } else {
-                x512.storePartial(u8, dst, o, @bitCast([2]@Vector(32, u8){ narrow, @splat(0) }), n);
+                simd.storePartial(dst[o..], @as(V64, @bitCast([2]@Vector(32, u8){ narrow, @splat(0) })), n);
             }
             p += n;
             o += n;
@@ -1810,7 +1651,7 @@ fn utf16ToUtf8Avx512(comptime e: Endian, comptime checked: bool, src: []const u1
             p += n;
             continue;
         }
-        const live = x512.low(u32, n);
+        const live = simd.lowBits(u32, n);
         const surrogates = simd.bitmask(v & splat(U, 0xF800) == splat(U, 0xD800)) & live;
         const a: [32]u16 = v;
         if (surrogates == 0) {
@@ -1871,13 +1712,13 @@ fn utf32ToUtf8Avx512(comptime checked: bool, src: []const u32, dst: []u8) struct
             }
         }
         const n = @min(rem, 16);
-        const v: D = if (rem >= 16) simd.load(u32, src[p..]) else x512.loadPartial(u32, src[p..], n);
+        const v: D = if (rem >= 16) simd.load(u32, src[p..]) else simd.loadShort(u32, src[p..][0..n]);
         if (checked) {
             const too_big = v > splat(D, 0x10FFFF);
             const surrogates = v & splat(D, 0xFFFFF800) == splat(D, 0xD800);
             if (simd.bitmask(too_big) | simd.bitmask(surrogates) != 0) break;
         }
-        if (!put512(dst, &o, utf8Encode512(v, x512.low(u16, n)))) break;
+        if (!put512(dst, &o, utf8Encode512(v, simd.lowBits(u16, n)))) break;
         p += n;
     }
     return .{ p, o };
@@ -2029,7 +1870,7 @@ fn utf16ToUtf32Avx512(
     while (p < src.len) {
         const rem = src.len - p;
         const n = @min(rem, 32);
-        var v: U = if (rem >= 32) simd.load(u16, src[p..]) else x512.loadPartial(u16, src[p..], n);
+        var v: U = if (rem >= 32) simd.load(u16, src[p..]) else simd.loadShort(u16, src[p..][0..n]);
         if (e != native) v = @byteSwap(v);
         const a: [32]u16 = v;
         if (simd.bitmask(v & splat(U, 0xF800) == splat(U, 0xD800)) == 0) {
@@ -2038,8 +1879,10 @@ fn utf16ToUtf32Avx512(
                 store(u32, native, dst, o, @as(D, @as(@Vector(16, u16), a[0..16].*)));
                 store(u32, native, dst, o + 16, @as(D, @as(@Vector(16, u16), a[16..32].*)));
             } else {
-                x512.storePartial(u32, dst, o, @as(@Vector(16, u16), a[0..16].*), n);
-                if (n > 16) x512.storePartial(u32, dst, o + 16, @as(@Vector(16, u16), a[16..32].*), n - 16);
+                const lo: @Vector(16, u16) = a[0..16].*;
+                const hi: @Vector(16, u16) = a[16..32].*;
+                simd.storePartial(dst[o..], @as(@Vector(16, u32), lo), n);
+                if (n > 16) simd.storePartial(dst[o + 16 ..], @as(@Vector(16, u32), hi), n - 16);
             }
             p += n;
             o += n;
@@ -2067,8 +1910,8 @@ fn utf16ToUtf32Avx512(
         const n0: usize = @popCount(t0);
         const n1: usize = @popCount(t1);
         if (n0 + n1 > dst.len - o) break;
-        x512.storePartial(u32, dst, o, x512.compress(d.cp[0], t0), n0);
-        x512.storePartial(u32, dst, o + n0, x512.compress(d.cp[1], t1), n1);
+        simd.storePartial(dst[o..], simd.compress(d.cp[0], t0), n0);
+        simd.storePartial(dst[o + n0 ..], simd.compress(d.cp[1], t1), n1);
         p += d.consumed;
         o += n0 + n1;
     }
@@ -2124,7 +1967,7 @@ fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16
             inline for (0..4) |g| {
                 const keep: u4 = @truncate(take >> 4 * g);
                 const lanes: @Vector(4, u32) = c[4 * g ..][0..4].*;
-                const kept = simd.lookup16(@bitCast(lanes), loadVolatile(&compress32[keep]));
+                const kept = simd.lookup16(@bitCast(lanes), simd.loadVolatile(V16, &compress32[keep]));
                 dst[o..][0..4].* = @as(@Vector(4, u32), @bitCast(kept));
                 o += @popCount(keep);
             }
@@ -2168,24 +2011,24 @@ fn utf32ToUtf16Avx512(
             }
         }
         const n = @min(rem, 16);
-        const v: D = if (rem >= 16) simd.load(u32, src[p..]) else x512.loadPartial(u32, src[p..], n);
+        const v: D = if (rem >= 16) simd.load(u32, src[p..]) else simd.loadShort(u32, src[p..][0..n]);
         if (checked) {
             const too_big = v > splat(D, 0x10FFFF);
             const surrogates = v & splat(D, 0xFFFFF800) == splat(D, 0xD800);
             if (simd.bitmask(too_big) | simd.bitmask(surrogates) != 0) break;
         }
         // Each lane as one unit, or as a high and a low surrogate.
-        const pairs: u16 = simd.bitmask(v >= splat(D, 0x10000)) & x512.low(u16, n);
+        const pairs: u16 = simd.bitmask(v >= splat(D, 0x10000)) & simd.lowBits(u16, n);
         const s = v -% splat(D, 0x10000);
         const hi = splat(D, 0xD800) | s >> splat(D, 10);
         const lo = splat(D, 0xDC00) | (s & splat(D, 0x3FF));
         const pair = hi | lo << splat(D, 16);
-        const keep: u32 = @truncate(x512.pdep(x512.low(u16, n), 0x55555555) | x512.pdep(pairs, 0xAAAAAAAA));
+        const keep: u32 = @truncate(simd.pdep(simd.lowBits(u16, n), 0x55555555) | simd.pdep(pairs, 0xAAAAAAAA));
         const count: usize = @popCount(keep);
         if (count > dst.len - o) break;
-        var w = x512.compress(@as(W, @bitCast(@select(u32, @as(@Vector(16, bool), @bitCast(pairs)), pair, v))), keep);
+        var w = simd.compress(@as(W, @bitCast(@select(u32, @as(@Vector(16, bool), @bitCast(pairs)), pair, v))), keep);
         if (e != native) w = @byteSwap(w);
-        x512.storePartial(u16, dst, o, w, count);
+        simd.storePartial(dst[o..], w, count);
         p += n;
         o += count;
     }
@@ -2220,7 +2063,7 @@ fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32
                 const sb = b & splat(W, 0xF800) == splat(W, 0xD800);
                 if (@reduce(.Or, @select(bool, sa, sa, sb))) break;
             }
-            store(u16, e, dst, o, narrowUnits(@bitCast([2]W{ a, b })));
+            store(u16, e, dst, o, simd.narrow(u16, @as(@Vector(32, u32), @bitCast([2]W{ a, b }))));
             p += 32;
             o += 32;
         }
@@ -2245,7 +2088,10 @@ fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32
                 const s = cp -% splat(U32x4, 0x10000);
                 const pair = (splat(U32x4, 0xD800) | s >> splat(U32x4, 10)) |
                     (splat(U32x4, 0xDC00) | (s & splat(U32x4, 0x3FF))) << splat(U32x4, 16);
-                const units = simd.lookup16(@bitCast(@select(u32, pairs, pair, cp)), loadVolatile(&utf16_pairs[mask]));
+                const units = simd.lookup16(
+                    @bitCast(@select(u32, pairs, pair, cp)),
+                    simd.loadVolatile(V16, &utf16_pairs[mask]),
+                );
                 store(u16, e, dst, o, @as(@Vector(8, u16), @bitCast(units)));
                 o += 4 + @as(usize, @popCount(mask));
             }
@@ -2270,13 +2116,13 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
             if (checked and !below(0x100, v)) break;
             if (v512) {
                 // The low bytes of both vectors in one permute and one store.
-                const halves: [2]x512.V = @bitCast(v);
+                const halves: [2]V64 = @bitCast(v);
                 const even = comptime blk: {
                     var t: [64]u8 = undefined;
                     for (&t, 0..) |*x, i| x.* = @intCast(2 * i);
                     break :blk t;
                 };
-                store(u8, native, dst, p, x512.permute2(halves[0], even, halves[1]));
+                store(u8, native, dst, p, simd.permute2(halves[0], even, halves[1]));
             } else {
                 dst[p..][0..64].* = @as(@Vector(64, u8), @truncate(v));
             }
@@ -2291,10 +2137,10 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
         if (v512) while (p < src.len) {
             const n = @min(src.len - p, 32);
             if (n > dst.len - p) break;
-            var v = x512.loadPartial(u16, src[p..], n);
+            var v = simd.loadShort(u16, src[p..][0..n]);
             if (e != native) v = @byteSwap(v);
             if (checked and !below(0x100, v)) break;
-            x512.storePartial(u8, dst, p, @bitCast([2]@Vector(32, u8){ @truncate(v), @splat(0) }), n);
+            simd.storePartial(dst[p..], @as(V64, @bitCast([2]@Vector(32, u8){ @truncate(v), @splat(0) })), n);
             p += n;
         };
     }
@@ -2309,7 +2155,7 @@ fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) Result
         while (src.len - p >= 64 and dst.len - p >= 64) : (step = 64) {
             const v: @Vector(64, u32) = src[p..][0..64].*;
             if (checked and !below(0x100, v)) break;
-            dst[p..][0..64].* = narrowLatin1(v);
+            dst[p..][0..64].* = simd.narrow(u8, v);
             p += step;
         }
         while (src.len - p >= 16 and dst.len - p >= 16) {
@@ -2321,59 +2167,14 @@ fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) Result
         if (v512) while (p < src.len) {
             const n = @min(src.len - p, 16);
             if (n > dst.len - p) break;
-            const v = x512.loadPartial(u32, src[p..], n);
+            const v = simd.loadShort(u32, src[p..][0..n]);
             if (checked and !below(0x100, v)) break;
-            x512.storePartial(u8, dst, p, @bitCast([4]V16{ @truncate(v), @splat(0), @splat(0), @splat(0) }), n);
+            simd.storePartial(dst[p..], @as(V64, @bitCast([4]V16{ @truncate(v), @splat(0), @splat(0), @splat(0) })), n);
             p += n;
         };
     }
     if (checked) return tail(scalar.utf32ToLatin1(src[p..], dst[p..]), p, p);
     return .ok(p + scalar.validUtf32ToLatin1(src[p..], dst[p..]));
-}
-
-extern fn @"llvm.x86.avx2.packusdw"(@Vector(8, u32), @Vector(8, u32)) @Vector(16, u16);
-extern fn @"llvm.x86.sse41.packusdw"(@Vector(4, u32), @Vector(4, u32)) @Vector(8, u16);
-
-/// The low halves of 32 values below 0x10000 (or, in a valid form,
-/// anything): saturating packs, where a truncation masks each lane first.
-inline fn narrowUnits(v: @Vector(32, u32)) @Vector(32, u16) {
-    if (builtin.zig_backend != .stage2_llvm) return @truncate(v);
-    switch (simd.isa) {
-        .avx2 => {
-            const q: [4]@Vector(8, u32) = @bitCast(v);
-            var out: [2]@Vector(16, u16) = undefined;
-            inline for (0..2) |h| {
-                const lanes: @Vector(4, u64) = @bitCast(@"llvm.x86.avx2.packusdw"(q[2 * h], q[2 * h + 1]));
-                out[h] = @bitCast(@shuffle(u64, lanes, undefined, [4]i32{ 0, 2, 1, 3 }));
-            }
-            return @bitCast(out);
-        },
-        .sse => if (comptime std.Target.x86.featureSetHas(builtin.cpu.features, .sse4_1)) {
-            const q: [8]@Vector(4, u32) = @bitCast(v);
-            var out: [4]@Vector(8, u16) = undefined;
-            inline for (0..4) |h| out[h] = @"llvm.x86.sse41.packusdw"(q[2 * h], q[2 * h + 1]);
-            return @bitCast(out);
-        } else return @truncate(v),
-        else => return @truncate(v),
-    }
-}
-extern fn @"llvm.x86.avx2.packuswb"(@Vector(16, u16), @Vector(16, u16)) @Vector(32, u8);
-extern fn @"llvm.x86.avx2.permd"(@Vector(8, u32), @Vector(8, u32)) @Vector(8, u32);
-
-/// The low bytes of 64 code points below U+0100 (or, in a valid form,
-/// anything). On AVX2 two saturating packs and a lane permute do it, where
-/// a truncation masks each lane first and fixes the lane order twice.
-inline fn narrowLatin1(v: @Vector(64, u32)) @Vector(64, u8) {
-    if (simd.isa != .avx2 or builtin.zig_backend != .stage2_llvm) return @truncate(v);
-    const q: [8]@Vector(8, u32) = @bitCast(v);
-    var out: [2]@Vector(32, u8) = undefined;
-    inline for (0..2) |h| {
-        const ab = @"llvm.x86.avx2.packusdw"(q[4 * h], q[4 * h + 1]);
-        const cd = @"llvm.x86.avx2.packusdw"(q[4 * h + 2], q[4 * h + 3]);
-        const bytes: @Vector(8, u32) = @bitCast(@"llvm.x86.avx2.packuswb"(ab, cd));
-        out[h] = @bitCast(@"llvm.x86.avx2.permd"(bytes, .{ 0, 4, 1, 5, 2, 6, 3, 7 }));
-    }
-    return @bitCast(out);
 }
 
 // UTF-16 byte-order swap: a copy, validated like UTF-16 to UTF-8.
@@ -2475,7 +2276,7 @@ fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
         }
         const n = @min(rem, 32);
         const v: @Vector(32, u8) = if (rem >= 32) src[p..][0..32].* else blk: {
-            const a: [64]u8 = x512.loadPartial(u8, src[p..], n);
+            const a: [64]u8 = simd.loadShort(u8, src[p..][0..n]);
             break :blk a[0..32].*;
         };
         if (!put512(dst, &o, latin1Encode512(v, n))) break;
@@ -2541,7 +2342,7 @@ fn latin1ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, s
             p += 16;
         }
         if (v512 and p < src.len and src.len - p <= dst.len - p) {
-            x512.storeWidened(T, e, dst, p, x512.loadPartial(u8, src[p..], src.len - p), src.len - p);
+            storeWidened(T, e, dst, p, simd.loadShort(u8, src[p..][0 .. src.len - p]), src.len - p);
             p = src.len;
         }
     }
