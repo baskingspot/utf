@@ -2134,6 +2134,20 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
             dst[p..][0..32].* = @as(@Vector(32, u8), @truncate(v));
             p += 32;
         }
+        // The last 1-31 units as two 16-unit vectors, the second ending
+        // at the end, rewriting some already narrowed: scalar code took
+        // 15-20 ns on 16 units.
+        if (!v512 and src.len - p -% 1 < 31 and src.len >= 16 and dst.len >= src.len) {
+            const q = src.len - 16;
+            const s = @min(p, q);
+            const lo = load16(e, 16, src, s);
+            const hi = load16(e, 16, src, q);
+            if (!checked or below(0x100, lo | hi)) {
+                dst[s..][0..16].* = @as(V16, @truncate(lo));
+                dst[q..][0..16].* = @as(V16, @truncate(hi));
+                p = src.len;
+            }
+        }
         if (v512) while (p < src.len) {
             const n = @min(src.len - p, 32);
             if (n > dst.len - p) break;
