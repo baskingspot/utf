@@ -1,0 +1,707 @@
+                                    │    simdutf     │                   utf                   │                   std                   │                  rust                   │                   go                   │
+                                    │      GB/s      │      GB/s       vs base                 │      GB/s       vs base                 │      GB/s       vs base                 │     GB/s       vs base                 │
+Utf8ToUtf16le/ascii-16                 1569.2m ± ∞ ¹    1398.0m ± ∞ ¹        ~ (p=0.100 n=3) ²    2534.7m ± ∞ ¹        ~ (p=0.100 n=3) ²     909.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    426.4m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/ascii-64                 6594.8m ± ∞ ¹    5525.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    7801.0m ± ∞ ¹        ~ (p=0.100 n=3) ²    3428.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    498.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/ascii-256               13511.8m ± ∞ ¹   16339.2m ± ∞ ¹        ~ (p=0.100 n=3) ²   15740.1m ± ∞ ¹        ~ (p=0.100 n=3) ²    5475.1m ± ∞ ¹        ~ (p=0.100 n=3) ²    551.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/ascii-4096              15905.0m ± ∞ ¹   30268.3m ± ∞ ¹        ~ (p=0.100 n=3) ²   23566.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    7657.1m ± ∞ ¹        ~ (p=0.100 n=3) ²    480.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/ascii-65536             15388.2m ± ∞ ¹   20922.0m ± ∞ ¹        ~ (p=0.100 n=3) ²   21400.1m ± ∞ ¹        ~ (p=0.100 n=3) ²    7923.5m ± ∞ ¹        ~ (p=0.100 n=3) ²    422.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/emoji                    3426.1m ± ∞ ¹    5024.0m ± ∞ ¹        ~ (p=0.100 n=3) ²     244.0m ± ∞ ¹        ~ (p=0.100 n=3) ²    1084.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    701.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/hebrew                   4907.6m ± ∞ ¹    4973.6m ± ∞ ¹        ~ (p=0.100 n=3) ²     123.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     907.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    351.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/korean                   4526.5m ± ∞ ¹    5108.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     195.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     965.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    496.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/japanese                 4603.7m ± ∞ ¹    5197.4m ± ∞ ¹        ~ (p=0.100 n=3) ²     218.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    1492.5m ± ∞ ¹        ~ (p=0.100 n=3) ²    605.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/chinese                  4662.0m ± ∞ ¹    5278.4m ± ∞ ¹        ~ (p=0.100 n=3) ²     222.3m ± ∞ ¹        ~ (p=0.100 n=3) ²    1560.8m ± ∞ ¹        ~ (p=0.100 n=3) ²    652.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/arabic                   4925.8m ± ∞ ¹    5054.5m ± ∞ ¹        ~ (p=0.400 n=3) ²     126.5m ± ∞ ¹        ~ (p=0.100 n=3) ²    1005.7m ± ∞ ¹        ~ (p=0.100 n=3) ²    353.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/latin                   15503.5m ± ∞ ¹   20841.6m ± ∞ ¹        ~ (p=0.100 n=3) ²   20727.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    7918.5m ± ∞ ¹        ~ (p=0.100 n=3) ²    401.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/hindi                    4580.5m ± ∞ ¹    5190.7m ± ∞ ¹        ~ (p=0.100 n=3) ²     195.9m ± ∞ ¹        ~ (p=0.100 n=3) ²     867.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    458.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/russian                  4787.2m ± ∞ ¹    5014.9m ± ∞ ¹        ~ (p=0.400 n=3) ²     118.8m ± ∞ ¹        ~ (p=0.100 n=3) ²     626.1m ± ∞ ¹        ~ (p=0.100 n=3) ²    313.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16le/ascii-1048576            8638.9m ± ∞ ¹    9824.0m ± ∞ ¹        ~ (p=0.100 n=3) ²   10402.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    7138.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    342.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-16              1.227 ± ∞ ¹      1.999 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.364 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-64              8.687 ± ∞ ¹      7.501 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                4.234 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-256            24.103 ± ∞ ¹     17.791 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.596 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-4096           40.561 ± ∞ ¹     31.238 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                8.043 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-65536          19.108 ± ∞ ¹     21.306 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                8.118 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/emoji                 2.121 ± ∞ ¹      5.592 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                2.398 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/hebrew              3535.4m ± ∞ ¹    5594.9m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               997.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/korean                4.227 ± ∞ ¹      5.745 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.233 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/japanese              4.190 ± ∞ ¹      5.806 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                2.234 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/chinese               4.296 ± ∞ ¹      5.674 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                2.325 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/arabic                3.546 ± ∞ ¹      5.603 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.034 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/latin                19.445 ± ∞ ¹     21.587 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.990 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/hindi                 4.191 ± ∞ ¹      5.783 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.002 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/russian             3507.0m ± ∞ ¹    5744.1m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               614.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16le/ascii-1048576         9.390 ± ∞ ¹      9.800 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                7.281 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/ascii-16                   1.576 ± ∞ ¹      1.481 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/ascii-64                   6.450 ± ∞ ¹      5.689 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/ascii-256                  12.04 ± ∞ ¹      16.24 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/ascii-4096                 13.59 ± ∞ ¹      29.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/ascii-65536                13.82 ± ∞ ¹      20.31 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/emoji                      3.448 ± ∞ ¹      5.281 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/hebrew                     4.697 ± ∞ ¹      5.051 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/korean                     4.589 ± ∞ ¹      5.170 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/japanese                   4.706 ± ∞ ¹      5.401 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/chinese                    4.755 ± ∞ ¹      5.479 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/arabic                     4.767 ± ∞ ¹      5.130 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf8ToUtf16be/latin                      13.67 ± ∞ ¹      20.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/hindi                      4.574 ± ∞ ¹      5.203 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf16be/russian                    4.766 ± ∞ ¹      5.075 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf8ToUtf16be/ascii-1048576              9.072 ± ∞ ¹      9.118 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf8ToUtf16be/ascii-16              1.211 ± ∞ ¹      1.984 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/ascii-64              9.053 ± ∞ ¹      7.376 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/ascii-256             21.42 ± ∞ ¹      18.15 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/ascii-4096            32.03 ± ∞ ¹      31.96 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf8ToUtf16be/ascii-65536           19.69 ± ∞ ¹      20.75 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf8ToUtf16be/emoji                 2.109 ± ∞ ¹      5.700 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/hebrew                3.331 ± ∞ ¹      5.517 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/korean                4.037 ± ∞ ¹      5.588 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/japanese              4.070 ± ∞ ¹      5.644 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/chinese               4.020 ± ∞ ¹      5.722 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/arabic                3.405 ± ∞ ¹      5.687 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/latin                 19.81 ± ∞ ¹      21.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/hindi                 4.122 ± ∞ ¹      5.560 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/russian               3.138 ± ∞ ¹      5.530 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf16be/ascii-1048576         8.901 ± ∞ ¹      9.822 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-16                    85.40m ± ∞ ¹   1335.10m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                       647.90m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-64                   6655.3m ± ∞ ¹    4997.5m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        709.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-256                 14779.5m ± ∞ ¹   13794.6m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        734.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-4096                20778.4m ± ∞ ¹   22291.0m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        747.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-65536               10015.5m ± ∞ ¹   10706.6m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        768.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/emoji                      3886.8m ± ∞ ¹    5245.4m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        938.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/hebrew                     3297.9m ± ∞ ¹    4825.2m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        430.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/korean                     3781.2m ± ∞ ¹    5330.3m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        692.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/japanese                   3855.3m ± ∞ ¹    5230.6m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        675.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/chinese                    3919.9m ± ∞ ¹    5273.3m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        741.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/arabic                     3335.0m ± ∞ ¹    4759.5m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        438.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/latin                      9675.7m ± ∞ ¹   10586.4m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        752.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/hindi                      3766.7m ± ∞ ¹    5082.7m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        477.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/russian                    3377.3m ± ∞ ¹    4679.1m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        346.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToUtf32/ascii-1048576              4951.6m ± ∞ ¹    5474.6m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        774.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-16                1.190 ± ∞ ¹      2.034 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-64                8.222 ± ∞ ¹      6.427 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-256               18.85 ± ∞ ¹      14.11 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-4096              20.77 ± ∞ ¹      22.70 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-65536             9.691 ± ∞ ¹     10.598 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/emoji                   4.993 ± ∞ ¹      6.011 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/hebrew                  4.247 ± ∞ ¹      5.253 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/korean                  4.968 ± ∞ ¹      5.379 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/japanese                4.944 ± ∞ ¹      5.715 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/chinese                 4.858 ± ∞ ¹      5.657 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/arabic                  4.349 ± ∞ ¹      5.208 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/latin                   9.677 ± ∞ ¹     10.358 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf8ToUtf32/hindi                   4.917 ± ∞ ¹      5.376 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/russian                 4.276 ± ∞ ¹      5.177 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToUtf32/ascii-1048576           5.195 ± ∞ ¹      5.464 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-16                    2.478 ± ∞ ¹      1.316 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/latin1-16                   2.316 ± ∞ ¹      1.573 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-64                    8.714 ± ∞ ¹      5.976 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/latin1-64                   7.384 ± ∞ ¹      4.965 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-256                   23.86 ± ∞ ¹      20.87 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/latin1-256                  12.49 ± ∞ ¹      11.33 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-4096                  67.66 ± ∞ ¹     103.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/latin1-4096                 14.23 ± ∞ ¹      15.82 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-65536                 37.80 ± ∞ ¹      39.79 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/latin1-65536                13.91 ± ∞ ¹      14.72 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf8ToLatin1/latin                       36.69 ± ∞ ¹      39.68 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8ToLatin1/ascii-1048576               25.08 ± ∞ ¹      26.53 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf8ToLatin1/latin1-1048576              12.84 ± ∞ ¹      13.12 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf8ToLatin1/ascii-16               2.149 ± ∞ ¹      1.930 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.354 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-16            2657.1m ± ∞ ¹    2327.3m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               898.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/ascii-64              10.688 ± ∞ ¹      9.218 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                4.177 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-64              8.932 ± ∞ ¹      6.813 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.185 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/ascii-256             27.409 ± ∞ ¹     30.048 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.061 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-256            19.401 ± ∞ ¹     16.116 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.619 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/ascii-4096            69.705 ± ∞ ¹     93.471 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.541 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-4096           25.107 ± ∞ ¹     23.358 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.630 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/ascii-65536           35.621 ± ∞ ¹     38.913 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.544 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-65536        19770.0m ± ∞ ¹   23651.4m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               649.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin                 34.893 ± ∞ ¹     41.409 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.469 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/ascii-1048576         23.718 ± ∞ ¹     25.991 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.456 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf8ToLatin1/latin1-1048576      17063.2m ± ∞ ¹   17683.8m ± ∞ ¹        ~ (p=0.700 n=3) ²                                               560.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-16                   3.772 ± ∞ ¹      2.680 ± ∞ ¹        ~ (p=0.100 n=3) ²      6.152 ± ∞ ¹        ~ (p=0.100 n=3) ²      2.443 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.716 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-64                  10.777 ± ∞ ¹     10.403 ± ∞ ¹        ~ (p=0.100 n=3) ²     18.189 ± ∞ ¹        ~ (p=0.100 n=3) ²      7.869 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.932 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-256                 29.481 ± ∞ ¹     33.368 ± ∞ ¹        ~ (p=0.100 n=3) ²     34.510 ± ∞ ¹        ~ (p=0.100 n=3) ²     11.642 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.881 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-4096                55.635 ± ∞ ¹     72.714 ± ∞ ¹        ~ (p=0.100 n=3) ²     43.994 ± ∞ ¹        ~ (p=0.100 n=3) ²     16.763 ± ∞ ¹        ~ (p=0.100 n=3) ²     2.029 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/japanese                 6041.8m ± ∞ ¹    8111.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     713.4m ± ∞ ¹        ~ (p=0.100 n=3) ²     887.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    601.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/chinese                  5936.4m ± ∞ ¹    7785.3m ± ∞ ¹        ~ (p=0.100 n=3) ²     747.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     933.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    666.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/korean                   5952.6m ± ∞ ¹    7792.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     828.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    1204.8m ± ∞ ¹        ~ (p=0.100 n=3) ²    629.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/hindi                    6079.8m ± ∞ ¹    7690.6m ± ∞ ¹        ~ (p=0.100 n=3) ²     487.6m ± ∞ ¹        ~ (p=0.100 n=3) ²     650.0m ± ∞ ¹        ~ (p=0.100 n=3) ²    455.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/emoji                    4822.5m ± ∞ ¹   13729.3m ± ∞ ¹        ~ (p=0.100 n=3) ²    1080.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    1339.7m ± ∞ ¹        ~ (p=0.100 n=3) ²    912.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/hebrew                  15270.5m ± ∞ ¹   14004.3m ± ∞ ¹        ~ (p=0.100 n=3) ²     865.5m ± ∞ ¹        ~ (p=0.100 n=3) ²    1356.8m ± ∞ ¹        ~ (p=0.100 n=3) ²    490.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/arabic                  15228.5m ± ∞ ¹   13795.8m ± ∞ ¹        ~ (p=0.100 n=3) ²     842.0m ± ∞ ¹        ~ (p=0.100 n=3) ²    1355.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    480.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/russian                 14989.9m ± ∞ ¹   14408.4m ± ∞ ¹        ~ (p=0.200 n=3) ²     467.9m ± ∞ ¹        ~ (p=0.100 n=3) ²     656.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    476.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-65536               53.870 ± ∞ ¹     58.306 ± ∞ ¹        ~ (p=0.100 n=3) ²     44.710 ± ∞ ¹        ~ (p=0.100 n=3) ²     16.046 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.984 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/latin                     55.964 ± ∞ ¹     56.367 ± ∞ ¹        ~ (p=1.000 n=3) ²      1.036 ± ∞ ¹        ~ (p=0.100 n=3) ²     17.382 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.951 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf8/ascii-1048576             19.990 ± ∞ ¹     19.350 ± ∞ ¹        ~ (p=1.000 n=3) ²     22.092 ± ∞ ¹        ~ (p=0.100 n=3) ²     16.295 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.897 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/ascii-16              3.512 ± ∞ ¹      3.680 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16leToUtf8/ascii-64              10.51 ± ∞ ¹      12.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/ascii-256             29.89 ± ∞ ¹      25.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/ascii-4096            56.03 ± ∞ ¹      72.46 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/japanese              6.003 ± ∞ ¹      7.751 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/chinese               5.981 ± ∞ ¹      8.085 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/korean                6.021 ± ∞ ¹      7.670 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/hindi                 5.948 ± ∞ ¹      8.129 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/emoji                 4.962 ± ∞ ¹     14.295 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/hebrew                14.98 ± ∞ ¹      16.48 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16leToUtf8/arabic                15.05 ± ∞ ¹      14.22 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/russian               15.26 ± ∞ ¹      14.40 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/ascii-65536           54.38 ± ∞ ¹      56.55 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/latin                 54.94 ± ∞ ¹      58.16 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf8/ascii-1048576         19.59 ± ∞ ¹      18.95 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-16                2.321 ± ∞ ¹      2.811 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-64                7.994 ± ∞ ¹     11.663 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-256               23.86 ± ∞ ¹      20.18 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-4096              48.46 ± ∞ ¹      42.42 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/japanese                25.81 ± ∞ ¹      31.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/chinese                 25.49 ± ∞ ¹      30.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/korean                  25.43 ± ∞ ¹      30.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/hindi                   26.34 ± ∞ ¹      31.42 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/emoji                   21.54 ± ∞ ¹      30.66 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/hebrew                  25.68 ± ∞ ¹      30.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/arabic                  25.03 ± ∞ ¹      36.88 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/russian                 26.09 ± ∞ ¹      36.64 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-65536             25.70 ± ∞ ¹      36.36 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/latin                   26.26 ± ∞ ¹      31.31 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf16be/ascii-1048576           10.14 ± ∞ ¹      13.93 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-16           5.255 ± ∞ ¹      4.546 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-64           21.25 ± ∞ ¹      19.79 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-256          56.82 ± ∞ ¹      31.04 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-4096         78.87 ± ∞ ¹      93.51 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/japanese           35.90 ± ∞ ¹      38.66 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/chinese            36.33 ± ∞ ¹      40.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/korean             36.47 ± ∞ ¹      42.46 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/hindi              35.85 ± ∞ ¹      40.67 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/emoji              36.47 ± ∞ ¹      40.02 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/hebrew             35.54 ± ∞ ¹      40.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/arabic             35.95 ± ∞ ¹      39.77 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/russian            35.81 ± ∞ ¹      39.76 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-65536        35.49 ± ∞ ¹      40.01 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/latin              35.74 ± ∞ ¹      39.59 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf16be/ascii-1048576      13.92 ± ∞ ¹      14.05 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf16leToUtf32/ascii-16                  1.603 ± ∞ ¹      2.767 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/ascii-64                  13.41 ± ∞ ¹      10.27 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/ascii-256                 31.95 ± ∞ ¹      30.71 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/ascii-4096                35.72 ± ∞ ¹      45.59 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/japanese                  20.01 ± ∞ ¹      21.08 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16leToUtf32/chinese                   19.80 ± ∞ ¹      21.34 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/korean                    20.09 ± ∞ ¹      22.11 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/hindi                     20.38 ± ∞ ¹      21.26 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16leToUtf32/emoji                     12.29 ± ∞ ¹      21.77 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/hebrew                    20.50 ± ∞ ¹      20.73 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf16leToUtf32/arabic                    19.80 ± ∞ ¹      21.21 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/russian                   20.68 ± ∞ ¹      21.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/ascii-65536               20.06 ± ∞ ¹      21.20 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/latin                     19.96 ± ∞ ¹      21.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToUtf32/ascii-1048576             8.640 ± ∞ ¹      8.567 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf16leToUtf32/ascii-16             1.798 ± ∞ ¹      3.874 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/ascii-64             13.52 ± ∞ ¹      13.46 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf16leToUtf32/ascii-256            32.60 ± ∞ ¹      24.94 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/ascii-4096           36.47 ± ∞ ¹      46.32 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/japanese             20.36 ± ∞ ¹      21.19 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16leToUtf32/chinese              19.87 ± ∞ ¹      21.80 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/korean               20.29 ± ∞ ¹      21.29 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/hindi                20.86 ± ∞ ¹      21.49 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16leToUtf32/emoji                12.61 ± ∞ ¹      24.14 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/hebrew               20.37 ± ∞ ¹      22.37 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16leToUtf32/arabic               19.97 ± ∞ ¹      20.99 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/russian              21.03 ± ∞ ¹      21.40 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf16leToUtf32/ascii-65536          19.74 ± ∞ ¹      20.84 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/latin                19.60 ± ∞ ¹      21.24 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToUtf32/ascii-1048576        8.518 ± ∞ ¹      8.736 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16leToLatin1/ascii-16                 5.217 ± ∞ ¹      2.877 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/latin1-16                5.301 ± ∞ ¹      2.863 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/ascii-64                 15.73 ± ∞ ¹      12.68 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/latin1-64                16.09 ± ∞ ¹      12.51 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/ascii-256                45.74 ± ∞ ¹      41.27 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/latin1-256               47.08 ± ∞ ¹      41.94 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/ascii-4096               82.80 ± ∞ ¹      90.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/latin1-4096              85.83 ± ∞ ¹     110.10 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/ascii-65536              62.83 ± ∞ ¹      62.24 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16leToLatin1/latin1-65536             60.50 ± ∞ ¹      55.91 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf16leToLatin1/latin                    53.49 ± ∞ ¹      57.23 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16leToLatin1/ascii-1048576            19.34 ± ∞ ¹      19.05 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16leToLatin1/latin1-1048576           19.33 ± ∞ ¹      19.16 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf16leToLatin1/ascii-16            4.945 ± ∞ ¹      4.236 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                3.256 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-16           4.838 ± ∞ ¹      4.222 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                3.277 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/ascii-64            14.52 ± ∞ ¹      20.01 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                10.81 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-64           14.56 ± ∞ ¹      20.00 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                10.64 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/ascii-256           44.39 ± ∞ ¹      55.83 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                21.08 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-256          43.19 ± ∞ ¹      55.72 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                20.45 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/ascii-4096          86.13 ± ∞ ¹     148.15 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                30.79 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-4096         87.03 ± ∞ ¹     114.83 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                31.14 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/ascii-65536         61.60 ± ∞ ¹      56.57 ± ∞ ¹        ~ (p=0.200 n=3) ²                                                21.92 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-65536        60.03 ± ∞ ¹      56.29 ± ∞ ¹        ~ (p=0.200 n=3) ²                                                21.93 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin               52.90 ± ∞ ¹      57.91 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                21.88 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/ascii-1048576       18.93 ± ∞ ¹      19.36 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                17.43 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16leToLatin1/latin1-1048576      19.33 ± ∞ ¹      20.35 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                17.88 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/ascii-16                   3.623 ± ∞ ¹      2.694 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/ascii-64                   10.19 ± ∞ ¹      10.45 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16beToUtf8/ascii-256                  26.76 ± ∞ ¹      30.70 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/ascii-4096                 46.19 ± ∞ ¹      53.71 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/japanese                   5.796 ± ∞ ¹      7.285 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/chinese                    5.689 ± ∞ ¹      7.348 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/korean                     5.973 ± ∞ ¹      7.544 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/hindi                      5.914 ± ∞ ¹      7.369 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/emoji                      4.764 ± ∞ ¹     12.920 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/hebrew                     14.58 ± ∞ ¹      13.39 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/arabic                     14.26 ± ∞ ¹      13.72 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16beToUtf8/russian                    14.08 ± ∞ ¹      13.46 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/ascii-65536                42.95 ± ∞ ¹      51.34 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/latin                      43.97 ± ∞ ¹      50.33 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf8/ascii-1048576              21.13 ± ∞ ¹      20.60 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf8/ascii-16              3.485 ± ∞ ¹      3.494 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToUtf8/ascii-64              10.30 ± ∞ ¹      12.58 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/ascii-256             28.62 ± ∞ ¹      34.95 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/ascii-4096            45.92 ± ∞ ¹      53.68 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/japanese              5.686 ± ∞ ¹      7.273 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/chinese               5.805 ± ∞ ¹      7.020 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/korean                5.819 ± ∞ ¹      7.145 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/hindi                 5.833 ± ∞ ¹      7.289 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/emoji                 4.843 ± ∞ ¹     12.610 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/hebrew                14.44 ± ∞ ¹      13.01 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/arabic                14.67 ± ∞ ¹      13.10 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/russian               14.83 ± ∞ ¹      13.22 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/ascii-65536           43.69 ± ∞ ¹      49.69 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/latin                 43.86 ± ∞ ¹      51.21 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf8/ascii-1048576         20.73 ± ∞ ¹      20.59 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16beToUtf16le/ascii-16                2.406 ± ∞ ¹      2.742 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/ascii-64                8.553 ± ∞ ¹     11.544 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/ascii-256               25.04 ± ∞ ¹      18.77 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/ascii-4096              44.78 ± ∞ ¹      39.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/japanese                25.83 ± ∞ ¹      30.67 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/chinese                 25.45 ± ∞ ¹      34.65 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/korean                  25.00 ± ∞ ¹      30.23 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/hindi                   25.00 ± ∞ ¹      34.47 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/emoji                   20.05 ± ∞ ¹      35.42 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/hebrew                  24.58 ± ∞ ¹      35.82 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/arabic                  24.51 ± ∞ ¹      31.05 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/russian                 24.09 ± ∞ ¹      30.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/ascii-65536             23.44 ± ∞ ¹      30.70 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/latin                   23.85 ± ∞ ¹      34.89 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf16le/ascii-1048576           10.33 ± ∞ ¹      13.18 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/ascii-16           5.487 ± ∞ ¹      4.342 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/ascii-64           21.21 ± ∞ ¹      19.63 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/ascii-256          57.05 ± ∞ ¹      30.06 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/ascii-4096         75.16 ± ∞ ¹      85.56 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/japanese           36.64 ± ∞ ¹      38.35 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf16le/chinese            36.00 ± ∞ ¹      40.05 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/korean             36.13 ± ∞ ¹      40.03 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/hindi              35.93 ± ∞ ¹      38.91 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/emoji              36.12 ± ∞ ¹      38.18 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf16le/hebrew             36.02 ± ∞ ¹      38.44 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf16le/arabic             36.29 ± ∞ ¹      39.21 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/russian            36.26 ± ∞ ¹      39.91 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/ascii-65536        36.35 ± ∞ ¹      41.94 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf16le/latin              36.95 ± ∞ ¹      38.98 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf16le/ascii-1048576      13.99 ± ∞ ¹      14.28 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16beToUtf32/ascii-16                  1.591 ± ∞ ¹      2.742 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/ascii-64                  12.62 ± ∞ ¹      10.10 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/ascii-256                 27.84 ± ∞ ¹      18.20 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/ascii-4096                32.29 ± ∞ ¹      38.36 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/japanese                  20.01 ± ∞ ¹      20.88 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16beToUtf32/chinese                   20.06 ± ∞ ¹      20.95 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/korean                    19.75 ± ∞ ¹      21.07 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/hindi                     20.86 ± ∞ ¹      20.88 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf16beToUtf32/emoji                     11.32 ± ∞ ¹      19.90 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/hebrew                    20.67 ± ∞ ¹      20.80 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16beToUtf32/arabic                    20.07 ± ∞ ¹      21.09 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/russian                   21.07 ± ∞ ¹      20.77 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf16beToUtf32/ascii-65536               20.03 ± ∞ ¹      21.12 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16beToUtf32/latin                     19.11 ± ∞ ¹      20.80 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToUtf32/ascii-1048576             8.332 ± ∞ ¹      8.685 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf16beToUtf32/ascii-16             1.605 ± ∞ ¹      3.725 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/ascii-64             12.82 ± ∞ ¹      12.97 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf16beToUtf32/ascii-256            28.11 ± ∞ ¹      30.87 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/ascii-4096           31.36 ± ∞ ¹      38.93 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/japanese             20.75 ± ∞ ¹      21.17 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/chinese              19.31 ± ∞ ¹      21.10 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/korean               20.34 ± ∞ ¹      20.86 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToUtf32/hindi                20.10 ± ∞ ¹      21.16 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/emoji                11.52 ± ∞ ¹      20.18 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/hebrew               21.30 ± ∞ ¹      21.07 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToUtf32/arabic               19.71 ± ∞ ¹      21.53 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/russian              20.16 ± ∞ ¹      21.04 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToUtf32/ascii-65536          19.63 ± ∞ ¹      21.40 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf16beToUtf32/latin                19.29 ± ∞ ¹      21.26 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToUtf32/ascii-1048576        8.339 ± ∞ ¹      8.614 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16beToLatin1/ascii-16                 5.336 ± ∞ ¹      2.858 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/latin1-16                5.235 ± ∞ ¹      2.839 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/ascii-64                 16.35 ± ∞ ¹      12.52 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/latin1-64                16.17 ± ∞ ¹      12.56 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/ascii-256                46.89 ± ∞ ¹      39.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/latin1-256               46.31 ± ∞ ¹      38.35 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/ascii-4096               64.18 ± ∞ ¹      71.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/latin1-4096              65.32 ± ∞ ¹      77.57 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16beToLatin1/ascii-65536              59.81 ± ∞ ¹      57.78 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16beToLatin1/latin1-65536             58.46 ± ∞ ¹      55.13 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16beToLatin1/latin                    54.04 ± ∞ ¹      55.56 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf16beToLatin1/ascii-1048576            19.80 ± ∞ ¹      19.30 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16beToLatin1/latin1-1048576           20.07 ± ∞ ¹      19.70 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf16beToLatin1/ascii-16            4.678 ± ∞ ¹      4.260 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/latin1-16           4.811 ± ∞ ¹      4.082 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/ascii-64            15.36 ± ∞ ¹      18.86 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/latin1-64           15.76 ± ∞ ¹      18.96 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/ascii-256           44.85 ± ∞ ¹      53.95 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/latin1-256          45.49 ± ∞ ¹      54.47 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/ascii-4096          63.95 ± ∞ ¹     142.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/latin1-4096         64.74 ± ∞ ¹     109.04 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/ascii-65536         57.92 ± ∞ ¹      56.34 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf16beToLatin1/latin1-65536        55.74 ± ∞ ¹      55.79 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToLatin1/latin               54.74 ± ∞ ¹      55.99 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf16beToLatin1/ascii-1048576       19.72 ± ∞ ¹      19.39 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf16beToLatin1/latin1-1048576      20.02 ± ∞ ¹      19.26 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-16                     3.869 ± ∞ ¹      5.760 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         3.709 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-64                    12.582 ± ∞ ¹     24.181 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.612 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-256                   32.109 ± ∞ ¹     45.978 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.380 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-4096                  36.997 ± ∞ ¹     71.833 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.173 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/emoji                        2.330 ± ∞ ¹     14.759 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.078 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/japanese                     8.506 ± ∞ ¹     13.310 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.183 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/chinese                      8.819 ± ∞ ¹     14.108 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.186 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/korean                       8.178 ± ∞ ¹     13.124 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.236 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/hindi                      8754.7m ± ∞ ¹   14271.0m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        857.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/hebrew                      13.572 ± ∞ ¹     25.048 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.010 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/arabic                      13.622 ± ∞ ¹     28.425 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         1.015 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/russian                   14069.5m ± ∞ ¹   25714.2m ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                        918.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-65536                 38.805 ± ∞ ¹     59.947 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.029 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/latin                       33.872 ± ∞ ¹     72.537 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.190 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf8/ascii-1048576               23.258 ± ∞ ¹     21.664 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                                                         4.023 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-16                3.195 ± ∞ ¹      7.832 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-64                10.02 ± ∞ ¹      30.15 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-256               24.98 ± ∞ ¹      62.15 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-4096              36.72 ± ∞ ¹      71.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/emoji                   2.416 ± ∞ ¹     13.932 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/japanese                8.943 ± ∞ ¹     15.991 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/chinese                 8.784 ± ∞ ¹     13.727 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/korean                  8.850 ± ∞ ¹     13.904 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/hindi                   8.704 ± ∞ ¹     13.967 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/hebrew                  14.24 ± ∞ ¹      25.51 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/arabic                  14.25 ± ∞ ¹      25.45 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/russian                 14.69 ± ∞ ¹      25.29 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-65536             39.53 ± ∞ ¹      58.55 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/latin                   37.56 ± ∞ ¹      60.08 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf8/ascii-1048576           24.17 ± ∞ ¹      21.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/ascii-16                  8.352 ± ∞ ¹      5.462 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/ascii-64                  22.65 ± ∞ ¹      21.17 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/ascii-256                 40.22 ± ∞ ¹      39.05 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/ascii-4096                45.33 ± ∞ ¹      41.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/emoji                     16.48 ± ∞ ¹      14.57 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/japanese                  42.60 ± ∞ ¹      39.14 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/chinese                   45.78 ± ∞ ¹      40.27 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/korean                    42.17 ± ∞ ¹      42.51 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf32ToUtf16le/hindi                     41.23 ± ∞ ¹      38.75 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf32ToUtf16le/hebrew                    45.33 ± ∞ ¹      39.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/arabic                    41.67 ± ∞ ¹      39.98 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf32ToUtf16le/russian                   43.81 ± ∞ ¹      42.39 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf32ToUtf16le/ascii-65536               45.64 ± ∞ ¹      38.86 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16le/latin                     43.61 ± ∞ ¹      39.82 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf32ToUtf16le/ascii-1048576             19.16 ± ∞ ¹      18.96 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf32ToUtf16le/ascii-16             8.055 ± ∞ ¹      8.161 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidUtf32ToUtf16le/ascii-64             22.23 ± ∞ ¹      29.11 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/ascii-256            41.08 ± ∞ ¹      56.46 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/ascii-4096           44.32 ± ∞ ¹      61.60 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/emoji                16.59 ± ∞ ¹      16.43 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf32ToUtf16le/japanese             40.69 ± ∞ ¹      54.21 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/chinese              45.63 ± ∞ ¹      52.16 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/korean               41.30 ± ∞ ¹      53.21 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/hindi                41.31 ± ∞ ¹      53.03 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/hebrew               44.79 ± ∞ ¹      59.57 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/arabic               39.74 ± ∞ ¹      53.74 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/russian              44.58 ± ∞ ¹      53.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/ascii-65536          44.71 ± ∞ ¹      59.43 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/latin                41.14 ± ∞ ¹      52.09 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16le/ascii-1048576        18.94 ± ∞ ¹      17.93 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf32ToUtf16be/ascii-16                  7.653 ± ∞ ¹      5.565 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/ascii-64                  22.97 ± ∞ ¹      21.40 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/ascii-256                 33.46 ± ∞ ¹      35.43 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/ascii-4096                37.65 ± ∞ ¹      38.07 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf32ToUtf16be/emoji                     15.21 ± ∞ ¹      16.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/japanese                  36.55 ± ∞ ¹      36.52 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf32ToUtf16be/chinese                   38.84 ± ∞ ¹      38.77 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf32ToUtf16be/korean                    35.89 ± ∞ ¹      36.62 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf32ToUtf16be/hindi                     35.08 ± ∞ ¹      39.54 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/hebrew                    37.94 ± ∞ ¹      36.20 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/arabic                    35.68 ± ∞ ¹      38.35 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/russian                   38.32 ± ∞ ¹      37.11 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/ascii-65536               39.68 ± ∞ ¹      36.22 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/latin                     34.85 ± ∞ ¹      38.52 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToUtf16be/ascii-1048576             20.01 ± ∞ ¹      18.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-16             8.374 ± ∞ ¹      7.744 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-64             21.58 ± ∞ ¹      27.64 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-256            33.68 ± ∞ ¹      52.76 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-4096           37.81 ± ∞ ¹      55.38 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/emoji                15.46 ± ∞ ¹      16.07 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidUtf32ToUtf16be/japanese             35.93 ± ∞ ¹      54.79 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/chinese              37.95 ± ∞ ¹      51.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/korean               36.92 ± ∞ ¹      51.36 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/hindi                36.24 ± ∞ ¹      50.35 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/hebrew               39.82 ± ∞ ¹      50.42 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/arabic               36.43 ± ∞ ¹      50.92 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/russian              37.65 ± ∞ ¹      52.12 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-65536          37.52 ± ∞ ¹      51.48 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/latin                35.95 ± ∞ ¹      53.02 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToUtf16be/ascii-1048576        20.06 ± ∞ ¹      18.57 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/ascii-16                   9.111 ± ∞ ¹      6.456 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/latin1-16                  9.115 ± ∞ ¹      6.504 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/ascii-64                   27.95 ± ∞ ¹      24.04 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/latin1-64                  27.89 ± ∞ ¹      23.87 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/ascii-256                  63.77 ± ∞ ¹      62.41 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf32ToLatin1/latin1-256                 66.00 ± ∞ ¹      67.53 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf32ToLatin1/ascii-4096                 84.19 ± ∞ ¹      82.92 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf32ToLatin1/latin1-4096                82.29 ± ∞ ¹      87.63 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/ascii-65536                84.10 ± ∞ ¹      56.53 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/latin1-65536               82.09 ± ∞ ¹      54.88 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/latin                      60.45 ± ∞ ¹      56.32 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/ascii-1048576              22.00 ± ∞ ¹      22.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf32ToLatin1/latin1-1048576             21.96 ± ∞ ¹      21.46 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidUtf32ToLatin1/ascii-16              9.812 ± ∞ ¹     10.176 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf32ToLatin1/latin1-16             9.806 ± ∞ ¹      9.993 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf32ToLatin1/ascii-64              29.07 ± ∞ ¹      35.16 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/latin1-64             28.79 ± ∞ ¹      33.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/ascii-256             65.01 ± ∞ ¹      80.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/latin1-256            63.17 ± ∞ ¹      57.23 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/ascii-4096            81.79 ± ∞ ¹      97.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/latin1-4096           82.78 ± ∞ ¹      92.37 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/ascii-65536           84.12 ± ∞ ¹      90.33 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/latin1-65536          84.36 ± ∞ ¹      63.38 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/latin                 61.49 ± ∞ ¹      92.07 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidUtf32ToLatin1/ascii-1048576         21.54 ± ∞ ¹      22.12 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidUtf32ToLatin1/latin1-1048576        21.70 ± ∞ ¹      21.61 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Latin1ToUtf8/ascii-16                    2.084 ± ∞ ¹      1.276 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.343 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-16                 1165.4m ± ∞ ¹    1257.1m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               737.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/ascii-64                    7.053 ± ∞ ¹      5.324 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                4.066 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-64                   6.963 ± ∞ ¹      5.104 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.130 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/ascii-256                  19.630 ± ∞ ¹     20.249 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.728 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-256                 13.854 ± ∞ ¹     11.742 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.651 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/ascii-4096                 72.999 ± ∞ ¹     91.739 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.113 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-4096                20.741 ± ∞ ¹     15.341 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                1.734 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/ascii-65536                40.514 ± ∞ ¹     39.651 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                7.442 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-65536             18226.1m ± ∞ ¹   14372.9m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               584.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin                      38.018 ± ∞ ¹     40.420 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.194 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/ascii-1048576              24.613 ± ∞ ¹     25.521 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                8.275 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf8/latin1-1048576           15769.4m ± ∞ ¹   14584.2m ± ∞ ¹        ~ (p=0.200 n=3) ²                                               518.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-16               2.047 ± ∞ ¹      1.625 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.364 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-16            1101.3m ± ∞ ¹    1590.8m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               742.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-64               6.877 ± ∞ ¹      7.723 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                4.114 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-64              6.947 ± ∞ ¹      5.986 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.114 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-256             19.637 ± ∞ ¹     24.657 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                6.867 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-256            13.714 ± ∞ ¹     11.886 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.609 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-4096            73.157 ± ∞ ¹     90.968 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.399 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-4096           20.212 ± ∞ ¹     15.767 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                1.781 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-65536           40.846 ± ∞ ¹     39.889 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                7.434 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-65536        18134.6m ± ∞ ¹   16104.4m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               575.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin                 38.134 ± ∞ ¹     39.787 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                7.601 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/ascii-1048576         23.073 ± ∞ ¹     24.849 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                8.158 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf8/latin1-1048576      15723.0m ± ∞ ¹   12830.9m ± ∞ ¹        ~ (p=0.100 n=3) ²                                               491.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-16                 3.023 ± ∞ ¹      1.531 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.619 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-16                2.928 ± ∞ ¹      1.583 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.604 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-64                11.031 ± ∞ ¹      6.106 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                5.588 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-64               11.298 ± ∞ ¹      5.995 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                5.363 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-256               28.925 ± ∞ ¹     20.591 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                8.782 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-256              29.551 ± ∞ ¹     20.763 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                8.593 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-4096               40.91 ± ∞ ¹      70.55 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                10.87 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-4096              40.96 ± ∞ ¹      75.05 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                11.13 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-65536             21.381 ± ∞ ¹     21.457 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                9.458 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-65536            21.878 ± ∞ ¹     21.143 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                9.433 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin                   21.852 ± ∞ ¹     21.727 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                9.285 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/ascii-1048576            9.958 ± ∞ ¹      9.417 ± ∞ ¹        ~ (p=0.200 n=3) ²                                                5.872 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16le/latin1-1048576          10.049 ± ∞ ¹      9.495 ± ∞ ¹        ~ (p=0.200 n=3) ²                                                5.856 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-16            3.027 ± ∞ ¹      2.315 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.567 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-16           2.951 ± ∞ ¹      2.324 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                1.635 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-64           10.918 ± ∞ ¹      9.253 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                5.706 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-64          11.074 ± ∞ ¹      8.985 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                5.312 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-256          28.043 ± ∞ ¹     27.531 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                8.596 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-256         27.830 ± ∞ ¹     28.148 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                8.690 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-4096          41.35 ± ∞ ¹      67.99 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                11.10 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-4096         40.27 ± ∞ ¹      63.89 ± ∞ ¹        ~ (p=0.100 n=3) ²                                                11.14 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-65536        20.882 ± ∞ ¹     21.382 ± ∞ ¹        ~ (p=0.400 n=3) ²                                                9.159 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-65536       20.859 ± ∞ ¹     21.231 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                9.390 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin              21.165 ± ∞ ¹     21.352 ± ∞ ¹        ~ (p=1.000 n=3) ²                                                9.009 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/ascii-1048576      10.143 ± ∞ ¹      9.748 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                5.731 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16le/latin1-1048576     10.084 ± ∞ ¹      9.533 ± ∞ ¹        ~ (p=0.700 n=3) ²                                                5.677 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/ascii-16                 2.980 ± ∞ ¹      1.519 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/latin1-16                2.956 ± ∞ ¹      1.512 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/ascii-64                11.530 ± ∞ ¹      6.173 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/latin1-64               11.150 ± ∞ ¹      6.038 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/ascii-256                29.38 ± ∞ ¹      20.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/latin1-256               30.38 ± ∞ ¹      20.98 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/ascii-4096               40.28 ± ∞ ¹      57.41 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/latin1-4096              39.63 ± ∞ ¹      63.20 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/ascii-65536              21.19 ± ∞ ¹      21.71 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf16be/latin1-65536             21.43 ± ∞ ¹      21.85 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Latin1ToUtf16be/latin                    21.42 ± ∞ ¹      21.51 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Latin1ToUtf16be/ascii-1048576           10.065 ± ∞ ¹      9.616 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Latin1ToUtf16be/latin1-1048576          10.201 ± ∞ ¹      9.681 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf16be/ascii-16            3.097 ± ∞ ¹      2.290 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/latin1-16           3.113 ± ∞ ¹      2.364 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/ascii-64           11.417 ± ∞ ¹      9.248 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/latin1-64          11.238 ± ∞ ¹      9.356 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/ascii-256           29.87 ± ∞ ¹      28.04 ± ∞ ¹        ~ (p=0.200 n=3) ²
+ValidLatin1ToUtf16be/latin1-256          30.69 ± ∞ ¹      28.44 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/ascii-4096          39.61 ± ∞ ¹      57.43 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/latin1-4096         40.27 ± ∞ ¹      55.60 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf16be/ascii-65536         21.46 ± ∞ ¹      21.35 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidLatin1ToUtf16be/latin1-65536        21.54 ± ∞ ¹      21.21 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf16be/latin               21.91 ± ∞ ¹      21.00 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf16be/ascii-1048576      10.073 ± ∞ ¹      9.589 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidLatin1ToUtf16be/latin1-1048576     10.003 ± ∞ ¹      9.715 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Latin1ToUtf32/ascii-16                   2.852 ± ∞ ¹      1.527 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/latin1-16                  2.904 ± ∞ ¹      1.573 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/ascii-64                   8.947 ± ∞ ¹      5.792 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/latin1-64                  8.765 ± ∞ ¹      5.742 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/ascii-256                  18.89 ± ∞ ¹      16.73 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/latin1-256                 18.67 ± ∞ ¹      16.81 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/ascii-4096                 20.99 ± ∞ ¹      40.08 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/latin1-4096                20.83 ± ∞ ¹      40.13 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Latin1ToUtf32/ascii-65536                11.25 ± ∞ ¹      11.26 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Latin1ToUtf32/latin1-65536               10.97 ± ∞ ¹      11.20 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Latin1ToUtf32/latin                      11.07 ± ∞ ¹      11.14 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Latin1ToUtf32/ascii-1048576              5.613 ± ∞ ¹      5.429 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Latin1ToUtf32/latin1-1048576             5.377 ± ∞ ¹      5.440 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf32/ascii-16              2.777 ± ∞ ¹      2.407 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/latin1-16             2.858 ± ∞ ¹      2.377 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/ascii-64              8.632 ± ∞ ¹      8.779 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf32/latin1-64             8.777 ± ∞ ¹      8.920 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidLatin1ToUtf32/ascii-256             18.57 ± ∞ ¹      23.92 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/latin1-256            18.83 ± ∞ ¹      23.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/ascii-4096            20.11 ± ∞ ¹      43.46 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/latin1-4096           20.95 ± ∞ ¹      43.66 ± ∞ ¹        ~ (p=0.100 n=3) ²
+ValidLatin1ToUtf32/ascii-65536           11.05 ± ∞ ¹      11.04 ± ∞ ¹        ~ (p=1.000 n=3) ²
+ValidLatin1ToUtf32/latin1-65536          10.86 ± ∞ ¹      11.05 ± ∞ ¹        ~ (p=0.400 n=3) ²
+ValidLatin1ToUtf32/latin                 11.00 ± ∞ ¹      11.10 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf32/ascii-1048576         5.348 ± ∞ ¹      5.368 ± ∞ ¹        ~ (p=0.700 n=3) ²
+ValidLatin1ToUtf32/latin1-1048576        5.431 ± ∞ ¹      5.447 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf16FromUtf8/ascii-16                 1082.3m ± ∞ ¹    2602.7m ± ∞ ¹        ~ (p=0.100 n=3) ²     101.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/ascii-64                 8859.9m ± ∞ ¹   13793.3m ± ∞ ¹        ~ (p=0.100 n=3) ²     103.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/ascii-256               25469.1m ± ∞ ¹   32595.0m ± ∞ ¹        ~ (p=0.100 n=3) ²     105.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/ascii-4096              68497.7m ± ∞ ¹   70096.7m ± ∞ ¹        ~ (p=1.000 n=3) ²     105.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/ascii-65536             58973.1m ± ∞ ¹   75039.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     108.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/emoji                   58423.0m ± ∞ ¹   73027.2m ± ∞ ¹        ~ (p=0.100 n=3) ²     328.0m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/hebrew                  75771.5m ± ∞ ¹   72637.6m ± ∞ ¹        ~ (p=0.400 n=3) ²     168.4m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/korean                  55649.3m ± ∞ ¹   74448.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     224.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/japanese                57100.2m ± ∞ ¹   75097.7m ± ∞ ¹        ~ (p=0.100 n=3) ²     253.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/chinese                 58090.1m ± ∞ ¹   77186.4m ± ∞ ¹        ~ (p=0.100 n=3) ²     260.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/arabic                  57170.9m ± ∞ ¹   75305.0m ± ∞ ¹        ~ (p=0.100 n=3) ²     169.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/latin                   56668.1m ± ∞ ¹   74081.4m ± ∞ ¹        ~ (p=0.100 n=3) ²     106.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/hindi                   78492.3m ± ∞ ¹   74284.2m ± ∞ ¹        ~ (p=0.200 n=3) ²     248.2m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/russian                 57592.3m ± ∞ ¹   74641.3m ± ∞ ¹        ~ (p=0.100 n=3) ²     167.5m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf8/ascii-1048576           57955.4m ± ∞ ¹   72438.6m ± ∞ ¹        ~ (p=0.100 n=3) ²     103.4m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-16                  10.27 ± ∞ ¹      14.94 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-64                  31.87 ± ∞ ¹      39.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-256                 71.89 ± ∞ ¹      82.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-4096                94.12 ± ∞ ¹     120.92 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/emoji                     64.67 ± ∞ ¹     106.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/japanese                  67.64 ± ∞ ¹     104.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/chinese                   102.6 ± ∞ ¹      107.4 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/korean                    64.94 ± ∞ ¹     108.69 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/hindi                     63.88 ± ∞ ¹     109.84 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/hebrew                    102.8 ± ∞ ¹      111.5 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/arabic                    64.97 ± ∞ ¹     108.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/russian                   103.1 ± ∞ ¹      107.4 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-65536               102.4 ± ∞ ¹      106.8 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf16FromUtf32/latin                     64.04 ± ∞ ¹     110.25 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf16FromUtf32/ascii-1048576             31.82 ± ∞ ¹      29.52 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-16                 1.570 ± ∞ ¹      4.953 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.307 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-64                14.603 ± ∞ ¹     16.660 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.414 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-256               34.403 ± ∞ ¹     33.731 ± ∞ ¹        ~ (p=0.700 n=3) ²      1.513 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-4096              50.995 ± ∞ ¹     51.670 ± ∞ ¹        ~ (p=0.400 n=3) ²      1.511 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/japanese              52434.0m ± ∞ ¹   55616.5m ± ∞ ¹        ~ (p=0.400 n=3) ²     994.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/chinese                 52.371 ± ∞ ¹     54.828 ± ∞ ¹        ~ (p=0.700 n=3) ²      1.057 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/korean                  39.883 ± ∞ ¹     50.117 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.159 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/hindi                 53159.2m ± ∞ ¹   50098.6m ± ∞ ¹        ~ (p=0.200 n=3) ²     762.4m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/emoji                   49.824 ± ∞ ¹     50.916 ± ∞ ¹        ~ (p=0.400 n=3) ²      1.915 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/hebrew                  51.914 ± ∞ ¹     51.224 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.111 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/arabic                  40.373 ± ∞ ¹     50.962 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.121 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/russian               52086.9m ± ∞ ¹   51504.5m ± ∞ ¹        ~ (p=0.200 n=3) ²     669.7m ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-65536             39.959 ± ∞ ¹     50.216 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.510 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/latin                   39.599 ± ∞ ¹     50.446 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.539 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16le/ascii-1048576           33.136 ± ∞ ¹     44.602 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.487 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/ascii-16                 1.304 ± ∞ ¹      4.596 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/ascii-64                 15.99 ± ∞ ¹      20.39 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/ascii-256                30.89 ± ∞ ¹      29.67 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/ascii-4096               43.31 ± ∞ ¹      44.22 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/japanese                 43.45 ± ∞ ¹      44.34 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf8FromUtf16be/chinese                  43.79 ± ∞ ¹      44.28 ± ∞ ¹        ~ (p=0.700 n=3) ²
+Utf8FromUtf16be/korean                   37.94 ± ∞ ¹      40.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/hindi                    41.93 ± ∞ ¹      42.10 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf8FromUtf16be/emoji                    41.27 ± ∞ ¹      41.80 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf8FromUtf16be/hebrew                   41.13 ± ∞ ¹      41.24 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf8FromUtf16be/arabic                   37.87 ± ∞ ¹      41.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/russian                  43.76 ± ∞ ¹      41.47 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf8FromUtf16be/ascii-65536              37.76 ± ∞ ¹      42.27 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/latin                    38.11 ± ∞ ¹      42.61 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf16be/ascii-1048576            31.94 ± ∞ ¹      33.89 ± ∞ ¹        ~ (p=0.200 n=3) ²
+Utf8FromUtf32/ascii-16                   8.615 ± ∞ ¹     13.016 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/ascii-64                   25.63 ± ∞ ¹      25.96 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf8FromUtf32/ascii-256                  35.37 ± ∞ ¹      42.26 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/ascii-4096                 39.76 ± ∞ ¹      56.78 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/emoji                      40.22 ± ∞ ¹      54.48 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/japanese                   40.55 ± ∞ ¹      53.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/chinese                    42.89 ± ∞ ¹      52.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/korean                     40.06 ± ∞ ¹      53.57 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/hindi                      40.08 ± ∞ ¹      53.28 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/hebrew                     41.16 ± ∞ ¹      54.08 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/arabic                     39.42 ± ∞ ¹      54.27 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/russian                    42.38 ± ∞ ¹      54.97 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/ascii-65536                42.41 ± ∞ ¹      53.63 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/latin                      39.89 ± ∞ ¹      54.58 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromUtf32/ascii-1048576              28.35 ± ∞ ¹      27.95 ± ∞ ¹        ~ (p=1.000 n=3) ²
+Utf8FromLatin1/ascii-16                  1.114 ± ∞ ¹      2.579 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-16                 1.127 ± ∞ ¹      2.631 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/ascii-64                  10.33 ± ∞ ¹      16.70 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-64                 10.42 ± ∞ ¹      16.18 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/ascii-256                 28.70 ± ∞ ¹      43.61 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-256                27.99 ± ∞ ¹      43.19 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/ascii-4096                97.98 ± ∞ ¹     122.62 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-4096               95.06 ± ∞ ¹     128.28 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/ascii-65536               109.5 ± ∞ ¹      106.8 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-65536              112.1 ± ∞ ¹      106.8 ± ∞ ¹        ~ (p=0.400 n=3) ²
+Utf8FromLatin1/latin                     70.59 ± ∞ ¹     102.49 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/ascii-1048576             70.22 ± ∞ ¹     104.75 ± ∞ ¹        ~ (p=0.100 n=3) ²
+Utf8FromLatin1/latin1-1048576            70.68 ± ∞ ¹     102.73 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-16                       1.033 ± ∞ ¹      2.740 ± ∞ ¹        ~ (p=0.100 n=3) ²      2.515 ± ∞ ¹        ~ (p=0.100 n=3) ²      1.764 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.439 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-64                       9.608 ± ∞ ¹     15.087 ± ∞ ¹        ~ (p=0.100 n=3) ²      6.103 ± ∞ ¹        ~ (p=0.100 n=3) ²      5.135 ± ∞ ¹        ~ (p=0.100 n=3) ²     2.088 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-256                     26.879 ± ∞ ¹     37.102 ± ∞ ¹        ~ (p=0.100 n=3) ²     10.027 ± ∞ ¹        ~ (p=0.100 n=3) ²     17.560 ± ∞ ¹        ~ (p=0.100 n=3) ²     2.124 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-4096                    67.965 ± ∞ ¹     90.950 ± ∞ ¹        ~ (p=0.100 n=3) ²     12.793 ± ∞ ¹        ~ (p=0.100 n=3) ²     36.565 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.693 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-65536                   65.095 ± ∞ ¹     95.090 ± ∞ ¹        ~ (p=0.100 n=3) ²     12.968 ± ∞ ¹        ~ (p=0.100 n=3) ²     34.960 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.572 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/emoji                       65240.9m ± ∞ ¹   93787.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     338.8m ± ∞ ¹        ~ (p=0.100 n=3) ²   34521.8m ± ∞ ¹        ~ (p=0.100 n=3) ²    901.6m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/hebrew                      64593.0m ± ∞ ¹   94751.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     210.4m ± ∞ ¹        ~ (p=0.100 n=3) ²   35852.8m ± ∞ ¹        ~ (p=0.100 n=3) ²    740.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/korean                      62602.2m ± ∞ ¹   92038.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     292.8m ± ∞ ¹        ~ (p=0.100 n=3) ²   34422.2m ± ∞ ¹        ~ (p=0.100 n=3) ²    837.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/japanese                    65039.7m ± ∞ ¹   96924.2m ± ∞ ¹        ~ (p=0.100 n=3) ²     275.4m ± ∞ ¹        ~ (p=0.100 n=3) ²   33680.4m ± ∞ ¹        ~ (p=0.100 n=3) ²    745.9m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/chinese                     64933.9m ± ∞ ¹   94922.3m ± ∞ ¹        ~ (p=0.100 n=3) ²     268.0m ± ∞ ¹        ~ (p=0.100 n=3) ²   34744.3m ± ∞ ¹        ~ (p=0.100 n=3) ²    815.4m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/arabic                      61847.1m ± ∞ ¹   96289.1m ± ∞ ¹        ~ (p=0.100 n=3) ²     213.0m ± ∞ ¹        ~ (p=0.100 n=3) ²   36191.9m ± ∞ ¹        ~ (p=0.100 n=3) ²    742.1m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/latin                         63.840 ± ∞ ¹     97.681 ± ∞ ¹        ~ (p=0.100 n=3) ²     12.402 ± ∞ ¹        ~ (p=0.100 n=3) ²     34.839 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.632 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/hindi                       63993.1m ± ∞ ¹   94852.7m ± ∞ ¹        ~ (p=0.100 n=3) ²     276.6m ± ∞ ¹        ~ (p=0.100 n=3) ²   33655.7m ± ∞ ¹        ~ (p=0.100 n=3) ²    541.8m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/russian                     65427.3m ± ∞ ¹   96183.5m ± ∞ ¹        ~ (p=0.100 n=3) ²     202.5m ± ∞ ¹        ~ (p=0.100 n=3) ²   34636.6m ± ∞ ¹        ~ (p=0.100 n=3) ²    428.3m ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf8/ascii-1048576                 65.559 ± ∞ ¹     99.111 ± ∞ ¹        ~ (p=0.100 n=3) ²     13.422 ± ∞ ¹        ~ (p=0.100 n=3) ²     34.593 ± ∞ ¹        ~ (p=0.100 n=3) ²     1.501 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-16                    5.165 ± ∞ ¹      4.463 ± ∞ ¹        ~ (p=0.100 n=3) ²      2.711 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-64                   18.319 ± ∞ ¹     22.033 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.274 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-256                  49.118 ± ∞ ¹     53.534 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.525 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-4096                 83.975 ± ∞ ¹     92.348 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.992 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/japanese                   85.210 ± ∞ ¹     96.885 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.755 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/chinese                    85.331 ± ∞ ¹     95.888 ± ∞ ¹        ~ (p=0.100 n=3) ²      4.037 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/korean                     58.253 ± ∞ ¹     90.183 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.987 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/hindi                      78.067 ± ∞ ¹     89.725 ± ∞ ¹        ~ (p=0.100 n=3) ²      4.082 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/emoji                      81.815 ± ∞ ¹     89.423 ± ∞ ¹        ~ (p=0.100 n=3) ²      4.507 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/hebrew                     79.588 ± ∞ ¹     90.182 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.956 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/arabic                     59.581 ± ∞ ¹     88.381 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.998 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/russian                    80.022 ± ∞ ¹     90.427 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.934 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-65536                57.753 ± ∞ ¹     89.507 ± ∞ ¹        ~ (p=0.100 n=3) ²      4.011 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/latin                      55.103 ± ∞ ¹     91.996 ± ∞ ¹        ~ (p=0.100 n=3) ²      4.110 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16le/ascii-1048576              42.356 ± ∞ ¹     58.260 ± ∞ ¹        ~ (p=0.100 n=3) ²      3.956 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-16                    4.816 ± ∞ ¹      5.006 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-64                    17.79 ± ∞ ¹      24.00 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-256                   47.63 ± ∞ ¹      54.28 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-4096                  63.10 ± ∞ ¹      92.45 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/japanese                    60.21 ± ∞ ¹      95.07 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/chinese                     65.55 ± ∞ ¹      94.24 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/korean                      52.96 ± ∞ ¹      88.30 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/hindi                       63.70 ± ∞ ¹      87.85 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/emoji                       65.08 ± ∞ ¹      89.54 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/hebrew                      63.58 ± ∞ ¹      89.54 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/arabic                      52.29 ± ∞ ¹      90.40 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/russian                     61.62 ± ∞ ¹      89.29 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-65536                 51.32 ± ∞ ¹      90.16 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/latin                       52.23 ± ∞ ¹      87.96 ± ∞ ¹        ~ (p=0.100 n=3) ²
+CountUtf16be/ascii-1048576               39.45 ± ∞ ¹      64.01 ± ∞ ¹        ~ (p=0.100 n=3) ²
+geomean                                  18.45            21.11        +14.42%                      1.242        -94.98%               ³      4.455        -68.70%               ³    909.1m        -92.00%               ³
+¹ need >= 6 samples for confidence interval at level 0.95
+² need >= 4 samples to detect a difference at alpha level 0.05
+³ benchmark set differs from baseline; geomeans may not be comparable

@@ -242,3 +242,45 @@ bench-compare`, and a per-operation geomean summary. The baseline
   Landed: decision 1's runtime dispatch, and `simd.bitmask` for vectors of
   fewer than 8 lanes on the self-hosted backends, so `convert.zig`'s `mask4`
   can call it directly.
+- **Transcoding**: `src/convert.zig`, `src/length.zig`, and
+  `src/scalar_convert.zig`. Landed: every public conversion and length
+  function dispatched (the four that return the input length are not:
+  nothing to select), `mask4` replaced by `simd.bitmask`, the big-endian
+  test fixes (the tests read native UTF-16 units as little-endian, and
+  U+0800 is not the same in both byte orders), and the
+  [measurements](results/convert-20261031.md): harness geomeans 1.14 of
+  `icelake` (wave 1: 0.85), 1.33 of `haswell` (1.09), 1.27 of `westmere`.
+  AVX-512 kernels (`v512`: VBMI, VBMI2, BMI2) follow Clausecker and Lemire:
+  UTF-8 decodes 64 bytes at a time by compressing lanes at character ends,
+  UTF-16 and UTF-32 encode with `vpmultishiftqb`, `vpermb`, and compress,
+  UTF-8 to Latin-1 decodes at every continuation byte from a load one byte
+  back (no loop-carried shift), Latin-1 to UTF-8 interleaves lead and
+  continuation bytes with `vpermt2b`, and the byte swap checks pairs a
+  64-byte block at a time. Tails use masked loads and stores only when the
+  64 bytes stay in one page, else a stack buffer out of line (inline, its
+  aligned frame cost every short call 1-2 ns). Long fixed-ratio loops
+  (Latin-1 widening, narrowing to Latin-1, the byte swap) take a first step
+  to the output's 64-byte boundary: 1.4-1.8× on Latin-1 to UTF-16/32 over
+  16 buffer offsets. Stores of a whole register are volatile, or LLVM splits
+  them. On AVX2 and SSE, UTF-16 and UTF-32 to UTF-8 encode BMP text in
+  16-bit lanes (1.4-2.0× on CJK, Korean, Hindi); the length functions count
+  with mask popcounts on AVX-512 and load aligned from 16 vectors on. Tried
+  and dropped: steps of 256 or 1024 units on the generic path (neutral to
+  −15%), accumulating counts in vectors instead of popcounts on AVX-512,
+  and sending inputs under 64 bytes to the 16-byte paths (slower on every
+  length not a multiple of 16). The generic checked forms are within ±10%
+  of an out-of-line scalar call; wave 1's "25% under" compared an inlined
+  one. Left: UTF-16 to UTF-8 on two-byte scripts (0.89-0.94 of `icelake`),
+  Latin-1 to UTF-8 on Latin-1 text from 4 KiB (0.74-0.79 of `icelake` and
+  `haswell`), the checked fixed-ratio conversions at 256 B (0.69-0.84), the
+  valid byte swap at 256 B (0.53-0.63); against `haswell` UTF-16 to UTF-8 on
+  Japanese, Korean, and Hindi (0.74-0.83) and UTF-32 to UTF-8 on Korean and
+  Hindi (0.80-0.84); against `westmere` the UTF-8 length functions from
+  UTF-16 and UTF-32 (0.83-0.96); the generic path's decode of non-ASCII
+  text, 10-30% under the scalar code. Exact multiples of 16 ASCII bytes are
+  2-4 ns slower than the wave-1 16-byte path, since the AVX-512 kernels load
+  their constants up front. A `Result` chosen between two built ones was
+  copied out with one 16-byte load after two narrower stores, stalling store
+  forwarding for 6 ns in every checked conversion; build it from scalars.
+  The harness's `written()` does the same with its `Out` union, which costs
+  the checked forms' short rows about 4 ns.

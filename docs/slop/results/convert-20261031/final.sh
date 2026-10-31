@@ -1,0 +1,7 @@
+#!/bin/bash
+# The three harness runs in convert-20261031.md, on the final code.
+cd /home/user/workspace/repo
+ops="utf8-to-utf16le valid-utf8-to-utf16le utf8-to-utf16be valid-utf8-to-utf16be utf8-to-utf32 valid-utf8-to-utf32 utf8-to-latin1 valid-utf8-to-latin1 utf16le-to-utf8 valid-utf16le-to-utf8 utf16le-to-utf16be valid-utf16le-to-utf16be utf16le-to-utf32 valid-utf16le-to-utf32 utf16le-to-latin1 valid-utf16le-to-latin1 utf16be-to-utf8 valid-utf16be-to-utf8 utf16be-to-utf16le valid-utf16be-to-utf16le utf16be-to-utf32 valid-utf16be-to-utf32 utf16be-to-latin1 valid-utf16be-to-latin1 utf32-to-utf8 valid-utf32-to-utf8 utf32-to-utf16le valid-utf32-to-utf16le utf32-to-utf16be valid-utf32-to-utf16be utf32-to-latin1 valid-utf32-to-latin1 latin1-to-utf8 valid-latin1-to-utf8 latin1-to-utf16le valid-latin1-to-utf16le latin1-to-utf16be valid-latin1-to-utf16be latin1-to-utf32 valid-latin1-to-utf32 utf16-from-utf8 utf16-from-utf32 utf8-from-utf16le utf8-from-utf16be utf8-from-utf32 utf8-from-latin1 count-utf8 count-utf16le count-utf16be "
+nix develop -c just bench-compare 3 $ops > /tmp/h-native.log 2>&1; rm -rf /tmp/h-native; cp -r zig-out/bench-compare /tmp/h-native
+nix develop -c just cpu=x86_64_v3 dispatch=false kernel=haswell bench-compare 3 $ops > /tmp/h-avx2.log 2>&1; rm -rf /tmp/h-avx2; cp -r zig-out/bench-compare /tmp/h-avx2
+nix develop -c just cpu=x86_64_v2 dispatch=false kernel=westmere bench-compare 3 $ops > /tmp/h-sse.log 2>&1; rm -rf /tmp/h-sse; cp -r zig-out/bench-compare /tmp/h-sse
