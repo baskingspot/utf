@@ -7,12 +7,16 @@
 
 const std = @import("std");
 const Endian = std.builtin.Endian;
+const dispatch = @import("dispatch.zig");
 const scalar = @import("scalar_convert.zig");
 
 const native = @import("builtin").cpu.arch.endian();
 
 /// Code points in UTF-8: the bytes that are not continuation bytes.
 pub fn countUtf8(src: []const u8) usize {
+    return dispatch.call(@src(), countUtf8Kernel, .{src});
+}
+fn countUtf8Kernel(src: []const u8) usize {
     const sum, const p = sumBlocks(u8, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v));
@@ -23,16 +27,25 @@ pub fn countUtf8(src: []const u8) usize {
 
 /// Code points in UTF-16LE: the code units that are not low surrogates.
 pub fn countUtf16le(src: []const u16) usize {
+    return dispatch.call(@src(), countUtf16leKernel, .{src});
+}
+fn countUtf16leKernel(src: []const u16) usize {
     return countUtf16(.little, src);
 }
 
 /// Code points in UTF-16BE: the code units that are not low surrogates.
 pub fn countUtf16be(src: []const u16) usize {
+    return dispatch.call(@src(), countUtf16beKernel, .{src});
+}
+fn countUtf16beKernel(src: []const u16) usize {
     return countUtf16(.big, src);
 }
 
 /// UTF-16 code units for UTF-8: one per character, two per four-byte one.
 pub fn utf16FromUtf8(src: []const u8) usize {
+    return dispatch.call(@src(), utf16FromUtf8Kernel, .{src});
+}
+fn utf16FromUtf8Kernel(src: []const u8) usize {
     const sum, const p = sumBlocks(u8, 2, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v)) + ones(u8, v >= @as(@TypeOf(v), @splat(0xF0)));
@@ -43,6 +56,9 @@ pub fn utf16FromUtf8(src: []const u8) usize {
 
 /// UTF-16 code units for UTF-32: one per code point, two above U+FFFF.
 pub fn utf16FromUtf32(src: []const u32) usize {
+    return dispatch.call(@src(), utf16FromUtf32Kernel, .{src});
+}
+fn utf16FromUtf32Kernel(src: []const u32) usize {
     const sum, const p = sumBlocks(u32, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u32, v > @as(@TypeOf(v), @splat(0xFFFF)));
@@ -58,16 +74,25 @@ pub fn utf16FromLatin1(src: []const u8) usize {
 
 /// UTF-32 code units for UTF-8: one per character.
 pub fn utf32FromUtf8(src: []const u8) usize {
-    return countUtf8(src);
+    return dispatch.call(@src(), utf32FromUtf8Kernel, .{src});
+}
+fn utf32FromUtf8Kernel(src: []const u8) usize {
+    return countUtf8Kernel(src);
 }
 
 /// UTF-32 code units for UTF-16LE: one per code point.
 pub fn utf32FromUtf16le(src: []const u16) usize {
+    return dispatch.call(@src(), utf32FromUtf16leKernel, .{src});
+}
+fn utf32FromUtf16leKernel(src: []const u16) usize {
     return countUtf16(.little, src);
 }
 
 /// UTF-32 code units for UTF-16BE: one per code point.
 pub fn utf32FromUtf16be(src: []const u16) usize {
+    return dispatch.call(@src(), utf32FromUtf16beKernel, .{src});
+}
+fn utf32FromUtf16beKernel(src: []const u16) usize {
     return countUtf16(.big, src);
 }
 
@@ -78,16 +103,25 @@ pub fn utf32FromLatin1(src: []const u8) usize {
 
 /// UTF-8 bytes for UTF-16LE: a surrogate counts two, so a pair counts four.
 pub fn utf8FromUtf16le(src: []const u16) usize {
+    return dispatch.call(@src(), utf8FromUtf16leKernel, .{src});
+}
+fn utf8FromUtf16leKernel(src: []const u16) usize {
     return utf8FromUtf16(.little, src);
 }
 
 /// UTF-8 bytes for UTF-16BE: a surrogate counts two, so a pair counts four.
 pub fn utf8FromUtf16be(src: []const u16) usize {
+    return dispatch.call(@src(), utf8FromUtf16beKernel, .{src});
+}
+fn utf8FromUtf16beKernel(src: []const u16) usize {
     return utf8FromUtf16(.big, src);
 }
 
 /// UTF-8 bytes for UTF-32: one to four per code point.
 pub fn utf8FromUtf32(src: []const u32) usize {
+    return dispatch.call(@src(), utf8FromUtf32Kernel, .{src});
+}
+fn utf8FromUtf32Kernel(src: []const u32) usize {
     const sum, const p = sumBlocks(u32, 3, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
@@ -100,6 +134,9 @@ pub fn utf8FromUtf32(src: []const u32) usize {
 
 /// UTF-8 bytes for Latin-1: one per byte below 0x80, two above.
 pub fn utf8FromLatin1(src: []const u8) usize {
+    return dispatch.call(@src(), utf8FromLatin1Kernel, .{src});
+}
+fn utf8FromLatin1Kernel(src: []const u8) usize {
     const sum, const p = sumBlocks(u8, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, v >= @as(@TypeOf(v), @splat(0x80)));
@@ -110,7 +147,10 @@ pub fn utf8FromLatin1(src: []const u8) usize {
 
 /// Latin-1 bytes for UTF-8: one per character.
 pub fn latin1FromUtf8(src: []const u8) usize {
-    return countUtf8(src);
+    return dispatch.call(@src(), latin1FromUtf8Kernel, .{src});
+}
+fn latin1FromUtf8Kernel(src: []const u8) usize {
+    return countUtf8Kernel(src);
 }
 
 /// Latin-1 bytes for UTF-16: one per code unit.
@@ -208,6 +248,10 @@ inline fn sumVectors(
 }
 
 test "every length function matches the scalar reference on any input" {
+    try dispatch.forEachLevel(anyInputCases, .{});
+}
+
+fn anyInputCases() !void {
     const testing = std.testing;
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
@@ -247,6 +291,10 @@ test "every length function matches the scalar reference on any input" {
 }
 
 test "length functions count past their lane accumulators' range" {
+    try dispatch.forEachLevel(overflowCases, .{});
+}
+
+fn overflowCases() !void {
     const testing = std.testing;
     // Every byte and unit counts the most it can, for more blocks than one
     // accumulator holds.
@@ -254,7 +302,8 @@ test "length functions count past their lane accumulators' range" {
     try testing.expectEqual(leads.len, countUtf8(&leads));
     try testing.expectEqual(2 * leads.len, utf16FromUtf8(&leads));
     try testing.expectEqual(2 * leads.len, utf8FromLatin1(&leads));
-    const units = [_]u16{0x0800} ** (32 * 100 + 3);
+    // U+0808 reads the same in either byte order.
+    const units = [_]u16{0x0808} ** (32 * 100 + 3);
     try testing.expectEqual(3 * units.len, utf8FromUtf16le(&units));
     const cps = [_]u32{0x10000} ** (16 * 100 + 7);
     try testing.expectEqual(4 * cps.len, utf8FromUtf32(&cps));

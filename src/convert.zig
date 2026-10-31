@@ -28,6 +28,7 @@ const result = @import("result.zig");
 const Result = result.Result;
 const scalar = @import("scalar_convert.zig");
 const simd = @import("simd.zig");
+const dispatch = @import("dispatch.zig");
 
 const native = builtin.cpu.arch.endian();
 
@@ -44,107 +45,203 @@ const use_simd = native == .little;
 // UTF-8 source.
 
 pub fn utf8ToUtf16le(src: []const u8, dst: []u16) Result {
+    return dispatch.call(@src(), utf8ToUtf16leKernel, .{ src, dst });
+}
+fn utf8ToUtf16leKernel(src: []const u8, dst: []u16) Result {
     return utf8ToUnits(u16, .little, true, src, dst);
 }
 pub fn utf8ToUtf16be(src: []const u8, dst: []u16) Result {
+    return dispatch.call(@src(), utf8ToUtf16beKernel, .{ src, dst });
+}
+fn utf8ToUtf16beKernel(src: []const u8, dst: []u16) Result {
     return utf8ToUnits(u16, .big, true, src, dst);
 }
 pub fn utf8ToUtf32(src: []const u8, dst: []u32) Result {
+    return dispatch.call(@src(), utf8ToUtf32Kernel, .{ src, dst });
+}
+fn utf8ToUtf32Kernel(src: []const u8, dst: []u32) Result {
     return utf8ToUnits(u32, native, true, src, dst);
 }
 pub fn utf8ToLatin1(src: []const u8, dst: []u8) Result {
+    return dispatch.call(@src(), utf8ToLatin1Kernel, .{ src, dst });
+}
+fn utf8ToLatin1Kernel(src: []const u8, dst: []u8) Result {
     return utf8ToLatin1Impl(true, src, dst);
 }
 pub fn validUtf8ToUtf16le(src: []const u8, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf8ToUtf16leKernel, .{ src, dst });
+}
+fn validUtf8ToUtf16leKernel(src: []const u8, dst: []u16) usize {
     return utf8ToUnits(u16, .little, false, src, dst).count;
 }
 pub fn validUtf8ToUtf16be(src: []const u8, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf8ToUtf16beKernel, .{ src, dst });
+}
+fn validUtf8ToUtf16beKernel(src: []const u8, dst: []u16) usize {
     return utf8ToUnits(u16, .big, false, src, dst).count;
 }
 pub fn validUtf8ToUtf32(src: []const u8, dst: []u32) usize {
+    return dispatch.call(@src(), validUtf8ToUtf32Kernel, .{ src, dst });
+}
+fn validUtf8ToUtf32Kernel(src: []const u8, dst: []u32) usize {
     return utf8ToUnits(u32, native, false, src, dst).count;
 }
 pub fn validUtf8ToLatin1(src: []const u8, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf8ToLatin1Kernel, .{ src, dst });
+}
+fn validUtf8ToLatin1Kernel(src: []const u8, dst: []u8) usize {
     return utf8ToLatin1Impl(false, src, dst).count;
 }
 
 // UTF-16 source.
 
 pub fn utf16leToUtf8(src: []const u16, dst: []u8) Result {
+    return dispatch.call(@src(), utf16leToUtf8Kernel, .{ src, dst });
+}
+fn utf16leToUtf8Kernel(src: []const u16, dst: []u8) Result {
     return utf16ToUtf8Impl(.little, true, src, dst);
 }
 pub fn utf16beToUtf8(src: []const u16, dst: []u8) Result {
+    return dispatch.call(@src(), utf16beToUtf8Kernel, .{ src, dst });
+}
+fn utf16beToUtf8Kernel(src: []const u16, dst: []u8) Result {
     return utf16ToUtf8Impl(.big, true, src, dst);
 }
 pub fn utf16leToUtf32(src: []const u16, dst: []u32) Result {
+    return dispatch.call(@src(), utf16leToUtf32Kernel, .{ src, dst });
+}
+fn utf16leToUtf32Kernel(src: []const u16, dst: []u32) Result {
     return utf16ToUtf32Impl(.little, true, src, dst);
 }
 pub fn utf16beToUtf32(src: []const u16, dst: []u32) Result {
+    return dispatch.call(@src(), utf16beToUtf32Kernel, .{ src, dst });
+}
+fn utf16beToUtf32Kernel(src: []const u16, dst: []u32) Result {
     return utf16ToUtf32Impl(.big, true, src, dst);
 }
 pub fn utf16leToLatin1(src: []const u16, dst: []u8) Result {
+    return dispatch.call(@src(), utf16leToLatin1Kernel, .{ src, dst });
+}
+fn utf16leToLatin1Kernel(src: []const u16, dst: []u8) Result {
     return utf16ToLatin1Impl(.little, true, src, dst);
 }
 pub fn utf16beToLatin1(src: []const u16, dst: []u8) Result {
+    return dispatch.call(@src(), utf16beToLatin1Kernel, .{ src, dst });
+}
+fn utf16beToLatin1Kernel(src: []const u16, dst: []u8) Result {
     return utf16ToLatin1Impl(.big, true, src, dst);
 }
 /// Swaps the byte order, failing on an unpaired surrogate.
 pub fn utf16leToUtf16be(src: []const u16, dst: []u16) Result {
+    return dispatch.call(@src(), utf16leToUtf16beKernel, .{ src, dst });
+}
+fn utf16leToUtf16beKernel(src: []const u16, dst: []u16) Result {
     return utf16SwapImpl(.little, true, src, dst);
 }
 /// Swaps the byte order, failing on an unpaired surrogate.
 pub fn utf16beToUtf16le(src: []const u16, dst: []u16) Result {
+    return dispatch.call(@src(), utf16beToUtf16leKernel, .{ src, dst });
+}
+fn utf16beToUtf16leKernel(src: []const u16, dst: []u16) Result {
     return utf16SwapImpl(.big, true, src, dst);
 }
 pub fn validUtf16leToUtf8(src: []const u16, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf16leToUtf8Kernel, .{ src, dst });
+}
+fn validUtf16leToUtf8Kernel(src: []const u16, dst: []u8) usize {
     return utf16ToUtf8Impl(.little, false, src, dst).count;
 }
 pub fn validUtf16beToUtf8(src: []const u16, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf16beToUtf8Kernel, .{ src, dst });
+}
+fn validUtf16beToUtf8Kernel(src: []const u16, dst: []u8) usize {
     return utf16ToUtf8Impl(.big, false, src, dst).count;
 }
 pub fn validUtf16leToUtf32(src: []const u16, dst: []u32) usize {
+    return dispatch.call(@src(), validUtf16leToUtf32Kernel, .{ src, dst });
+}
+fn validUtf16leToUtf32Kernel(src: []const u16, dst: []u32) usize {
     return utf16ToUtf32Impl(.little, false, src, dst).count;
 }
 pub fn validUtf16beToUtf32(src: []const u16, dst: []u32) usize {
+    return dispatch.call(@src(), validUtf16beToUtf32Kernel, .{ src, dst });
+}
+fn validUtf16beToUtf32Kernel(src: []const u16, dst: []u32) usize {
     return utf16ToUtf32Impl(.big, false, src, dst).count;
 }
 pub fn validUtf16leToLatin1(src: []const u16, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf16leToLatin1Kernel, .{ src, dst });
+}
+fn validUtf16leToLatin1Kernel(src: []const u16, dst: []u8) usize {
     return utf16ToLatin1Impl(.little, false, src, dst).count;
 }
 pub fn validUtf16beToLatin1(src: []const u16, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf16beToLatin1Kernel, .{ src, dst });
+}
+fn validUtf16beToLatin1Kernel(src: []const u16, dst: []u8) usize {
     return utf16ToLatin1Impl(.big, false, src, dst).count;
 }
 pub fn validUtf16leToUtf16be(src: []const u16, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf16leToUtf16beKernel, .{ src, dst });
+}
+fn validUtf16leToUtf16beKernel(src: []const u16, dst: []u16) usize {
     return utf16SwapImpl(.little, false, src, dst).count;
 }
 pub fn validUtf16beToUtf16le(src: []const u16, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf16beToUtf16leKernel, .{ src, dst });
+}
+fn validUtf16beToUtf16leKernel(src: []const u16, dst: []u16) usize {
     return utf16SwapImpl(.big, false, src, dst).count;
 }
 
 // UTF-32 source.
 
 pub fn utf32ToUtf8(src: []const u32, dst: []u8) Result {
+    return dispatch.call(@src(), utf32ToUtf8Kernel, .{ src, dst });
+}
+fn utf32ToUtf8Kernel(src: []const u32, dst: []u8) Result {
     return utf32ToUtf8Impl(true, src, dst);
 }
 pub fn utf32ToUtf16le(src: []const u32, dst: []u16) Result {
+    return dispatch.call(@src(), utf32ToUtf16leKernel, .{ src, dst });
+}
+fn utf32ToUtf16leKernel(src: []const u32, dst: []u16) Result {
     return utf32ToUtf16Impl(.little, true, src, dst);
 }
 pub fn utf32ToUtf16be(src: []const u32, dst: []u16) Result {
+    return dispatch.call(@src(), utf32ToUtf16beKernel, .{ src, dst });
+}
+fn utf32ToUtf16beKernel(src: []const u32, dst: []u16) Result {
     return utf32ToUtf16Impl(.big, true, src, dst);
 }
 pub fn utf32ToLatin1(src: []const u32, dst: []u8) Result {
+    return dispatch.call(@src(), utf32ToLatin1Kernel, .{ src, dst });
+}
+fn utf32ToLatin1Kernel(src: []const u32, dst: []u8) Result {
     return utf32ToLatin1Impl(true, src, dst);
 }
 pub fn validUtf32ToUtf8(src: []const u32, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf32ToUtf8Kernel, .{ src, dst });
+}
+fn validUtf32ToUtf8Kernel(src: []const u32, dst: []u8) usize {
     return utf32ToUtf8Impl(false, src, dst).count;
 }
 pub fn validUtf32ToUtf16le(src: []const u32, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf32ToUtf16leKernel, .{ src, dst });
+}
+fn validUtf32ToUtf16leKernel(src: []const u32, dst: []u16) usize {
     return utf32ToUtf16Impl(.little, false, src, dst).count;
 }
 pub fn validUtf32ToUtf16be(src: []const u32, dst: []u16) usize {
+    return dispatch.call(@src(), validUtf32ToUtf16beKernel, .{ src, dst });
+}
+fn validUtf32ToUtf16beKernel(src: []const u32, dst: []u16) usize {
     return utf32ToUtf16Impl(.big, false, src, dst).count;
 }
 pub fn validUtf32ToLatin1(src: []const u32, dst: []u8) usize {
+    return dispatch.call(@src(), validUtf32ToLatin1Kernel, .{ src, dst });
+}
+fn validUtf32ToLatin1Kernel(src: []const u32, dst: []u8) usize {
     return utf32ToLatin1Impl(false, src, dst).count;
 }
 
@@ -152,27 +249,51 @@ pub fn validUtf32ToLatin1(src: []const u32, dst: []u8) usize {
 // when the output runs out, and the valid forms only assume it does not.
 
 pub fn latin1ToUtf8(src: []const u8, dst: []u8) Result {
+    return dispatch.call(@src(), latin1ToUtf8Kernel, .{ src, dst });
+}
+fn latin1ToUtf8Kernel(src: []const u8, dst: []u8) Result {
     return latin1ToUtf8Impl(true, src, dst);
 }
 pub fn latin1ToUtf16le(src: []const u8, dst: []u16) Result {
+    return dispatch.call(@src(), latin1ToUtf16leKernel, .{ src, dst });
+}
+fn latin1ToUtf16leKernel(src: []const u8, dst: []u16) Result {
     return latin1ToUnits(u16, .little, true, src, dst);
 }
 pub fn latin1ToUtf16be(src: []const u8, dst: []u16) Result {
+    return dispatch.call(@src(), latin1ToUtf16beKernel, .{ src, dst });
+}
+fn latin1ToUtf16beKernel(src: []const u8, dst: []u16) Result {
     return latin1ToUnits(u16, .big, true, src, dst);
 }
 pub fn latin1ToUtf32(src: []const u8, dst: []u32) Result {
+    return dispatch.call(@src(), latin1ToUtf32Kernel, .{ src, dst });
+}
+fn latin1ToUtf32Kernel(src: []const u8, dst: []u32) Result {
     return latin1ToUnits(u32, native, true, src, dst);
 }
 pub fn validLatin1ToUtf8(src: []const u8, dst: []u8) usize {
+    return dispatch.call(@src(), validLatin1ToUtf8Kernel, .{ src, dst });
+}
+fn validLatin1ToUtf8Kernel(src: []const u8, dst: []u8) usize {
     return latin1ToUtf8Impl(false, src, dst).count;
 }
 pub fn validLatin1ToUtf16le(src: []const u8, dst: []u16) usize {
+    return dispatch.call(@src(), validLatin1ToUtf16leKernel, .{ src, dst });
+}
+fn validLatin1ToUtf16leKernel(src: []const u8, dst: []u16) usize {
     return latin1ToUnits(u16, .little, false, src, dst).count;
 }
 pub fn validLatin1ToUtf16be(src: []const u8, dst: []u16) usize {
+    return dispatch.call(@src(), validLatin1ToUtf16beKernel, .{ src, dst });
+}
+fn validLatin1ToUtf16beKernel(src: []const u8, dst: []u16) usize {
     return latin1ToUnits(u16, .big, false, src, dst).count;
 }
 pub fn validLatin1ToUtf32(src: []const u8, dst: []u32) usize {
+    return dispatch.call(@src(), validLatin1ToUtf32Kernel, .{ src, dst });
+}
+fn validLatin1ToUtf32Kernel(src: []const u8, dst: []u32) usize {
     return latin1ToUnits(u32, native, false, src, dst).count;
 }
 
@@ -182,14 +303,6 @@ const V16 = @Vector(16, u8);
 
 inline fn splat(comptime T: type, comptime x: anytype) T {
     return @splat(x);
-}
-
-/// The lanes of `b` as bits. The self-hosted x86 backend can leave junk
-/// above bit 3 when it bitcasts a 4-lane bool vector, so it gets them one by
-/// one.
-inline fn mask4(b: @Vector(4, bool)) u4 {
-    if (builtin.zig_backend == .stage2_llvm) return simd.bitmask(b);
-    return @truncate(@reduce(.Or, @select(u8, b, @Vector(4, u8){ 1, 2, 4, 8 }, splat(@Vector(4, u8), 0))));
 }
 
 /// Loads `n` UTF-16 code units in byte order `e` as native values. Volatile,
@@ -528,7 +641,7 @@ inline fn utf8Window(comptime T: type, comptime e: Endian, in: V16, ends: u64, d
             o.* += 3;
         } else {
             const pairs = cp >= splat(U32x4, 0x10000);
-            const mask = mask4(pairs) & 7;
+            const mask = simd.bitmask(pairs) & 7;
             const s = cp -% splat(U32x4, 0x10000);
             const pair = (splat(U32x4, 0xD800) | s >> splat(U32x4, 10)) |
                 (splat(U32x4, 0xDC00) | (s & splat(U32x4, 0x3FF))) << splat(U32x4, 16);
@@ -1030,7 +1143,7 @@ fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32
             inline for (0..4) |g| {
                 const cp: U32x4 = c[4 * g ..][0..4].*;
                 const pairs = cp >= splat(U32x4, 0x10000);
-                const mask = mask4(pairs);
+                const mask = simd.bitmask(pairs);
                 const s = cp -% splat(U32x4, 0x10000);
                 const pair = (splat(U32x4, 0xD800) | s >> splat(U32x4, 10)) |
                     (splat(U32x4, 0xDC00) | (s & splat(U32x4, 0x3FF))) << splat(U32x4, 16);
@@ -1360,6 +1473,10 @@ fn expectSame(
 }
 
 test "every conversion matches the scalar reference on valid text" {
+    try dispatch.forEachLevel(validTextCases, .{});
+}
+
+fn validTextCases() !void {
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
     var text: Text = .{};
@@ -1415,6 +1532,10 @@ fn expectErrorsMatch(comptime from: Format, text: *Text, patterns: []const []con
 }
 
 test "every error kind at every position matches the scalar reference" {
+    try dispatch.forEachLevel(errorCases, .{});
+}
+
+fn errorCases() !void {
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
     var text: Text = .{};
