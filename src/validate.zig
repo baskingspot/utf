@@ -11,6 +11,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const testing = std.testing;
 const simd = @import("simd.zig");
+const dispatch = @import("dispatch.zig");
 const scalar = @import("scalar.zig");
 const Result = @import("result.zig").Result;
 const Error = @import("result.zig").Error;
@@ -19,13 +20,21 @@ const Bytes = simd.Block(u8);
 
 /// Reports whether `bytes` is well-formed UTF-8.
 pub fn utf8(bytes: []const u8) bool {
-    if (simd.isa == .generic) return utf8WithErrors(bytes).err == .none;
+    return dispatch.call(@src(), utf8Kernel, .{bytes});
+}
+
+fn utf8Kernel(bytes: []const u8) bool {
+    if (simd.isa == .generic) return utf8WithErrorsKernel(bytes).err == .none;
     return utf8BadBlock(bytes) == null;
 }
 
 /// Validates UTF-8. On failure `count` is the index of the first byte of the
 /// ill-formed sequence, and `err` says what is wrong with it.
 pub fn utf8WithErrors(bytes: []const u8) Result {
+    return dispatch.call(@src(), utf8WithErrorsKernel, .{bytes});
+}
+
+fn utf8WithErrorsKernel(bytes: []const u8) Result {
     const pos = utf8BadBlock(bytes) orelse return .ok(bytes.len);
     // Every byte before `pos` passed, so the character containing the byte
     // before it starts at most four bytes back.
