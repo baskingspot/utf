@@ -7,13 +7,18 @@
 //
 //   bench-simdutf bench [OP...]   rows in the Go benchmark format
 //   bench-simdutf check [OP...]   one checksum line per row
+//   bench-simdutf serve           one row per request line on stdin
 //
 // OP is a name from bench/ops.tsv, which also gives each operation's row
 // name, corpus directory, and output size; none means all. BENCHTIME_MS
 // (default 100) is how long each row's timed loop runs, sized the way Go's
-// testing.B sizes one.
+// testing.B sizes one. A `serve` request is `OP INPUT N`: time the row N
+// iterations, or for BENCHTIME_MS when N is 0. Every input starts
+// BENCH_IN_OFFSET bytes (default 0) past a page boundary and its output
+// BENCH_OUT_OFFSET bytes (default 2048) past another, as in every arm.
 
 #include <simdutf.h>
+#include <sys/mman.h>
 
 #include <algorithm>
 #include <chrono>
@@ -24,7 +29,7 @@
 #include <filesystem>
 #include <fstream>
 #include <map>
-#include <memory>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -253,9 +258,65 @@ std::vector<Op> read_ops() {
   return ops;
 }
 
+size_t offset_env(const char *name, size_t def) {
+  const char *v = std::getenv(name);
+  size_t off = v ? std::strtoull(v, nullptr, 10) : def;
+  if (off >= 4096 || off % 4 != 0)
+    fail(std::string(name) + " must be a multiple of 4 under 4096");
+  return off;
+}
+
+// Where every arm puts its buffers: the input BENCH_IN_OFFSET bytes past a
+// page boundary, and the output BENCH_OUT_OFFSET past another, in an
+// allocation of its own. The defaults align the input to a page and keep the output 2 KiB
+// from it modulo 4 KiB, so a store does not alias a nearby load.
+const size_t in_offset = offset_env("BENCH_IN_OFFSET", 0);
+const size_t out_offset = offset_env("BENCH_OUT_OFFSET", 2048);
+
+// `len` bytes `off` bytes past a page boundary, in an anonymous mapping of
+// their own: zeroed, and resident only once written.
+struct Placed {
+  char *base = nullptr;
+  char *ptr = nullptr;
+  size_t len = 0;
+  size_t size = 0;
+
+  Placed(size_t len, size_t off) : len(len), size((off + len + 4096) / 4096 * 4096) {
+    void *p = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == MAP_FAILED)
+      fail("out of memory");
+    base = static_cast<char *>(p);
+    ptr = base + off;
+  }
+  Placed(Placed &&o) noexcept : base(o.base), ptr(o.ptr), len(o.len), size(o.size) {
+    o.base = nullptr;
+  }
+  Placed &operator=(Placed &&o) noexcept {
+    std::swap(base, o.base);
+    std::swap(size, o.size);
+    ptr = o.ptr;
+    len = o.len;
+    return *this;
+  }
+  ~Placed() {
+    if (base)
+      munmap(base, size);
+  }
+
+  // Writes every page of the mapping but the data's bytes. A masked load
+  // whose masked-off lanes reach a page nothing has touched takes a
+  // microcode assist on every call: an input that ends at a page boundary
+  // ran simdutf's UTF-16 validation at a third of its speed.
+  void write_rest() {
+    std::memset(base, 0, size_t(ptr - base));
+    std::memset(ptr + len, 0, size - size_t(ptr - base) - len);
+  }
+  void write_all() { std::memset(base, 0, size); }
+};
+
 struct Input {
   std::string name;
-  std::vector<char> data;
+  Placed data;
 };
 
 // Every file in bench/corpus-gen/<dir>, smallest first, then by name.
@@ -268,18 +329,90 @@ std::vector<Input> load(const std::string &dir) {
     fail("open " + path.string() + ": " + ec.message() + " (run `just bench-corpus`)");
   std::vector<Input> inputs;
   for (const auto &entry : it) {
-    // Read at the file's size, so the buffer is never grown and copied.
-    std::vector<char> data(entry.file_size());
+    Placed data(entry.file_size(), in_offset);
     std::ifstream(entry.path(), std::ios::binary)
-        .read(data.data(), std::streamsize(data.size()));
+        .read(data.ptr, std::streamsize(data.len));
+    data.write_rest();
     inputs.push_back({entry.path().filename().string(), std::move(data)});
   }
   std::sort(inputs.begin(), inputs.end(), [](const Input &a, const Input &b) {
-    if (a.data.size() != b.data.size())
-      return a.data.size() < b.data.size();
+    if (a.data.len != b.data.len)
+      return a.data.len < b.data.len;
     return a.name < b.name;
   });
   return inputs;
+}
+
+// Times F on one input: n iterations after one untimed call, or with n 0,
+// sized the way Go's testing.B sizes a loop, growing n until a run takes
+// the goal. Prints the row.
+void measure(const Op &op, const Impl &f, const Input &in, char *out, uint64_t n,
+             uint64_t goal) {
+  const char *data = in.data.ptr;
+  size_t len = in.data.len;
+  uint64_t ns;
+  if (n > 0) {
+    f.timed(data, len, out, 1);
+    ns = f.timed(data, len, out, n);
+  } else {
+    const uint64_t max_n = 1'000'000'000;
+    n = 1;
+    ns = f.timed(data, len, out, n);
+    while (ns < goal && n < max_n) {
+      uint64_t last = n;
+      uint64_t next = uint64_t((unsigned __int128)goal * last / ns);
+      next += next / 5;
+      n = std::min({std::max(next, last + 1), 100 * last, max_n});
+      ns = f.timed(data, len, out, n);
+    }
+  }
+  std::printf("Benchmark%s/%s\t%" PRIu64 "\t%.2f ns/op\t%.2f MB/s\n", op.row.c_str(),
+              in.name.c_str(), n, double(ns) / double(n),
+              double(len) * double(n) * 1e3 / double(ns));
+  std::fflush(stdout);
+}
+
+// One operation's inputs and their output buffers, written before timing,
+// as `write_rest` says.
+struct Loaded {
+  const Op *op = nullptr;
+  std::vector<Input> inputs;
+  std::vector<Placed> outs;
+
+  void load_op(const Op &o) {
+    op = &o;
+    outs.clear();
+    inputs = load(o.dir);
+    for (const Input &in : inputs) {
+      outs.emplace_back(o.out_len(in.data.len), out_offset);
+      outs.back().write_all();
+    }
+  }
+};
+
+// `serve`: one row per request line, `OP INPUT N`, until stdin ends.
+int serve(const std::vector<Op> &ops, uint64_t goal) {
+  Loaded loaded;
+  for (std::string line; std::getline(std::cin, line);) {
+    std::istringstream fields(line);
+    std::string arg, name;
+    uint64_t n = 0;
+    if (!(fields >> arg >> name >> n))
+      fail("bad request: " + line);
+    auto op = std::find_if(ops.begin(), ops.end(), [&](const Op &o) { return o.arg == arg; });
+    auto found = impls.find(arg);
+    if (op == ops.end() || found == impls.end())
+      fail("no operation " + arg);
+    if (loaded.op != &*op)
+      loaded.load_op(*op);
+    size_t i = 0;
+    while (i < loaded.inputs.size() && loaded.inputs[i].name != name)
+      i++;
+    if (i == loaded.inputs.size())
+      fail("no input " + name + " for " + arg);
+    measure(*op, found->second, loaded.inputs[i], loaded.outs[i].ptr, n, goal);
+  }
+  return 0;
 }
 
 uint64_t fnv1a(const char *p, size_t n) {
@@ -292,13 +425,18 @@ uint64_t fnv1a(const char *p, size_t n) {
 } // namespace
 
 int main(int argc, char **argv) {
-  if (argc < 2 ||
-      (std::strcmp(argv[1], "bench") != 0 && std::strcmp(argv[1], "check") != 0)) {
-    std::fprintf(stderr, "usage: bench-simdutf bench|check [OP...]\n");
+  if (argc < 2 || (std::strcmp(argv[1], "bench") != 0 && std::strcmp(argv[1], "check") != 0 &&
+                   std::strcmp(argv[1], "serve") != 0)) {
+    std::fprintf(stderr, "usage: bench-simdutf bench|check [OP...] | serve\n");
     return 2;
   }
   bool check = std::strcmp(argv[1], "check") == 0;
   std::vector<Op> ops = read_ops();
+  uint64_t goal = 100'000'000;
+  if (const char *ms = std::getenv("BENCHTIME_MS"))
+    goal = std::strtoull(ms, nullptr, 10) * 1'000'000;
+  if (std::strcmp(argv[1], "serve") == 0)
+    return serve(ops, goal);
   std::vector<std::string> wanted(argv + 2, argv + argc);
   for (const auto &w : wanted) {
     if (std::none_of(ops.begin(), ops.end(), [&](const Op &op) { return w == op.arg; })) {
@@ -306,9 +444,6 @@ int main(int argc, char **argv) {
       return 2;
     }
   }
-  uint64_t goal = 100'000'000;
-  if (const char *ms = std::getenv("BENCHTIME_MS"))
-    goal = std::strtoull(ms, nullptr, 10) * 1'000'000;
   if (check) {
     auto name = simdutf::get_active_implementation()->name();
     std::fprintf(stderr, "bench-simdutf: simdutf %s, kernel %.*s\n",
@@ -326,15 +461,11 @@ int main(int argc, char **argv) {
     }
     const Impl &f = found->second;
     for (Input &in : load(op.dir)) {
-      // Aligned for any code unit, and left uninitialized for `check`, as
-      // the other arms' buffers are, so only the pages written count in RSS.
-      size_t words = op.out_len(in.data.size()) / 4 + 1;
-      std::unique_ptr<char32_t[]> buf(new char32_t[words]);
-      char *out = reinterpret_cast<char *>(buf.get());
-      const char *data = in.data.data();
-      size_t len = in.data.size();
+      // Left unwritten for `check`, as the other arms' buffers are, so only
+      // the pages written count in RSS.
+      Placed out(op.out_len(in.data.len), out_offset);
       if (check) {
-        Out r = f.run(data, len, out);
+        Out r = f.run(in.data.ptr, in.data.len, out.ptr);
         switch (r.kind) {
         case Out::valid:
           std::printf("%s/%s\tvalid=%s\n", op.row.c_str(), in.name.c_str(),
@@ -345,7 +476,7 @@ int main(int argc, char **argv) {
           break;
         case Out::len:
           std::printf("%s/%s\tlen=%zu fnv=%016" PRIx64 "\n", op.row.c_str(),
-                      in.name.c_str(), r.value, fnv1a(out, r.value));
+                      in.name.c_str(), r.value, fnv1a(out.ptr, r.value));
           break;
         }
         continue;
@@ -353,22 +484,8 @@ int main(int argc, char **argv) {
       // Fault every page in before timing: a masked store that overhangs
       // into a page nothing has written takes a microcode assist on every
       // call.
-      std::memset(out, 0, words * 4);
-      // Go's testing.B loop sizing: grow n until a run takes the goal.
-      const uint64_t max_n = 1'000'000'000;
-      uint64_t n = 1;
-      uint64_t ns = f.timed(data, len, out, n);
-      while (ns < goal && n < max_n) {
-        uint64_t last = n;
-        uint64_t next = uint64_t((unsigned __int128)goal * last / ns);
-        next += next / 5;
-        n = std::min({std::max(next, last + 1), 100 * last, max_n});
-        ns = f.timed(data, len, out, n);
-      }
-      std::printf("Benchmark%s/%s\t%" PRIu64 "\t%.2f ns/op\t%.2f MB/s\n",
-                  op.row.c_str(), in.name.c_str(), n, double(ns) / double(n),
-                  double(len) * double(n) * 1e3 / double(ns));
-      std::fflush(stdout);
+      out.write_all();
+      measure(op, f, in, out.ptr, 0, goal);
     }
   }
   return 0;

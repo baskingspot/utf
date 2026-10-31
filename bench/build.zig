@@ -1,8 +1,9 @@
 //! The benchmark harness's Zig programs (bench/README.md), a build of its
 //! own so the package's build and fetch graph never see them. Everything is
-//! ReleaseFast for the host CPU, except that `-Dutf-optimize`, `-Dutf-cpu`,
-//! and `-Dutf-dispatch` build the `utf` arm, and only it, another way. The C++, Go,
-//! and Rust programs are built by the justfile with their own toolchains.
+//! ReleaseFast for `-Dcpu` (default the host CPU), except that
+//! `-Dutf-optimize`, `-Dutf-cpu`, and `-Dutf-dispatch` build the `utf` arm,
+//! and only it, another way. The C++, Go, and Rust programs are built by the
+//! justfile with their own toolchains.
 
 const std = @import("std");
 
@@ -36,6 +37,8 @@ pub fn build(b: *std.Build) void {
     // The two Zig arms are one program: `impl` picks Zig's std or this package.
     for ([_][]const u8{ "std", "utf" }) |impl| {
         const is_utf = std.mem.eql(u8, impl, "utf");
+        // std is built for `-Dcpu`, as `just bench-compare` builds the Rust
+        // and Go arms for its `cpu`.
         const exe_target = if (is_utf) arm_target else target;
         const exe_optimize = if (is_utf) arm_optimize else optimize;
         const dep = if (is_utf and arm_dispatch != null)

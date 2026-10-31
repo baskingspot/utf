@@ -5,11 +5,15 @@
 //
 //	bench-go bench [OP...]   rows in the Go benchmark format
 //	bench-go check [OP...]   one checksum line per row
+//	bench-go serve           one row per request line on stdin
 //
 // OP is a name from bench/ops.tsv, which also gives each operation's row
 // name, corpus directory, and output size; none means all. BENCHTIME_MS
 // (default 100) is how long each row's timed loop runs; Go's own
-// testing.Benchmark sizes it.
+// testing.Benchmark sizes it. A serve request is `OP INPUT N`: time the row
+// N iterations, or for BENCHTIME_MS when N is 0. Every input starts
+// BENCH_IN_OFFSET bytes (default 0) past a page boundary and its output
+// BENCH_OUT_OFFSET bytes (default 2048) past another, as in every arm.
 //
 // The standard library has no UTF-8 validator that reports a position, so
 // both validation operations time utf8.Valid. It has no slice-to-slice
@@ -19,20 +23,23 @@
 package main
 
 import (
+	"bufio"
 	"encoding/base64"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 	"unicode/utf16"
 	"unicode/utf8"
+	"unsafe"
 )
 
 const corpus = "bench/corpus-gen"
@@ -216,6 +223,68 @@ func readOps() []op {
 	return ops
 }
 
+// placed returns n bytes off bytes past a page boundary, in an anonymous
+// mapping of their own: zeroed, and resident only once written. Every arm
+// places its buffers this way.
+func placed(n, off int) []byte {
+	size := (off + n + 4096) / 4096 * 4096
+	m, err := syscall.Mmap(-1, 0, size, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_PRIVATE|syscall.MAP_ANON)
+	if err != nil {
+		fail("mmap: %v", err)
+	}
+	return m[off : off+n : off+n]
+}
+
+// mapping returns the whole mapping a buffer from placed lies in.
+func mapping(b []byte) []byte {
+	off := int(uintptr(unsafe.Pointer(unsafe.SliceData(b))) & 4095)
+	size := (off + cap(b) + 4096) / 4096 * 4096
+	return unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(unsafe.SliceData(b)), -off)), size)
+}
+
+// release unmaps a buffer from placed.
+func release(b []byte) {
+	syscall.Munmap(mapping(b))
+}
+
+// writeRest writes every page of b's mapping but b's bytes: a masked load
+// whose masked-off lanes reach a page nothing has touched takes a microcode
+// assist on every call.
+func writeRest(b []byte) {
+	m := mapping(b)
+	off := int(uintptr(unsafe.Pointer(unsafe.SliceData(b))) & 4095)
+	clear(m[:off])
+	clear(m[off+len(b):])
+}
+
+func offsetEnv(name string, def int) int {
+	v := os.Getenv(name)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 0 || n >= 4096 || n%4 != 0 {
+		fail("%s must be a multiple of 4 under 4096", name)
+	}
+	return n
+}
+
+var (
+	inOffset  = offsetEnv("BENCH_IN_OFFSET", 0)
+	outOffset = offsetEnv("BENCH_OUT_OFFSET", 2048)
+)
+
+// units views b as code units of type T, in place: the corpus is little
+// endian, as this machine is, and the offsets keep them aligned.
+func units[T any](b []byte) []T {
+	var t T
+	n := len(b) / int(unsafe.Sizeof(t))
+	if n == 0 {
+		return nil
+	}
+	return unsafe.Slice((*T)(unsafe.Pointer(unsafe.SliceData(b))), n)
+}
+
 // load reads every file in bench/corpus-gen/<dir>, smallest first, then by
 // name.
 func load(dir string) []input {
@@ -226,23 +295,27 @@ func load(dir string) []input {
 	}
 	var inputs []input
 	for _, entry := range entries {
-		data, err := os.ReadFile(filepath.Join(path, entry.Name()))
+		f, err := os.Open(filepath.Join(path, entry.Name()))
 		if err != nil {
 			fail("read %s: %v", entry.Name(), err)
 		}
+		info, err := f.Stat()
+		if err != nil {
+			fail("read %s: %v", entry.Name(), err)
+		}
+		data := placed(int(info.Size()), inOffset)
+		if _, err := io.ReadFull(f, data); err != nil {
+			fail("read %s: %v", entry.Name(), err)
+		}
+		writeRest(data)
+		f.Close()
 		in := input{name: entry.Name(), bytes: data}
 		// Only the UTF-16 and UTF-32 inputs need their code units.
 		if strings.Contains(dir, "utf16le") {
-			in.units16 = make([]uint16, len(data)/2)
-			for i := range in.units16 {
-				in.units16[i] = binary.LittleEndian.Uint16(data[2*i:])
-			}
+			in.units16 = units[uint16](data)
 		}
 		if strings.Contains(dir, "utf32") {
-			in.units32 = make([]rune, len(data)/4)
-			for i := range in.units32 {
-				in.units32[i] = rune(binary.LittleEndian.Uint32(data[4*i:]))
-			}
+			in.units32 = units[rune](data)
 		}
 		inputs = append(inputs, in)
 	}
@@ -255,24 +328,92 @@ func load(dir string) []input {
 	return inputs
 }
 
+// output returns an operation's output buffer for an input of n bytes,
+// unwritten, as each typed view the operation's function writes.
+func output(o op, n int) (buffers, []byte) {
+	raw := placed(o.outLen(n), outOffset)
+	var b buffers
+	switch {
+	case strings.HasSuffix(o.arg, "-to-utf16le"):
+		b.b16 = units[uint16](raw)
+	case strings.HasSuffix(o.arg, "-to-utf32"):
+		b.b32 = units[rune](raw)
+	default:
+		b.b8 = raw
+	}
+	return b, raw
+}
+
+// measure times run on one input, n iterations, or for the benchtime when
+// n is 0, and prints the row.
+func measure(o op, run fn, in *input, b buffers, n int, benchtime time.Duration) {
+	if n > 0 {
+		flag.Set("test.benchtime", fmt.Sprintf("%dx", n))
+	} else {
+		flag.Set("test.benchtime", benchtime.String())
+	}
+	result := testing.Benchmark(func(tb *testing.B) {
+		tb.SetBytes(int64(len(in.bytes)))
+		for tb.Loop() {
+			sink = run(in, b)
+		}
+	})
+	fmt.Printf("Benchmark%s/%s\t%s\n", o.row, in.name, result.String())
+}
+
+// serve answers one row per request line, `OP INPUT N`, until stdin ends.
+// The requested operation's inputs and outputs stay loaded until another
+// is requested.
+func serve(ops []op, benchtime time.Duration) {
+	var (
+		current = -1
+		inputs  []input
+		outs    []buffers
+		raws    [][]byte
+	)
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		var arg, name string
+		var n int
+		if _, err := fmt.Sscan(scanner.Text(), &arg, &name, &n); err != nil {
+			fail("bad request: %s", scanner.Text())
+		}
+		i := slices.IndexFunc(ops, func(o op) bool { return o.arg == arg })
+		run, ok := impls[arg]
+		if i < 0 || !ok {
+			fail("no operation %s", arg)
+		}
+		if i != current {
+			for k := range inputs {
+				release(inputs[k].bytes)
+				release(raws[k])
+			}
+			current, inputs, outs, raws = i, load(ops[i].dir), nil, nil
+			for _, in := range inputs {
+				b, raw := output(ops[i], len(in.bytes))
+				clear(mapping(raw))
+				outs, raws = append(outs, b), append(raws, raw)
+			}
+		}
+		k := slices.IndexFunc(inputs, func(in input) bool { return in.name == name })
+		if k < 0 {
+			fail("no input %s for %s", name, arg)
+		}
+		measure(ops[i], run, &inputs[k], outs[k], n, benchtime)
+	}
+}
+
 var sink out
 
 func main() {
 	testing.Init()
 	flag.Parse()
-	if flag.NArg() < 1 || (flag.Arg(0) != "bench" && flag.Arg(0) != "check") {
-		fmt.Fprintln(os.Stderr, "usage: bench-go bench|check [OP...]")
+	if flag.NArg() < 1 || (flag.Arg(0) != "bench" && flag.Arg(0) != "check" && flag.Arg(0) != "serve") {
+		fmt.Fprintln(os.Stderr, "usage: bench-go bench|check [OP...] | serve")
 		os.Exit(2)
 	}
 	check := flag.Arg(0) == "check"
 	ops := readOps()
-	wanted := flag.Args()[1:]
-	for _, w := range wanted {
-		if !slices.ContainsFunc(ops, func(o op) bool { return o.arg == w }) {
-			fmt.Fprintf(os.Stderr, "bench-go: unknown operation %s\n", w)
-			os.Exit(2)
-		}
-	}
 	benchtime := 100 * time.Millisecond
 	if ms := os.Getenv("BENCHTIME_MS"); ms != "" {
 		n, err := strconv.Atoi(ms)
@@ -281,7 +422,17 @@ func main() {
 		}
 		benchtime = time.Duration(n) * time.Millisecond
 	}
-	flag.Set("test.benchtime", benchtime.String())
+	if flag.Arg(0) == "serve" {
+		serve(ops, benchtime)
+		return
+	}
+	wanted := flag.Args()[1:]
+	for _, w := range wanted {
+		if !slices.ContainsFunc(ops, func(o op) bool { return o.arg == w }) {
+			fmt.Fprintf(os.Stderr, "bench-go: unknown operation %s\n", w)
+			os.Exit(2)
+		}
+	}
 
 	for _, o := range ops {
 		if len(wanted) > 0 && !slices.Contains(wanted, o.arg) {
@@ -293,17 +444,7 @@ func main() {
 			continue
 		}
 		for _, in := range load(o.dir) {
-			n := o.outLen(len(in.bytes))
-			// Each buffer holds the operation's output code units.
-			var b buffers
-			switch {
-			case strings.HasSuffix(o.arg, "-to-utf16le"):
-				b.b16 = make([]uint16, n/2)
-			case strings.HasSuffix(o.arg, "-to-utf32"):
-				b.b32 = make([]rune, n/4)
-			default:
-				b.b8 = make([]byte, n)
-			}
+			b, raw := output(o, len(in.bytes))
 			if check {
 				r := run(&in, b)
 				switch r.kind {
@@ -312,37 +453,21 @@ func main() {
 				case 'c':
 					fmt.Printf("%s/%s\tcount=%d\n", o.row, in.name, r.value)
 				default:
-					// Wide output is hashed as its little-endian bytes.
+					// Wide output is hashed as its bytes in memory, little
+					// endian here.
 					h := fnv.New64a()
-					switch {
-					case b.b16 != nil:
-						for _, u := range b.b16[:r.value/2] {
-							h.Write(binary.LittleEndian.AppendUint16(nil, u))
-						}
-					case b.b32 != nil:
-						for _, u := range b.b32[:r.value/4] {
-							h.Write(binary.LittleEndian.AppendUint32(nil, uint32(u)))
-						}
-					default:
-						h.Write(b.b8[:r.value])
-					}
+					h.Write(raw[:r.value])
 					fmt.Printf("%s/%s\tlen=%d fnv=%016x\n", o.row, in.name, r.value, h.Sum64())
 				}
-				continue
+			} else {
+				// Fault every page in before timing: a masked store that
+				// overhangs into a page nothing has written takes a
+				// microcode assist on every call.
+				clear(mapping(raw))
+				measure(o, run, &in, b, 0, benchtime)
 			}
-			// Fault every page in before timing: a masked store that
-			// overhangs into a page nothing has written takes a microcode
-			// assist on every call.
-			clear(b.b8)
-			clear(b.b16)
-			clear(b.b32)
-			result := testing.Benchmark(func(tb *testing.B) {
-				tb.SetBytes(int64(len(in.bytes)))
-				for tb.Loop() {
-					sink = run(&in, b)
-				}
-			})
-			fmt.Printf("Benchmark%s/%s\t%s\n", o.row, in.name, result.String())
+			release(in.bytes)
+			release(raw)
 		}
 	}
 }

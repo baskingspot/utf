@@ -1,13 +1,25 @@
 # The summary at the end of `just bench-compare` (bench/README.md): for each
-# operation, this package's throughput against each other arm's, as the
-# geometric mean over the operation's inputs of utf's median GB/s divided
-# by the arm's, on the inputs both have. Above 1, utf is faster. The last
-# column is utf's slowest input against the first other arm, simdutf.
+# operation, this package's throughput against each other arm's.
 #
-#     awk -f bench/summary.awk DIR/utf.txt DIR/simdutf.txt DIR/std.txt ...
+#     awk -f bench/summary.awk [-v rows=FILE] DIR/utf.txt DIR/simdutf.txt ...
 #
 # The first file is utf's; each holds `Benchmark<Row>/<input> <n> <GB/s> GB/s`
-# lines, one per round, as `just bench-compare` writes them.
+# lines, one per round, in round order, so the k-th line of a row in each
+# file comes from the same round. `just bench-compare` times the arms on a
+# row back to back, so a row's ratio in one round compares the arms on the
+# same machine state. A row's ratio is the median over the rounds of
+# utf's GB/s divided by the arm's in the same round, with a 95% confidence
+# interval from the order statistics, as benchstat's; an operation's ratio
+# is the geometric mean of its rows'. Above 1, utf is faster.
+#
+# Against the first other arm, simdutf, the summary also counts the rows
+# utf is slower on beyond their interval (`<1`), the rows whose interval
+# holds 1 (`~`: their spread exceeds their gap, so they cannot be called
+# either way), gives the spread of the operation's geomean over the rounds
+# (`±`, half its interval), and names the slowest row and its interval.
+# With `-v rows=FILE`, every row against every arm goes to FILE: the row, the
+# arm, both median GB/s, the median ratio and its interval, and `<`, `>`,
+# or `~`.
 
 FNR == 1 {
     arm = FILENAME
@@ -27,24 +39,58 @@ FNR == 1 {
     }
     if (!((op, row) in has_row)) {
         has_row[op, row] = 1
-        rows[op, ++nrows[op]] = row
+        op_rows[op, ++nrows[op]] = row
     }
     k = arm SUBSEP row
     v[k, ++n[k]] = $3
 }
 
-function median(k,    i, j, t, m, a) {
-    m = n[k]
-    for (i = 1; i <= m; i++) a[i] = v[k, i] + 0
+function sort(a, m,    i, j, t) {
     for (i = 2; i <= m; i++) {
         t = a[i]
         for (j = i - 1; j >= 1 && a[j] > t; j--) a[j + 1] = a[j]
         a[j + 1] = t
     }
+}
+
+function median(a, m) {
     return m % 2 ? a[(m + 1) / 2] : (a[m / 2] + a[m / 2 + 1]) / 2
 }
 
-function ratio(x) {
+# The rank of the order statistic that bounds a 95% interval for the median
+# of m values: the largest c with P(Binomial(m, 1/2) < c) <= 0.025, at least
+# 1 (the extremes, below 6 values).
+function rank(m,    c, p, cum) {
+    p = 0.5 ^ m
+    cum = p
+    for (c = 1; ; c++) {
+        p = p * (m - c + 1) / c
+        if (cum + p > 0.025) break
+        cum += p
+    }
+    return c
+}
+
+# Sorts a[1..m] and sets lo, mid, and hi to its median and interval.
+function interval(a, m,    c) {
+    sort(a, m)
+    c = rank(m)
+    lo = a[c]
+    hi = a[m + 1 - c]
+    mid = median(a, m)
+}
+
+function gbs(k,    i, a) {
+    for (i = 1; i <= n[k]; i++) a[i] = v[k, i] + 0
+    sort(a, n[k])
+    return median(a, n[k])
+}
+
+function verdict(lo, hi) {
+    return hi < 1 ? "<" : lo > 1 ? ">" : "~"
+}
+
+function fmt(x) {
     return x == "" ? "-" : sprintf("%.2f", x)
 }
 
@@ -53,25 +99,37 @@ END {
     ref = arms[1]
     printf "%-24s %5s %9s", "utf/arm, geomean", "rows", "utf GB/s"
     for (a = 2; a <= narms; a++) printf " %8s", arms[a]
-    printf "   %s\n", "slowest vs " arms[2]
+    printf " %5s %4s %4s   %s\n", "±", "<1", "~", "slowest vs " arms[2]
     for (i = 1; i <= nops; i++) {
         op = ops[i]
         own = 0; nown = 0
-        delete logsum; delete nshared
-        worst = ""; worst_row = ""
+        delete logsum; delete nshared; delete round_log; delete round_n
+        worst = ""; worst_row = ""; under = 0; level = 0
         for (r = 1; r <= nrows[op]; r++) {
-            row = rows[op, r]
-            if (!((ref, row) in n)) continue
-            u = median(ref SUBSEP row)
+            row = op_rows[op, r]
+            ku = ref SUBSEP row
+            if (!(ku in n)) continue
+            u = gbs(ku)
             own += log(u); nown++
             for (a = 2; a <= narms; a++) {
                 k = arms[a] SUBSEP row
                 if (!(k in n)) continue
-                q = u / median(k)
-                logsum[a] += log(q); nshared[a]++
-                all_logsum[a] += log(q); all_n[a]++
-                if (a == 2 && (worst == "" || q < worst)) {
-                    worst = q
+                m = n[k] < n[ku] ? n[k] : n[ku]
+                delete q
+                for (j = 1; j <= m; j++) {
+                    q[j] = v[ku, j] / v[k, j]
+                    if (a == 2) { round_log[j] += log(q[j]); round_n[j]++ }
+                }
+                interval(q, m)
+                logsum[a] += log(mid); nshared[a]++
+                all_logsum[a] += log(mid); all_n[a]++
+                if (rows != "")
+                    printf "%-44s %-8s %9.3f %9.3f %6.3f %6.3f %6.3f %s\n", row, arms[a], u, gbs(k), mid, lo, hi, verdict(lo, hi) > rows
+                if (a != 2) continue
+                if (hi < 1) under++
+                else if (lo <= 1) level++
+                if (worst == "" || mid < worst) {
+                    worst = mid; worst_lo = lo; worst_hi = hi
                     worst_row = row
                     sub(/^[^\/]*\//, "", worst_row)
                 }
@@ -79,11 +137,23 @@ END {
         }
         if (nown == 0) continue
         all_own += own; all_nown += nown
+        all_under += under; all_level += level
         printf "%-24s %5d %9.2f", op, nown, exp(own / nown)
-        for (a = 2; a <= narms; a++) printf " %8s", ratio(nshared[a] ? exp(logsum[a] / nshared[a]) : "")
-        printf "   %s\n", worst == "" ? "-" : sprintf("%.2f %s", worst, worst_row)
+        for (a = 2; a <= narms; a++) printf " %8s", fmt(nshared[a] ? exp(logsum[a] / nshared[a]) : "")
+        spread = "-"
+        if (nshared[2]) {
+            # The operation's geomean against simdutf in each round, over
+            # the rows every round has.
+            delete g; m = 0
+            for (j = 1; (j in round_n) && round_n[j] == nshared[2]; j++) g[++m] = exp(round_log[j] / round_n[j])
+            if (m > 1) {
+                interval(g, m)
+                spread = sprintf("%.0f%%", 50 * (hi - lo) / mid)
+            }
+        }
+        printf " %5s %4d %4d   %s\n", spread, under, level, worst == "" ? "-" : sprintf("%.2f [%.2f, %.2f] %s", worst, worst_lo, worst_hi, worst_row)
     }
     printf "%-24s %5d %9.2f", "all", all_nown, all_nown ? exp(all_own / all_nown) : 0
-    for (a = 2; a <= narms; a++) printf " %8s", ratio(all_n[a] ? exp(all_logsum[a] / all_n[a]) : "")
-    printf "\n"
+    for (a = 2; a <= narms; a++) printf " %8s", fmt(all_n[a] ? exp(all_logsum[a] / all_n[a]) : "")
+    printf " %5s %4d %4d\n", "", all_under, all_level
 }

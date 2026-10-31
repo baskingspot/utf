@@ -3,16 +3,22 @@
 
 markdown := "README.md AGENTS.md CHANGELOG.md bench/README.md docs/slop .github"
 
-# How `just bench-compare` builds this package's arm, and which simdutf kernel
-# its arm runs (empty: simdutf's runtime pick). Set them on the command line:
-# `just cpu=baseline dispatch=false kernel=fallback bench-compare`. dispatch
-# empty is the package's default: runtime dispatch for a generic x86-64 CPU
-# (baseline or an x86-64 level), none for native.
+# How `just bench-compare` builds the arms, and which simdutf kernel its arm
+# runs (empty: simdutf's runtime pick). Set them on the command line:
+# `just cpu=baseline dispatch=false kernel=fallback bench-compare`. cpu builds
+# this package's, std's, Rust's, and Go's arms for one CPU; optimize and
+# dispatch apply to this package's alone. dispatch empty is the package's
+# default: runtime dispatch for a generic x86-64 CPU (baseline or an x86-64
+# level), none for native.
 optimize := "ReleaseFast"
 cpu := "native"
 dispatch := ""
 kernel := ""
-bench_zig := "zig build -p ../zig-out -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
+bench_zig := "zig build -p ../zig-out -Dcpu=" + cpu + " -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
+
+# cpu in Rust's and Go's terms. Go has no native: the highest level the host has.
+rust_cpu := if cpu == "baseline" { "x86-64" } else { replace(cpu, "_", "-") }
+goamd64 := if cpu == "baseline" { "v1" } else if cpu == "x86_64_v2" { "v2" } else if cpu == "x86_64_v3" { "v3" } else if cpu == "x86_64_v4" { "v4" } else if cpu == "native" { shell("if grep -qw avx512vl /proc/cpuinfo; then echo v4; elif grep -qw avx2 /proc/cpuinfo; then echo v3; else echo v2; fi") } else { "v1" }
 
 [private]
 default:
@@ -62,7 +68,7 @@ bench-corpus:
     zig-out/bin/bench-corpus
     cd bench/corpus-gen && sha256sum --quiet --check ../corpus/SHA256SUMS
 
-# Every arm, into zig-out/bin/bench-<arm>.
+# Every arm, into zig-out/bin/bench-<arm>, built for cpu.
 [private]
 bench-build:
     #!/usr/bin/env bash
@@ -71,13 +77,14 @@ bench-build:
     (cd bench && {{ bench_zig }})
     c++ -O3 -std=c++20 -o zig-out/bin/bench-simdutf bench/simdutf/main.cpp \
         $(pkg-config --cflags --libs simdutf) -Wl,-rpath,"$(pkg-config --variable=libdir simdutf)"
-    go build -C bench/go -o ../../zig-out/bin/bench-go .
-    RUSTFLAGS="-C target-cpu=native" cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml
-    cp bench/rust/target/release/bench-rust zig-out/bin/
+    GOAMD64={{ goamd64 }} go build -C bench/go -o ../../zig-out/bin/bench-go .
+    RUSTFLAGS="-C target-cpu={{ rust_cpu }}" CARGO_TARGET_DIR=bench/rust/target/{{ rust_cpu }} \
+        cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml
+    cp bench/rust/target/{{ rust_cpu }}/release/bench-rust zig-out/bin/
 
-[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then interleaved rounds on one core, benchstat against simdutf, and a summary per operation. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds. The numbers are not claims")]
+[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then rounds on one core that time the arms on each row back to back, benchstat against simdutf, and a summary per operation with each row's noise. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds. The numbers are not claims")]
 [group("bench")]
-bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
+bench-compare ROUNDS="10" *OPS: bench-corpus bench-build
     #!/usr/bin/env bash
     set -euo pipefail
     out=zig-out/bench-compare
@@ -85,13 +92,21 @@ bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
     arms=(simdutf utf std rust go)
     ops=({{ OPS }})
     if [ -n "{{ kernel }}" ]; then export SIMDUTF_FORCE_IMPLEMENTATION="{{ kernel }}"; fi
+    # Each sample's timed loop: short, so the arms' samples of a row are close
+    # in time.
+    export BENCHTIME_MS="${BENCHTIME_MS:-50}"
     # The outputs must match before the timings mean anything: every arm's
     # checksums against simdutf's, on the rows both have.
     for arm in "${arms[@]}"; do
         zig-out/bin/bench-$arm check "${ops[@]}" > "$out/check-$arm.txt" 2> "$out/stderr-$arm.txt" ||
             { cat "$out/stderr-$arm.txt"; exit 1; }
     done
-    { echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}"; cat "$out/stderr-simdutf.txt"; } | tee "$out/config.txt"
+    {
+        echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}"
+        echo "std: ReleaseFast, cpu {{ cpu }}; rust: target-cpu={{ rust_cpu }}; go: GOAMD64={{ goamd64 }}"
+        echo "buffers: input ${BENCH_IN_OFFSET:-0} bytes past a page, output ${BENCH_OUT_OFFSET:-2048}; ${BENCHTIME_MS} ms a sample, {{ ROUNDS }} rounds"
+        cat "$out/stderr-simdutf.txt"
+    } | tee "$out/config.txt"
     status=0
     for arm in "${arms[@]:1}"; do
         join -t $'\t' <(grep -v '^#' "$out/check-simdutf.txt" | sort) <(grep -v '^#' "$out/check-$arm.txt" | sort) |
@@ -122,31 +137,88 @@ bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
         done
     } | tee "$out/rss.txt"
     echo
-    # The last core, and one round of each arm at a time in a rotating order,
-    # so drift on the machine lands on every arm alike.
+    # The rounds. Each arm runs as a server (`bench-<arm> serve`) pinned to
+    # the last core, and each row is timed by every arm that has it back to
+    # back, in an order that rotates from row to row and round to round, so
+    # the arms' samples of a row see the same machine: on a shared host the
+    # throughput of every arm steps by up to half for seconds at a time.
+    # Every round starts the servers afresh, so each round is a separate
+    # process per arm. Round 0 sizes each row's loop to BENCHTIME_MS and is
+    # not counted; the rounds after it run that many iterations.
     core=$(( $(nproc) - 1 ))
-    for round in $(seq 0 $(( {{ ROUNDS }} - 1 ))); do
-        for i in "${!arms[@]}"; do
-            arm=${arms[$(( (round + i) % ${#arms[@]} ))]}
-            taskset -c "$core" zig-out/bin/bench-$arm bench "${ops[@]}" >> "$out/raw-$arm.txt"
-        done
+    taskset -cp 0 $$ > /dev/null
+    declare -A arg_of has iters to from
+    while IFS=$'\t' read -r arg row _; do arg_of[$row]=$arg; done < <(grep -v '^#' bench/ops.tsv)
+    mapfile -t rows < <(grep -v '^#' "$out/check-simdutf.txt" | cut -f1)
+    for arm in "${arms[@]}"; do
+        while IFS=$'\t' read -r row _; do has[$arm/$row]=1; done < <(grep -v '^#' "$out/check-$arm.txt")
     done
-    # Only the rows, and of each row only its throughput, in GB/s: testingx's
-    # header lines, which the other arms lack, would put the Zig arms in
-    # tables of their own, and it rounds ns/op to whole nanoseconds, which
-    # blurs the short inputs. An arm with no rows yet is left out.
+    fifos=$(mktemp -d)
+    trap 'rm -rf "$fifos"' EXIT
+    start() {
+        for arm in "${arms[@]}"; do
+            mkfifo "$fifos/$arm.in" "$fifos/$arm.out"
+            taskset -c "$core" zig-out/bin/bench-$arm serve < "$fifos/$arm.in" > "$fifos/$arm.out" 2>> "$out/stderr-$arm.txt" &
+            exec {fd}> "$fifos/$arm.in"
+            to[$arm]=$fd
+            exec {fd}< "$fifos/$arm.out"
+            from[$arm]=$fd
+        done
+    }
+    stop() {
+        for arm in "${arms[@]}"; do eval "exec ${to[$arm]}>&-"; done
+        wait
+        for arm in "${arms[@]}"; do eval "exec ${from[$arm]}<&-"; done
+        rm -f "$fifos"/*
+    }
+    # One row on one arm, N iterations (0: BENCHTIME_MS), into $line.
+    sample() {
+        printf '%s %s %s\n' "$2" "$3" "$4" >&"${to[$1]}"
+        if ! IFS= read -r line <&"${from[$1]}" || [[ $line != Benchmark* ]]; then
+            echo "bench-$1 failed on $2 $3: $line"
+            cat "$out/stderr-$1.txt"
+            exit 1
+        fi
+    }
+    for round in $(seq 0 {{ ROUNDS }}); do
+        start
+        j=0
+        for row in "${rows[@]}"; do
+            arg=${arg_of[${row%%/*}]}
+            input=${row#*/}
+            present=()
+            for arm in "${arms[@]}"; do [ -n "${has[$arm/$row]:-}" ] && present+=("$arm"); done
+            for i in "${!present[@]}"; do
+                arm=${present[$(( (round + j + i) % ${#present[@]} ))]}
+                if [ "$round" = 0 ]; then
+                    sample "$arm" "$arg" "$input" 0
+                    IFS=$'\t' read -r _ n _ <<< "$line"
+                    iters[$arm/$row]=$n
+                else
+                    sample "$arm" "$arg" "$input" "${iters[$arm/$row]}"
+                    echo "$line" >> "$out/raw-$arm.txt"
+                fi
+            done
+            j=$(( j + 1 ))
+        done
+        stop
+        echo "round $round of {{ ROUNDS }} done at $(date +%T)"
+    done
+    # Only the rows, and of each row only its throughput, in GB/s, for
+    # benchstat. An arm with no rows yet is left out.
     files=()
     for arm in "${arms[@]}"; do
+        [ -s "$out/raw-$arm.txt" ] || continue
         awk '/^Benchmark/ { for (i = 3; i < NF; i += 2) if ($(i + 1) == "MB/s") printf "%s\t%s\t%.4f GB/s\n", $1, $2, $i / 1000 }' \
             "$out/raw-$arm.txt" > "$out/$arm.txt"
-        [ -s "$out/$arm.txt" ] && files+=("$arm=$out/$arm.txt")
+        files+=("$arm=$out/$arm.txt")
     done
     benchstat "${files[@]}" > "$out/benchstat.txt"
     echo "benchstat: $out/benchstat.txt"
     echo
     just bench-summary "$out" | tee "$out/summary.txt"
 
-[doc("Summarize a bench-compare run in DIR: per operation, utf's geomean throughput against each arm's")]
+[doc("Summarize a bench-compare run in DIR: per operation, utf's geomean throughput against each arm's, and each row's ratio with its interval into DIR/rows.txt")]
 [group("bench")]
 bench-summary DIR="zig-out/bench-compare":
     #!/usr/bin/env bash
@@ -155,7 +227,8 @@ bench-summary DIR="zig-out/bench-compare":
     for arm in utf simdutf std rust go; do
         [ -s "{{ DIR }}/$arm.txt" ] && files+=("{{ DIR }}/$arm.txt")
     done
-    awk -f bench/summary.awk "${files[@]}"
+    : > "{{ DIR }}/rows.txt"
+    awk -v rows="{{ DIR }}/rows.txt" -f bench/summary.awk "${files[@]}"
 
 [doc("Build the simdutf oracle, zig-out/bin/utf-oracle, which tests and fuzzers drive through bench/oracle/Oracle.zig")]
 [group("bench")]
