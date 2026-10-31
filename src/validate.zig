@@ -133,7 +133,7 @@ pub fn utf32WithErrors(units: []const u32) Result {
 fn utf32WithErrorsKernel(units: []const u32) Result {
     const pos = utf32BadBlock(units);
     if (pos == none) return .ok(units.len);
-    const v = if (units.len < n32) loadShort(u32, units) else simd.load(u32, units[pos..]);
+    const v = if (units.len < n32) simd.loadShort(u32, units) else simd.load(u32, units[pos..]);
     // Lanes before the first bad one passed, in an overlapping last block too.
     const at = pos + @ctz(simd.bitmask(utf32Key(v) > @as(Units32, @splat(utf32_key_max))));
     return .fail(if (units[at] > 0x10FFFF) .too_large else .surrogate, at);
@@ -153,35 +153,6 @@ inline fn isAscii(v: Bytes) bool {
 
 inline fn any(v: Bytes) bool {
     return @reduce(.Or, v != splat(0));
-}
-
-/// The block at `src[0]`, which must be 64-byte aligned: an aligned load
-/// can be an operand on SSE.
-inline fn loadAligned(comptime T: type, src: []const T) simd.Block(T) {
-    const n = @typeInfo(simd.Block(T)).vector.len;
-    return @as(*align(64) const simd.Block(T), @ptrCast(@alignCast(src[0..n]))).*;
-}
-
-/// Code units from `p` to the first 64-byte boundary after it, 1 to a
-/// block's worth.
-inline fn toBoundary(comptime T: type, p: [*]const T) usize {
-    return (64 - @intFromPtr(p) % 64) / @sizeOf(T);
-}
-
-/// AVX-512 loads a short input with one masked load, which reads no byte
-/// past the input; elsewhere `simd.loadPartial` builds the block in
-/// registers. The intrinsic needs the LLVM backend.
-const masked_load = simd.isa == .avx512 and builtin.zig_backend == .stage2_llvm;
-extern fn @"llvm.masked.load.v64i8.p0"(*const anyopaque, u32, @Vector(64, bool), @Vector(64, u8)) @Vector(64, u8);
-
-/// A slice shorter than a block, zero-padded.
-inline fn loadShort(comptime T: type, src: []const T) simd.Block(T) {
-    if (!masked_load) return simd.loadPartial(T, src);
-    const len = src.len * @sizeOf(T);
-    // The pointer of an empty slice may be anything.
-    if (len == 0) return @splat(0);
-    const mask: u64 = (@as(u64, 1) << @intCast(len)) - 1;
-    return @bitCast(@"llvm.masked.load.v64i8.p0"(src.ptr, 1, @bitCast(mask), @splat(0)));
 }
 
 /// Whether at most 64 bytes are all ASCII.
@@ -240,14 +211,14 @@ inline fn asciiPrefix(bytes: []const u8, comptime whole: bool) usize {
         return if (isAscii(simd.load(u8, bytes[len - 64 ..]))) len else i;
     }
     if (!isAscii(simd.load(u8, bytes))) return 0;
-    var i = toBoundary(u8, bytes.ptr);
+    var i = simd.toBoundary(u8, bytes.ptr);
     while (i + 256 <= len) : (i += 256) {
-        const v = loadAligned(u8, bytes[i..]) | loadAligned(u8, bytes[i + 64 ..]) |
-            loadAligned(u8, bytes[i + 128 ..]) | loadAligned(u8, bytes[i + 192 ..]);
+        const v = simd.loadAligned(u8, bytes[i..]) | simd.loadAligned(u8, bytes[i + 64 ..]) |
+            simd.loadAligned(u8, bytes[i + 128 ..]) | simd.loadAligned(u8, bytes[i + 192 ..]);
         if (!isAscii(v)) break;
     }
     while (i + 64 <= len) : (i += 64) {
-        if (!isAscii(loadAligned(u8, bytes[i..]))) return i;
+        if (!isAscii(simd.loadAligned(u8, bytes[i..]))) return i;
     }
     return if (isAscii(simd.load(u8, bytes[len - 64 ..]))) len else i;
 }
@@ -256,7 +227,7 @@ inline fn asciiPrefix(bytes: []const u8, comptime whole: bool) usize {
 /// be one.
 fn firstHigh(bytes: []const u8, from: usize) usize {
     const len = bytes.len;
-    if (len < 64) return from + @ctz(simd.bitmask(loadShort(u8, bytes) >= splat(0x80)) >> @intCast(from));
+    if (len < 64) return from + @ctz(simd.bitmask(simd.loadShort(u8, bytes) >= splat(0x80)) >> @intCast(from));
     var i = from;
     while (i + 64 <= len) : (i += 64) {
         const m = simd.bitmask(simd.load(u8, bytes[i..]) >= splat(0x80));
@@ -400,7 +371,7 @@ inline fn utf8BadBlock(bytes: []const u8) usize {
         if (isAsciiShort(bytes)) return none;
         if (simd.isa == .generic) return 0;
         // The zero padding ends any sequence the input cuts short.
-        return if (!any(utf8Errors(loadShort(u8, bytes), zero))) none else 0;
+        return if (!any(utf8Errors(simd.loadShort(u8, bytes), zero))) none else 0;
     }
     // Leading ASCII blocks first, so ASCII text never loads the lookup
     // tables. Zero stands in for ASCII as context.
@@ -420,7 +391,7 @@ inline fn utf8BadBlock(bytes: []const u8) usize {
         // unless it starts right after it.
         const cur: Bytes = simd.load(u8, bytes);
         if (any(utf8Errors(cur, zero))) return 0;
-        i = toBoundary(u8, bytes.ptr);
+        i = simd.toBoundary(u8, bytes.ptr);
         if (i == 64) {
             before = cur;
             incomplete = utf8Incomplete(cur);
@@ -495,7 +466,7 @@ fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Resu
     if (pos == len) return .fail(.surrogate, len - 1);
     if (len < n16) {
         // The zero padding is not a surrogate.
-        const s = surrogateMasks(endian, loadShort(u16, units));
+        const s = surrogateMasks(endian, simd.loadShort(u16, units));
         return .fail(.surrogate, @ctz((s.low & ~(s.high << 1)) | (s.high & ~(s.low >> 1))));
     }
     // The scalar validator stops at the first low surrogate with no high
@@ -568,7 +539,7 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
     if (len < n16) {
         // The zero padding is not a low surrogate, so a high one at the end
         // fails here.
-        const block = loadShort(u16, units);
+        const block = simd.loadShort(u16, units);
         if (!hasSurrogate(endian, block)) return none;
         const s = surrogateMasks(endian, block);
         return if (s.low != s.high << 1) 0 else none;
@@ -586,7 +557,7 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
     if (len >= 8 * n16) {
         // The first block, then groups from the next 64-byte boundary.
         if (utf16Block(endian, simd.load(u16, units), 0) == bad_block) return 0;
-        i = toBoundary(u16, units.ptr);
+        i = simd.toBoundary(u16, units.ptr);
         pending = @intFromBool(isHigh(std.mem.toNative(u16, units[i - 1], endian)));
     }
     // Groups of eight blocks, then one of four, with one test for a
@@ -646,7 +617,7 @@ inline fn utf32Bad(v: Units32) bool {
 
 inline fn utf32BadBlock(units: []const u32) usize {
     const len = units.len;
-    if (len < n32) return if (utf32Bad(loadShort(u32, units))) 0 else none;
+    if (len < n32) return if (utf32Bad(simd.loadShort(u32, units))) 0 else none;
     if (len <= 2 * n32) {
         // One block, or the first and the last, overlapping it, with one
         // test: the loops' setup cost a third of the time here, and so did
@@ -664,7 +635,7 @@ inline fn utf32BadBlock(units: []const u32) usize {
     if (len >= 8 * n32) {
         // The first block, then groups from the next 64-byte boundary.
         if (utf32Bad(simd.load(u32, units))) return 0;
-        i = toBoundary(u32, units.ptr);
+        i = simd.toBoundary(u32, units.ptr);
     }
     // Groups of four blocks with one test; the loop below finds the block
     // in a group that fails.

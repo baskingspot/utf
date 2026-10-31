@@ -140,8 +140,9 @@ standard, not from simdutf's source.
    masked load (`llvm.masked.load`, LLVM backend only) builds the padded
    block for UTF-8, UTF-16, and UTF-32, 1.2–1.9× `loadPartial` at 7–45
    bytes; ASCII keeps overlapping loads, now up to 64 bytes (+15% at 64),
-   where the masked load lost. validate.zig keeps it as a private
-   `loadShort` until `simd.zig` has one.
+   where the masked load lost. Wave 3: it is `simd.loadShort`, shared with
+   transcoding's tails; where the masked-off bytes would reach another
+   page it loads the 64 bytes that end where the input does instead.
 4. **Valid vs checked.** The checked conversion validates in the same pass;
    it must not cost more than validating and converting separately.
    Measured for transcoding ([convert-20261030.md](results/convert-20261030.md)):
@@ -304,3 +305,30 @@ wave-2 measurements left.
   the copy was, checked conversions 1.2-1.8× dispatched; dispatch now
   costs 0.1-3 ns over native on these rows. Kernels may return from as
   many places as they like: no result crosses `call` whole.
+- **Shared helpers**: `src/simd.zig`, and `validate.zig`, `convert.zig`,
+  and `base64.zig` moved onto them
+  ([simd-wave3-20261031.md](results/simd-wave3-20261031.md)). One set
+  replaces wave 2's private copies: `loadAligned`, `toBoundary`,
+  `loadShort` (masked load), `loadTail` (the block ending at the input's
+  end, moved down with `vpermb`), `storePartial` (masked store, else
+  16-byte and integer stores), `loadVolatile`, `storeVolatile`, `lowBits`
+  (`bzhi`), `compress`, `permute`, `permute2` (`vpermi2b/d`), `multishift`,
+  `pext`, `pdep`, and `narrow` (`packusdw`/`packuswb`). A masked access
+  stays masked only while its masked-off bytes are on the page of its last
+  counted byte, tested first as "all 64 bytes on one page" (a masked load
+  whose rest reaches an untouched or unreadable page costs about 240
+  cycles, measured); otherwise it goes in
+  as the end of the 64 bytes that end where the data does, which lie on
+  that page, moved with `vpermi2b`/`vpermb`: no call, no saved registers,
+  no stack buffer. `loadShort` takes up to a whole block and `storePartial`
+  stores at most its lane count, as transcoding's tails need. Still
+  private, as only one module uses them: base64's `pmaddubsw`/`pmaddwd`/
+  `pmulhuw` and whitespace ring, transcoding's shuffle tables and
+  `firstStep`, length's `alignHead` (0 when aligned, which its sums
+  want, where `toBoundary` gives a whole block). Every module level in
+  the harness (geomean native -0.2%, dispatched +2.8%, AVX2 -0.9%, where
+  unchanged `length` code moves ±2.5% and single rows ±15% with layout);
+  base64's driver 1.04-1.07× (short decode 1.2×); short validation next
+  to an untouched page 98-142 ns to 4-7 ns, a wave-2 bug. Also: AVX2 and
+  SSE UTF-16 to Latin-1 finish the last 1-31 units in two 16-unit
+  vectors, 2.1-2.4× at 16 units.

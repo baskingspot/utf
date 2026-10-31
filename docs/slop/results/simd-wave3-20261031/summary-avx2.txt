@@ -1,0 +1,47 @@
+base64    rows=  42 geomean=-2.51%
+convert   rows= 568 geomean=-0.66%
+length    rows= 133 geomean=-2.43%
+validate  rows= 134 geomean=+0.46%
+all       rows= 877 geomean=-0.85%
+-- convert: 17 up, 13 down (>=5%, p<0.05)
+    -16.92%  ValidUtf16leToLatin1/latin1-256            64.062 ->   53.224 GB/s
+    -15.12%  ValidUtf16leToUtf16be/ascii-4096          103.977 ->   88.252 GB/s
+    -14.13%  ValidUtf16beToLatin1/ascii-64              26.143 ->   22.448 GB/s
+    -11.25%  ValidUtf16beToLatin1/latin1-64             25.601 ->   22.722 GB/s
+    -10.96%  ValidUtf16beToUtf16le/ascii-256            58.103 ->   51.735 GB/s
+    -10.44%  Utf16leToLatin1/ascii-65536                67.675 ->   60.610 GB/s
+    -10.40%  Utf32ToUtf8/japanese                        9.009 ->    8.072 GB/s
+    -10.05%  ValidUtf8ToUtf16le/hebrew                   5.181 ->    4.660 GB/s
+     -9.15%  ValidUtf16leToLatin1/ascii-64              25.598 ->   23.256 GB/s
+     -8.11%  ValidUtf16beToUtf16le/ascii-4096           80.149 ->   73.647 GB/s
+     -7.12%  Utf32ToUtf16be/ascii-1048576               22.640 ->   21.027 GB/s
+     -5.96%  ValidUtf16beToUtf16le/ascii-64             24.523 ->   23.062 GB/s
+     -5.15%  Utf16leToUtf8/korean                        5.477 ->    5.194 GB/s
+     +5.31%  Utf32ToUtf8/ascii-4096                     48.955 ->   51.553 GB/s
+     +5.74%  ValidUtf16beToUtf16le/korean               41.580 ->   43.968 GB/s
+     +7.58%  Utf8ToLatin1/latin1-4096                    2.868 ->    3.086 GB/s
+     +9.83%  ValidUtf16leToUtf16be/ascii-256            33.058 ->   36.307 GB/s
+    +10.17%  ValidUtf16leToLatin1/latin1-16              5.264 ->    5.799 GB/s
+    +11.57%  ValidUtf16leToUtf8/ascii-16                 5.130 ->    5.723 GB/s
+    +13.78%  ValidUtf8ToUtf16be/chinese                  7.795 ->    8.868 GB/s
+    +13.97%  ValidUtf16beToLatin1/ascii-16               5.334 ->    6.079 GB/s
+    +14.66%  ValidUtf16leToLatin1/ascii-16               5.283 ->    6.057 GB/s
+    +16.95%  ValidUtf16beToLatin1/latin1-16              5.228 ->    6.114 GB/s
+    +28.77%  Utf32ToUtf8/ascii-256                      30.548 ->   39.336 GB/s
+    +30.02%  Utf8ToLatin1/ascii-4096                    50.944 ->   66.236 GB/s
+    +40.73%  Utf8ToLatin1/ascii-65536                   35.912 ->   50.539 GB/s
+    +96.03%  Utf16beToLatin1/ascii-16                    2.570 ->    5.039 GB/s
+   +100.66%  Utf16beToLatin1/latin1-16                   2.545 ->    5.106 GB/s
+   +142.05%  Utf16leToLatin1/ascii-16                    2.286 ->    5.534 GB/s
+   +151.64%  Utf16leToLatin1/latin1-16                   2.257 ->    5.680 GB/s
+-- length: 2 up, 3 down (>=5%, p<0.05)
+    -15.23%  CountUtf8/ascii-64                         12.233 ->   10.370 GB/s
+    -10.33%  Utf8FromUtf16le/russian                    39.678 ->   35.579 GB/s
+     -8.39%  Utf16FromUtf32/ascii-64                    38.694 ->   35.446 GB/s
+     +6.23%  CountUtf16le/ascii-16                       4.940 ->    5.248 GB/s
+     +7.33%  CountUtf16be/ascii-64                      16.404 ->   17.607 GB/s
+-- validate: 2 up, 2 down (>=5%, p<0.05)
+    -14.25%  ValidateAsciiErr/ascii-256                 41.543 ->   35.621 GB/s
+    -10.09%  ValidateUtf16le/ascii-256                  46.461 ->   41.774 GB/s
+    +10.59%  ValidateUtf8Err/ascii-64                    5.362 ->    5.929 GB/s
+    +24.99%  ValidateUtf16be/ascii-16                    5.602 ->    7.002 GB/s
