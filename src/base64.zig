@@ -235,7 +235,25 @@ pub fn decodeWith(
     const n = t.len - i;
     if (n == 0 and t.padding == 0) return .ok(o);
     const live = simd.lowBits(u64, n);
-    const c = K.classifyBlock(simd.loadTail(src, i, t.len));
+    const block = simd.loadTail(src, i, t.len);
+    if (K.blocks > 1 and n <= 32) {
+        // Classify and pack only the first half of the block, one vector
+        // on AVX2 and two on SSE and NEON
+        // (docs/slop/results/calls-20261031.md).
+        const in: [K.blocks]K.V = @bitCast(block);
+        var values: [K.blocks / 2]K.V = undefined;
+        var bad: u64 = 0;
+        inline for (&values, 0..) |*v, k| {
+            const c = K.classify(in[k]);
+            v.* = c.values;
+            bad |= @as(u64, simd.bitmask(c.bad)) << (k * K.lanes);
+        }
+        if (bad & live == 0) {
+            if (K.finish(values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+            return scalar.decodeFrom(dst, src, t, i, o, options);
+        }
+    }
+    const c = K.classifyBlock(block);
     const bad = c.badMask() & live;
     if (bad == 0) {
         if (K.finish(c.values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
@@ -765,14 +783,17 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             }
         }
 
-        /// Turns 64 6-bit values into 48 bytes, the first 48 of the result.
-        inline fn packAll(values: [blocks]V) V64 {
-            var p: [blocks]V = undefined;
-            inline for (0..blocks) |k| p[k] = pack(values[k]);
-            if (blocks == 1) return @bitCast(p);
-            return @shuffle(u8, @as(V64, @bitCast(p)), undefined, blk: {
-                var m: [64]i32 = @splat(0);
-                for (0..48) |j| m[j] = j / (lanes / 4 * 3) * lanes + j % (lanes / 4 * 3);
+        /// Turns the 6-bit values of an array of vectors into bytes, each
+        /// four into three, in the first three quarters of the result.
+        inline fn packAll(values: anytype) @Vector(@sizeOf(@TypeOf(values)), u8) {
+            const k = values.len;
+            const W = @Vector(k * lanes, u8);
+            var p: [k]V = undefined;
+            inline for (0..k) |j| p[j] = pack(values[j]);
+            if (k == 1) return @bitCast(p);
+            return @shuffle(u8, @as(W, @bitCast(p)), undefined, blk: {
+                var m: [k * lanes]i32 = @splat(0);
+                for (0..k * lanes / 4 * 3) |j| m[j] = j / (lanes / 4 * 3) * lanes + j % (lanes / 4 * 3);
                 break :blk m;
             });
         }
@@ -781,7 +802,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// rules, into `dst`, and returns the number of bytes written. Null
         /// when the scalar decoder must finish: at an error, at a partial
         /// chunk the rules leave to it, or when `dst` is too small.
-        inline fn finish(values: [blocks]V, count: usize, dst: []u8, t: scalar.Trim, last: LastChunk) ?usize {
+        inline fn finish(values: anytype, count: usize, dst: []u8, t: scalar.Trim, last: LastChunk) ?usize {
             const rest = count % 4;
             const tail: usize = switch (rest) {
                 0 => if (t.padding == 0) 0 else return null,
@@ -794,13 +815,17 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             };
             const len = count / 4 * 3 + tail;
             if (dst.len < len) return null;
+            // A block, or the vectors of one that hold all `count` values.
+            const w = @sizeOf(@TypeOf(values));
+            const W = @Vector(w, u8);
             // Zeros past the data, so that a partial chunk decodes with zero
             // bits after it, and the byte after its data holds its extra bits.
-            const live = std.simd.iota(u8, 64) < @as(V64, @splat(@intCast(count)));
-            const out = packAll(@bitCast(@select(u8, live, @as(V64, @bitCast(values)), @as(V64, @splat(0)))));
+            const live = std.simd.iota(u8, w) < @as(W, @splat(@intCast(count)));
+            const kept = @select(u8, live, @as(W, @bitCast(values)), @as(W, @splat(0)));
+            const out = packAll(@as([w / lanes]V, @bitCast(kept)));
             // In a vector: reading byte `len` stored `out` to the stack.
-            const at_len = std.simd.iota(u8, 64) == @as(V64, @splat(@intCast(len)));
-            const zero: V64 = @splat(0);
+            const at_len = std.simd.iota(u8, w) == @as(W, @splat(@intCast(len)));
+            const zero: W = @splat(0);
             if (last == .strict and tail != 0 and @reduce(.Or, @select(u8, at_len, out, zero) != zero)) return null;
             simd.storePartial(dst, out, len);
             return len;
@@ -822,7 +847,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const space = c.spaceMask() & live;
             if (bad & ~space != 0) return null;
             const v = compressVec(c.values, space) orelse return null;
-            return finish(@bitCast(v), n - @popCount(space), dst, t, last);
+            return finish(v, n - @popCount(space), dst, t, last);
         }
 
         /// The staging ring: 512 values at `stage[64..]`, with 64 bytes
