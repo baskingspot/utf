@@ -21,33 +21,6 @@ pub fn build(b: *std.Build) void {
 
     if (b.pkg_hash.len != 0) return;
 
-    // The standalone interpreter, `lua`, as reference Lua's lua.c.
-    const exe = b.addExecutable(.{
-        .name = "utf",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{.{ .name = "utf", .module = mod }},
-        }),
-    });
-    b.installArtifact(exe);
-    const run_exe = b.addRunArtifact(exe);
-    if (b.args) |args| run_exe.addArgs(args);
-    b.step("run", "Run the lua interpreter").dependOn(&run_exe.step);
-
-    // The bytecode lister `just bytecode` compares with `luac -l -l`.
-    const listing = b.addExecutable(.{
-        .name = "listing",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("test/bytecode/listing.zig"),
-            .target = target,
-            .optimize = optimize,
-            .imports = &.{.{ .name = "utf", .module = mod }},
-        }),
-    });
-    b.step("listing", "Build the bytecode lister").dependOn(&b.addInstallArtifact(listing, .{}).step);
-
     // Every step below needs testingx, which is lazy so a consumer never
     // fetches it. On the first configure pass it is not fetched yet, and the
     // build runner fetches it and reruns this script.
