@@ -1,0 +1,5 @@
+row                                                           fin   simdutf   utf/simdutf
+ValidUtf16leToUtf16be/n=128/src=0/dst=0                     61.40     33.06   fin/simdutf 1.86
+ValidUtf16leToUtf16be/n=128/src=0/dst=2048                  64.77     34.11   fin/simdutf 1.90
+ValidUtf16leToUtf16be/n=128/src=16/dst=0                    52.32     33.42   fin/simdutf 1.57
+ValidUtf16leToUtf16be/n=128/src=16/dst=2048                 53.89     33.87   fin/simdutf 1.59

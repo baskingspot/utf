@@ -1,0 +1,33 @@
+== -Doptimize=ReleaseSafe -Dcpu=native
+testingx: 52 passed, 0 failed, 0 skipped (of 52 total) in 2781ms (seed: 0x191eb199)
+exit 0
+== -Doptimize=ReleaseSafe -Dcpu=x86_64_v3 -Ddispatch=false
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 1950ms (seed: 0x1a191163)
+exit 0
+== -Doptimize=ReleaseSafe -Dcpu=x86_64_v2 -Ddispatch=false
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 1858ms (seed: 0xc9edd8f3)
+exit 0
+== -Doptimize=ReleaseSafe -Dcpu=x86_64_v3
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 5230ms (seed: 0x64197f22)
+exit 0
+== -Doptimize=ReleaseSafe -Dcpu=baseline
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 9314ms (seed: 0x7d90fb02)
+exit 0
+== -Doptimize=ReleaseSafe -Dcpu=baseline -Ddispatch=false
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 2257ms (seed: 0xf5618f9)
+exit 0
+== -Doptimize=Debug -Dcpu=baseline
+testingx: 51 passed, 0 failed, 1 skipped (of 52 total) in 30339ms (seed: 0x6e8ef4ac)
+exit 0
+== -Doptimize=ReleaseSafe -Dtarget=aarch64-linux-musl -fqemu
+testingx: 50 passed, 0 failed, 2 skipped (of 52 total) in 23667ms (seed: 0x7d64a2db)
+exit 0
+== -Doptimize=Debug -Dtarget=aarch64-linux-musl -fqemu
+testingx: 50 passed, 0 failed, 2 skipped (of 52 total) in 71560ms (seed: 0x410df924)
+exit 0
+== -Doptimize=ReleaseSafe -Dtarget=aarch64_be-linux-musl -fqemu
+testingx: 50 passed, 0 failed, 2 skipped (of 52 total) in 25490ms (seed: 0x15640fef)
+exit 0
+== -Doptimize=Debug -Dtarget=aarch64_be-linux-musl -fqemu
+testingx: 50 passed, 0 failed, 2 skipped (of 52 total) in 73329ms (seed: 0x5d537032)
+exit 0

@@ -1,0 +1,16 @@
+# lay-fin, latin1 text, DST_OFFS=2048
+row                                                           fin   simdutf   utf/simdutf
+ValidUtf8ToLatin1/n=64/src=0/dst=2048                        9.28      7.99   fin/simdutf 1.16
+ValidUtf8ToLatin1/n=64/src=16/dst=2048                       8.76      8.00   fin/simdutf 1.09
+Utf8ToLatin1/n=64/src=0/dst=2048                             7.75      5.95   fin/simdutf 1.30
+Utf8ToLatin1/n=64/src=16/dst=2048                            7.37      6.34   fin/simdutf 1.16
+row                                                           fin   simdutf   utf/simdutf
+ValidUtf8ToLatin1/n=256/src=0/dst=2048                      17.24     19.73   fin/simdutf 0.87
+ValidUtf8ToLatin1/n=256/src=16/dst=2048                     17.35     18.76   fin/simdutf 0.92
+Utf8ToLatin1/n=256/src=0/dst=2048                           13.24     13.38   fin/simdutf 0.99
+Utf8ToLatin1/n=256/src=16/dst=2048                          12.85     12.63   fin/simdutf 1.02
+row                                                           fin   simdutf   utf/simdutf
+ValidUtf8ToLatin1/n=4096/src=0/dst=2048                     26.41     27.80   fin/simdutf 0.95
+ValidUtf8ToLatin1/n=4096/src=16/dst=2048                    25.00     26.13   fin/simdutf 0.96
+Utf8ToLatin1/n=4096/src=0/dst=2048                          17.90     15.95   fin/simdutf 1.12
+Utf8ToLatin1/n=4096/src=16/dst=2048                         17.23     15.32   fin/simdutf 1.12

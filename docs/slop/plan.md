@@ -349,3 +349,27 @@ wave-2 measurements left.
   a `vpermb` for the UTF-8 shift by two (0.82-0.88× at 7-45 bytes),
   masks before the pass test in short UTF-16/32 (0.47-0.75× on valid
   input), and inlining `decodeStaged`.
+- **Transcoding**: `src/convert.zig`, `src/length.zig`, and two
+  additions to `src/simd.zig`
+  ([convert-wave3-20261031.md](results/convert-wave3-20261031.md)).
+  Harness 1.25 to 1.29 of `icelake`, 1.38 to 1.55 of `haswell`, 1.32 to
+  1.38 of `westmere`; rows under 1.0 139 to 114, 139 to 51, 194 to 112.
+  AVX2 and SSE encode BMP UTF-16 and UTF-32 in simdutf's byte layout (the
+  low byte twice, then lead and middle bytes, one `xor` for two-byte
+  leads; no blends): Korean and Hindi 1.31× on AVX2. `simd.shuffleLanes`
+  packs two groups per AVX2 `vpshufb`; `simd.narrow` uses `vpermt2b` on
+  VBMI (UTF-32 to UTF-16 1.06-1.23×). The checked byte swap checks pairs
+  only in blocks with a surrogate or a low surrogate after them (1.32× on
+  AVX2 and SSE, emoji 0.69-0.93×). Fixed-ratio loops align to the input
+  (the harness's 0.63-0.69 UTF-32 to Latin-1 rows were input alignment).
+  AVX-512 kernels test a short ASCII input before loading their
+  constants. Length without AVX-512: masked equalities and signed
+  compares where unsigned ones take two operations, the base count
+  added once per run of blocks, big-endian UTF-16 compared against
+  swapped constants (1.05-1.22×). Left, with reasons in the results:
+  AVX-512 Latin-1 to UTF-8 on Latin-1 text (0.77-0.88, shuffle-port
+  bound), SSE Latin-1 to UTF-16 at 4-64 KiB (store-bound), 256-byte
+  ASCII widening (0.73-0.82, not investigated), short `sumBlocks`
+  reductions on AVX2; other rows under 1.0 move with layout and buffer
+  offsets. Harness rows move up to ±50% between processes and ±15% with
+  a function's address, so compare in one process or with a driver.
