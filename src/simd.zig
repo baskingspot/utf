@@ -125,21 +125,24 @@ fn prevMask(comptime n: usize, comptime k: usize) [n]i32 {
     return m;
 }
 
-/// Lane i of `v` as bit i of an integer. On big-endian targets a `@bitCast`
-/// of a bool vector orders the bits differently depending on how the vector
-/// was made (seen on aarch64_be with Zig 0.16), so there the mask is built
-/// from the lanes instead.
+/// Lane i of `v` as bit i of an integer. Two cases build the mask from the
+/// lanes instead of a `@bitCast`: big-endian targets, where the cast orders
+/// the bits differently depending on how the vector was made (seen on
+/// aarch64_be with Zig 0.16), and fewer than 8 lanes (or a count that is not
+/// a multiple of 8) on the self-hosted backends, where the cast can leave
+/// bits set above the last lane (seen on x86_64 for 2 and 4 lanes after `!`
+/// or a 64-bit compare).
 pub inline fn bitmask(v: anytype) @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.len) {
     const n = @typeInfo(@TypeOf(v)).vector.len;
-    const M = @Int(.unsigned, n);
-    if (builtin.cpu.arch.endian() == .little) return @bitCast(v);
+    if (builtin.cpu.arch.endian() == .little and (llvm or n % 8 == 0)) return @bitCast(v);
+    const L = @Int(.unsigned, @max(8, std.math.ceilPowerOfTwoAssert(usize, n)));
     const bits = comptime blk: {
         @setEvalBranchQuota(100_000);
-        var b: [n]M = undefined;
-        for (&b, 0..) |*x, i| x.* = @as(M, 1) << i;
+        var b: [n]L = undefined;
+        for (&b, 0..) |*x, i| x.* = @as(L, 1) << i;
         break :blk b;
     };
-    return @reduce(.Or, @select(M, v, @as(@Vector(n, M), bits), @as(@Vector(n, M), @splat(0))));
+    return @truncate(@reduce(.Or, @select(L, v, @as(@Vector(n, L), bits), @as(@Vector(n, L), @splat(0)))));
 }
 
 /// Loads the block starting at `src[0]`, which must hold a whole block. One
@@ -244,6 +247,22 @@ test "bitmask puts lane i in bit i" {
     const w: @Vector(16, u16) = @bitCast(a[0..32].*);
     const one: u16 = std.mem.nativeToLittle(u16, 1);
     try testing.expectEqual(0b1, bitmask(w == @as(@Vector(16, u16), @splat(one))));
+}
+
+test "bitmask sets no bits above the last lane of a short vector" {
+    // `!` and a 64-bit compare are what left junk above the lanes on the
+    // self-hosted x86_64 backend; every mask of 2 and 4 lanes, read wide.
+    inline for (.{ 2, 4 }) |n| {
+        for (0..1 << n) |k| {
+            var lanes: [n]u64 = undefined;
+            for (&lanes, 0..) |*x, i| x.* = if (k >> @intCast(i) & 1 != 0) 7 else 2;
+            var v: @Vector(n, u64) = lanes;
+            std.mem.doNotOptimizeAway(&v);
+            const five: @Vector(n, u64) = @splat(5);
+            try testing.expectEqual(k, @as(u64, bitmask(v >= five)));
+            try testing.expectEqual(~k & ((1 << n) - 1), @as(u64, bitmask(!(v >= five))));
+        }
+    }
 }
 
 test "loadPartial copies every short length and zero-pads" {
