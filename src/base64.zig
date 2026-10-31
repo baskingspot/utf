@@ -132,11 +132,11 @@ pub fn decodeWith(
     var i: usize = 0;
     var o: usize = 0;
     // The 6-bit values of blocks with whitespace, compressed, not yet
-    // decoded. They are decoded four blocks at a time, well after they are
-    // stored, so loads do not wait on the stores: fewer than 256 between
-    // steps, one more block, and 8-byte stores past the end.
-    var stage: [336]u8 align(64) = undefined;
-    var staged: usize = 0;
+    // decoded, in the ring `K.stagePut` and `K.stageGet` keep: `w` values
+    // staged, the first `r` of them, whole blocks, decoded.
+    var stage: [K.stage_len]u8 align(64) = undefined;
+    var w: usize = 0;
+    var r: usize = 0;
     blocks: while (true) {
         // Blocks without whitespace go straight to `dst`, as many as fit
         // with the slack.
@@ -158,35 +158,32 @@ pub fn decodeWith(
             i += 64;
             o += 48;
         }
-        // From the first with whitespace, all go through `stage`.
-        while (t.len - i >= 64 and dst.len - o >= 48 * (staged / 64 + 1) + K.slack) {
+        // From the first with whitespace, all go through `stage`. A
+        // staged block is decoded once `K.lag` more values follow it: its
+        // load straddles the stores that wrote it, and would wait for them
+        // to reach the cache.
+        while (t.len - i >= 64 and dst.len - o >= 48 * ((w - r) / 64 + 1) + K.slack) {
             const block = src[i..][0..64];
             const c = K.classifyBlock(block);
-            if (!c.anyBad()) {
-                stage[staged..][0..64].* = @bitCast(c.values);
-            } else {
-                const space = K.spaceMask(simd.load(u8, block));
+            var space: u64 = 0;
+            if (c.anyBad()) {
+                space = c.spaceMask();
                 if (c.badMask() & ~space != 0) break :blocks;
-                K.compress(c.values, space, stage[staged..][0..72]);
             }
-            staged += 64 - @popCount(c.badMask());
+            K.stagePut(&stage, w, c.values, space);
+            w += 64 - @popCount(space);
             i += 64;
-            if (staged >= 256) {
-                var done: usize = 0;
-                while (staged - done >= 64) : (done += 64) {
-                    K.packBlock(@bitCast(stage[done..][0..64].*), dst[o..][0 .. 48 + K.slack]);
-                    o += 48;
-                }
-                stage[0..64].* = stage[done..][0..64].*;
-                staged -= done;
-                if (staged == 0) continue :blocks;
+            if (w - r >= 64 + K.lag) {
+                K.packBlock(K.stageGet(&stage, r), dst[o..][0 .. 48 + K.slack]);
+                r += 64;
+                o += 48;
             }
         }
         break;
     }
 
     // A block without whitespace that fits only without the slack.
-    if (staged == 0 and t.len - i >= 64 and dst.len - o >= 48) {
+    if (w == 0 and t.len - i >= 64 and dst.len - o >= 48) {
         const c = K.classifyBlock(src[i..][0..64]);
         if (!c.anyBad()) {
             K.storePartial(dst[o..], K.packAll(c.values), 48);
@@ -203,18 +200,14 @@ pub fn decodeWith(
         const block = K.loadPartial(src[i..t.len]);
         const c = K.classifyBlock(block);
         const bad = c.badMask() & live;
-        if (bad == 0 and staged == 0) {
+        if (bad == 0 and w == 0) {
             if (K.finish(c.values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
             return scalar.decodeFrom(dst, src, t, i, o, options);
         }
-        const space = if (bad == 0) 0 else K.spaceMask(block) & live;
+        const space = if (bad == 0) 0 else c.spaceMask() & live;
         if (bad & ~space == 0) {
-            if (space == 0) {
-                stage[staged..][0..64].* = @bitCast(c.values);
-            } else {
-                K.compress(c.values, space, stage[staged..][0..72]);
-            }
-            staged += n - @popCount(space);
+            K.stagePut(&stage, w, c.values, space);
+            w += n - @popCount(space);
             end = t.len;
         }
     }
@@ -222,9 +215,8 @@ pub fn decodeWith(
     // Decode the staged blocks that fit, and the last one if the input is
     // all staged. Otherwise hand the scalar decoder the input from the
     // first value still undecoded.
-    var done: usize = 0;
-    while (staged - done >= 64 and dst.len - o >= 48) : (done += 64) {
-        const values: [K.blocks]K.V = @bitCast(stage[done..][0..64].*);
+    while (w - r >= 64 and dst.len - o >= 48) : (r += 64) {
+        const values = K.stageGet(&stage, r);
         if (dst.len - o >= 48 + K.slack) {
             K.packBlock(values, dst[o..][0 .. 48 + K.slack]);
         } else {
@@ -232,12 +224,11 @@ pub fn decodeWith(
         }
         o += 48;
     }
-    if (end == t.len and staged - done < 64) {
-        const values: [K.blocks]K.V = @bitCast(stage[done..][0..64].*);
-        if (K.finish(values, staged - done, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+    if (end == t.len and w - r < 64) {
+        if (K.finish(K.stageGet(&stage, r), w - r, dst[o..], t, last_chunk)) |len| return .ok(o + len);
     }
     var start = end;
-    var keep = staged - done;
+    var keep = w - r;
     while (keep > 0) {
         start -= 1;
         if (!scalar.isSpace(src[start])) keep -= 1;
@@ -425,7 +416,11 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return simd.lookup16(table, reduced);
         }
 
-        const Classified = struct { values: V, bad: @Vector(lanes, bool) };
+        /// `classes` says which characters are whitespace: with the nibble
+        /// tables, through their whitespace bits, and otherwise it is the
+        /// input, for `isSpace`.
+        const Classified = struct { values: V, bad: @Vector(lanes, bool), classes: V };
+        const nibbles = isa == .ssse3 or isa == .avx2 or isa == .neon;
 
         /// Each character's 6-bit value, and whether it is outside the
         /// alphabet (whitespace included).
@@ -439,7 +434,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                     break :blk t;
                 };
                 const v = @"llvm.x86.avx512.vpermi2var.qi.512"(table[0..64].*, in, table[64..].*);
-                return .{ .values = v, .bad = (v | in) >= splat(0x80) };
+                return .{ .values = v, .bad = (v | in) >= splat(0x80), .classes = in };
             }
             if (isa == .generic) {
                 const upper = in -% splat('A') < splat(26);
@@ -453,15 +448,22 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 v = @select(u8, is62, splat(62), v);
                 v = @select(u8, is63, splat(63), v);
                 const good = anyTrue(anyTrue(upper, lower), anyTrue(digit, anyTrue(is62, is63)));
-                return .{ .values = v, .bad = !good };
+                return .{ .values = v, .bad = !good, .classes = in };
             }
             const hi = in >> @splat(4);
             const lo = in & splat(0x0f);
-            const bad = simd.lookup16(tables.lo, lo) & simd.lookup16(tables.hi, hi) != splat(0);
+            const classes = simd.lookup16(tables.lo, lo) & simd.lookup16(tables.hi, hi);
             // The character whose offset differs from the rest of its high
-            // nibble's takes a slot of its own, above 7.
-            const slot = hi | (@select(u8, in == splat(tables.special), splat(8), splat(0)));
-            return .{ .values = in +% simd.lookup16(tables.roll, slot), .bad = bad };
+            // nibble's takes a slot of its own: the one below, when that
+            // nibble has no characters, with one instruction, or one above 7.
+            const special = in == splat(tables.special);
+            const I = @Vector(lanes, i8);
+            const slot = if (tables.below)
+                hi +% @as(V, @bitCast(@select(i8, special, @as(I, @splat(-1)), @as(I, @splat(0)))))
+            else
+                hi | @select(u8, special, splat(8), splat(0));
+            const values = in +% simd.lookup16(tables.roll, slot);
+            return .{ .values = values, .bad = classes != splat(0), .classes = classes };
         }
 
         /// Which characters are ASCII whitespace.
@@ -481,6 +483,17 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         const Block = struct {
             values: [blocks]V,
             bad: [blocks]@Vector(lanes, bool),
+            classes: [blocks]V,
+
+            /// Bit k is set when character k is ASCII whitespace.
+            inline fn spaceMask(b: Block) u64 {
+                var m: u64 = 0;
+                inline for (b.classes, 0..) |c, k| {
+                    const space = if (nibbles) c & splat(tables.space) != splat(0) else isSpace(c);
+                    m |= @as(u64, simd.bitmask(space)) << (k * lanes);
+                }
+                return m;
+            }
 
             inline fn anyBad(b: Block) bool {
                 var any = b.bad[0];
@@ -510,6 +523,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const c = classify(in[k]);
                 b.values[k] = c.values;
                 b.bad[k] = c.bad;
+                b.classes[k] = c.classes;
             }
             return b;
         }
@@ -524,8 +538,23 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // The stores are volatile so that LLVM keeps them whole: it
             // would merge them with more shuffles than it saves.
             inline for (0..blocks) |k| {
-                const p: *align(1) volatile V = @ptrCast(out[k * lanes / 4 * 3 ..][0..lanes]);
-                p.* = pack(values[k]);
+                if (isa == .avx2) {
+                    // Each 16-byte half from its own store, which saves the
+                    // shuffle across halves, a shuffle-port instruction.
+                    const halves: [2]@Vector(16, u8) = @bitCast(@shuffle(u8, packWords(values[k]), undefined, blk: {
+                        // The lanes left over stay in their half too.
+                        var m: [lanes]i32 = std.simd.iota(i32, lanes);
+                        for (0..lanes / 4) |g| m[g / 4 * 16 + g % 4 * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
+                        break :blk m;
+                    }));
+                    inline for (halves, 0..) |h, j| {
+                        const p: *align(1) volatile @Vector(16, u8) = @ptrCast(out[k * 24 + j * 12 ..][0..16]);
+                        p.* = h;
+                    }
+                } else {
+                    const p: *align(1) volatile V = @ptrCast(out[k * lanes / 4 * 3 ..][0..lanes]);
+                    p.* = pack(values[k]);
+                }
             }
         }
 
@@ -567,21 +596,47 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return len;
         }
 
-        /// Bit k is set when character k is ASCII whitespace.
-        inline fn spaceMask(block: V64) u64 {
-            const in: [blocks]V = @bitCast(block);
-            var m: u64 = 0;
-            inline for (0..blocks) |k| m |= @as(u64, simd.bitmask(isSpace(in[k]))) << (k * lanes);
-            return m;
+        /// The staging ring: 512 values at `stage[64..]`, with 64 bytes
+        /// before it, where a store that runs past its end is written again
+        /// 512 bytes earlier, and 72 after it for `compressMem`'s overflow.
+        const ring = 512;
+        const stage_len = 64 + ring + 72;
+        /// How many values follow a staged block before it is decoded.
+        /// At most `64 + lag` values are pending before a put, so what a put
+        /// writes past the ring's end, its overflow included, lands on
+        /// values already decoded.
+        const lag = 256;
+        comptime {
+            std.debug.assert(64 + lag + 72 <= ring - 64);
         }
 
-        /// Copies the bytes of `src` not in `space` to the front of `out`. It
-        /// may write all of `out`.
-        inline fn compress(values: [blocks]V, space: u64, out: *[72]u8) void {
+        /// Stages the values of `values` not in `space` at ring position
+        /// `w`, and may write the ring up to 64 positions past them.
+        inline fn stagePut(stage: *[stage_len]u8, w: usize, values: [blocks]V, space: u64) void {
+            const p = 64 + w % ring;
+            const v: V64 = if (space == 0) @bitCast(values) else compressVec(values, space) orelse {
+                compressMem(values, space, stage[p..][0..72]);
+                if (p + 72 > 64 + ring) stage[64..][0..72].* = stage[64 + ring ..][0..72].*;
+                return;
+            };
+            // Volatile, so that LLVM keeps each store whole.
+            @as(*align(1) volatile V64, @ptrCast(stage[p..][0..64])).* = v;
+            if (p > ring) @as(*align(1) volatile V64, @ptrCast(stage[p - ring ..][0..64])).* = v;
+        }
+
+        /// The staged block at ring position `r`, a multiple of 64.
+        inline fn stageGet(stage: *const [stage_len]u8, r: usize) [blocks]V {
+            // Through an unaligned vector pointer: Debug builds bitcast the
+            // array in place as the 64-byte-aligned result, which faults.
+            return @bitCast(@as(*align(1) const V64, @ptrCast(stage[64 + r % ring ..][0..64])).*);
+        }
+
+        /// The bytes of `values` not in `space`, at the front, when that
+        /// takes a few vector instructions.
+        inline fn compressVec(values: [blocks]V, space: u64) ?V64 {
             if (avx512 and simd.has_vbmi2) {
                 const keep: @Vector(64, bool) = @bitCast(~space);
-                out[0..64].* = @"llvm.x86.avx512.mask.compress.v64i8"(values[0], @splat(0), keep);
-                return;
+                return @"llvm.x86.avx512.mask.compress.v64i8"(values[0], @splat(0), keep);
             }
             // Line breaks put one or two whitespace characters in most
             // blocks: remove each by shifting what follows it down a lane,
@@ -599,13 +654,20 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                             for (&m, 1..) |*x, j| x.* = if (j < lanes) j else ~@as(i32, 0);
                             break :blk m;
                         });
-                        const below = std.simd.iota(u8, lanes) + splat(k * lanes) < splat(pos);
-                        v[k] = @select(u8, below, v[k], shifted);
+                        // Lanes from `pos` on, from a load instead of a compare
+                        // with a broadcast, which take the shuffle port.
+                        const from: V = shift_masks[64 - @as(usize, pos) + k * lanes ..][0..lanes].*;
+                        v[k] = @select(u8, from == splat(0xff), shifted, v[k]);
                     }
                 }
-                out[0..64].* = @bitCast(v);
-                return;
+                return @bitCast(v);
             }
+            return null;
+        }
+
+        /// Copies the bytes of `values` not in `space` to the front of
+        /// `out`. It may write all of `out`.
+        inline fn compressMem(values: [blocks]V, space: u64, out: *[72]u8) void {
             const src: [64]u8 = @bitCast(values);
             var n: usize = 0;
             if (isa == .generic) {
@@ -636,6 +698,20 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// Turns 6-bit values into bytes: each four into three, in the
         /// first three quarters of the result.
         inline fn pack(values: V) V {
+            // Each 32-bit lane holds its three bytes in its low 24 bits.
+            return @shuffle(u8, packWords(values), undefined, blk: {
+                var m: [lanes]i32 = @splat(0);
+                for (0..lanes / 4) |g| m[g * 3 ..][0..3].* = if (big)
+                    .{ g * 4 + 1, g * 4 + 2, g * 4 + 3 }
+                else
+                    .{ g * 4 + 2, g * 4 + 1, g * 4 };
+                break :blk m;
+            });
+        }
+
+        /// Turns each four 6-bit values into three bytes, in the low 24 bits
+        /// of their 32-bit lane, the first byte highest.
+        inline fn packWords(values: V) V {
             const D = @Vector(lanes / 4, u32);
             const w: D = switch (isa) {
                 // a*64 + b in 16-bit lanes, then ab*4096 + cd in 32-bit ones.
@@ -667,16 +743,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                             (x >> @splat(24));
                 },
             };
-            // Each 32-bit lane holds its three bytes in its low 24 bits.
-            const bytes: V = @bitCast(w);
-            return @shuffle(u8, bytes, undefined, blk: {
-                var m: [lanes]i32 = @splat(0);
-                for (0..lanes / 4) |g| m[g * 3 ..][0..3].* = if (big)
-                    .{ g * 4 + 1, g * 4 + 2, g * 4 + 3 }
-                else
-                    .{ g * 4 + 2, g * 4 + 1, g * 4 };
-                break :blk m;
-            });
+            return @bitCast(w);
         }
 
         /// Loads `s`, shorter than a block, zero-padded, without reading
@@ -727,10 +794,18 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
 }
 
 /// Lookup tables for the nibble classification: `lo[c & 15] & hi[c >> 4]`
-/// is nonzero exactly for the bytes outside the alphabet, and
-/// `c + roll[c >> 4]` is the value of an alphabet character other than
-/// `special`, whose offset is at `roll[(special >> 4) | 8]`.
-fn decodeTables(comptime alphabet: Alphabet) struct { lo: [16]u8, hi: [16]u8, roll: [16]u8, special: u8 } {
+/// is nonzero exactly for the bytes outside the alphabet, and has a bit of
+/// `space` exactly for ASCII whitespace; `c + roll[c >> 4]` is the value of
+/// an alphabet character other than `special`, whose offset is at
+/// `roll[(special >> 4) | 8]`.
+fn decodeTables(comptime alphabet: Alphabet) struct {
+    lo: [16]u8,
+    hi: [16]u8,
+    roll: [16]u8,
+    special: u8,
+    space: u8,
+    below: bool,
+} {
     @setEvalBranchQuota(10000);
     const chars = alphabet.chars();
     const special = chars[63];
@@ -756,17 +831,30 @@ fn decodeTables(comptime alphabet: Alphabet) struct { lo: [16]u8, hi: [16]u8, ro
             if (set >> l & 1 != 0) lo[l] |= 1 << bit;
         }
     }
+    // Two bits of their own: tab, LF, FF, and CR, then space.
+    if (n_sets > 6) @compileError("too many nibble classes");
+    hi[0] |= 0x40;
+    for ("\t\n\x0c\r") |c| lo[c] |= 0x40;
+    hi[2] |= 0x80;
+    lo[0] |= 0x80;
     var roll: [16]u8 = @splat(0);
     var seen: [16]bool = @splat(false);
+    const below = for (chars) |c| {
+        if (c >> 4 == (special >> 4) - 1) break false;
+    } else true;
     for (chars, 0..) |c, v| {
-        const slot = if (c == special) (c >> 4) | 8 else c >> 4;
+        const slot = if (c != special) c >> 4 else if (below) (c >> 4) - 1 else (c >> 4) | 8;
         const off: u8 = @as(u8, v) -% c;
         if (seen[slot] and roll[slot] != off) @compileError("two offsets for one high nibble");
         roll[slot] = off;
         seen[slot] = true;
     }
-    return .{ .lo = lo, .hi = hi, .roll = roll, .special = special };
+    return .{ .lo = lo, .hi = hi, .roll = roll, .special = special, .space = 0xc0, .below = below };
 }
+
+/// 64 zeros, then 64 bytes of 0xff: the lanes of a block from position p on
+/// are the 64 bytes from `64 - p`.
+const shift_masks: [128]u8 = @as([64]u8, @splat(0)) ++ @as([64]u8, @splat(0xff));
 
 /// For each 8-bit mask, the indices of its set bits in order, a byte each
 /// in memory order.
