@@ -17,7 +17,10 @@ kernel := ""
 bench_zig := "zig build -p ../zig-out -Dcpu=" + cpu + " -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
 
 # cpu in Rust's and Go's terms. Go has no native: the highest level the host has.
+# simdutf8 and base64-simd detect AVX2 at run time, as a distribution's build
+# does; for an x86-64 level or a named CPU they take the ISA cpu names.
 rust_cpu := if cpu == "baseline" { "x86-64" } else { replace(cpu, "_", "-") }
+rust_detect := if cpu == "baseline" { "detect" } else if cpu == "native" { "detect" } else { "none" }
 goamd64 := if cpu == "baseline" { "v1" } else if cpu == "x86_64_v2" { "v2" } else if cpu == "x86_64_v3" { "v3" } else if cpu == "x86_64_v4" { "v4" } else if cpu == "native" { shell("if grep -qw avx512vl /proc/cpuinfo; then echo v4; elif grep -qw avx2 /proc/cpuinfo; then echo v3; else echo v2; fi") } else { "v1" }
 
 [private]
@@ -79,7 +82,8 @@ bench-build:
         $(pkg-config --cflags --libs simdutf) -Wl,-rpath,"$(pkg-config --variable=libdir simdutf)"
     GOAMD64={{ goamd64 }} go build -C bench/go -o ../../zig-out/bin/bench-go .
     RUSTFLAGS="-C target-cpu={{ rust_cpu }}" CARGO_TARGET_DIR=bench/rust/target/{{ rust_cpu }} \
-        cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml
+        cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml \
+        {{ if rust_detect == "none" { "--no-default-features" } else { "" } }}
     cp bench/rust/target/{{ rust_cpu }}/release/bench-rust zig-out/bin/
 
 [doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then rounds on one core that time the arms on each row back to back, benchstat against simdutf, and a summary per operation with each row's noise. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds. The numbers are not claims")]
@@ -103,7 +107,7 @@ bench-compare ROUNDS="10" *OPS: bench-corpus bench-build
     done
     {
         echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}"
-        echo "std: ReleaseFast, cpu {{ cpu }}; rust: target-cpu={{ rust_cpu }}; go: GOAMD64={{ goamd64 }}"
+        echo "std: ReleaseFast, cpu {{ cpu }}; rust: target-cpu={{ rust_cpu }}, run-time detection {{ rust_detect }}; go: GOAMD64={{ goamd64 }}"
         echo "buffers: input ${BENCH_IN_OFFSET:-0} bytes past a page, output ${BENCH_OUT_OFFSET:-2048}; ${BENCHTIME_MS} ms a sample, {{ ROUNDS }} rounds"
         cat "$out/stderr-simdutf.txt"
     } | tee "$out/config.txt"

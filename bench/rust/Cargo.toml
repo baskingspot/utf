@@ -5,9 +5,16 @@ edition = "2021"
 publish = false
 
 [dependencies]
-base64-simd = "0.8"
+base64-simd = { version = "0.8", default-features = false }
 encoding_rs = "0.8"
-simdutf8 = "0.1"
+simdutf8 = { version = "0.1", default-features = false }
+
+# simdutf8 and base64-simd pick AVX2 at run time unless built without it,
+# which `just bench-compare` does for an x86-64 level or named CPU, so that
+# the SSE run times SSE Rust.
+[features]
+default = ["detect"]
+detect = ["base64-simd/std", "base64-simd/detect", "simdutf8/std"]
 
 [profile.release]
 codegen-units = 1
