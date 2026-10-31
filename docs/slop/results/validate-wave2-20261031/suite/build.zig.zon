@@ -1,0 +1,11 @@
+.{
+    .name = .vb,
+    .version = "0.0.0",
+    .fingerprint = 0x9b00ccfbb3de2b56,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .testingx = .{ .path = "testingx" },
+        .utf = .{ .path = "../workspace/repo", .lazy = true },
+    },
+    .paths = .{""},
+}

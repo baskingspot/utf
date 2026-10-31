@@ -120,13 +120,28 @@ standard, not from simdutf's source.
    `simd.load`: coercing an array to a vector compiled to a load per lane
    (4× slower). For UTF-8, the bytes one to three back come from unaligned
    loads on AVX2 and SSE (+10%, +17%) and from shifts on AVX-512, where the
-   loads lost 11%.
+   loads lost 11%. **Decided for validation: 64 on AVX2**
+   ([validate-wave2-20261031.md](results/validate-wave2-20261031.md)):
+   against 32-byte blocks on `x86_64_v3`, 64 is 14% faster on UTF-8 at
+   4 KiB and 4–5% at 64 KiB, 12–49% on UTF-16, and 16% on ASCII at 4 KiB;
+   32 wins only below one block (22–43% at 16 bytes), which the short paths
+   take anyway. What moved long inputs was where blocks load: past four
+   blocks for ASCII, from 4 KiB for UTF-8 that is not ASCII, and from eight
+   blocks for UTF-16 and UTF-32, the first block loads unaligned and the
+   rest from the next 64-byte boundary, so no load splits a cache line
+   (ASCII at 64 KiB 52 to 146 GB/s), with one test per group of four
+   blocks (eight for UTF-16).
 3. **Short inputs.** Below one block, the scalar path, unless a measured
    masked or overlapping-load path beats it. Landed for validation: an ASCII
    check on overlapping loads, then one zero-padded block built in registers
    (`simd.loadPartial`), which beats the scalar validator on non-ASCII text
    from 16 bytes. Building the padded block in a stack buffer stalls
-   store-to-load forwarding and was half as fast.
+   store-to-load forwarding and was half as fast. Wave 2: on AVX-512 one
+   masked load (`llvm.masked.load`, LLVM backend only) builds the padded
+   block for UTF-8, UTF-16, and UTF-32, 1.2–1.9× `loadPartial` at 7–45
+   bytes; ASCII keeps overlapping loads, now up to 64 bytes (+15% at 64),
+   where the masked load lost. validate.zig keeps it as a private
+   `loadShort` until `simd.zig` has one.
 4. **Valid vs checked.** The checked conversion validates in the same pass;
    it must not cost more than validating and converting separately.
    Measured for transcoding ([convert-20261030.md](results/convert-20261030.md)):
@@ -210,6 +225,19 @@ bench-compare`, and a per-operation geomean summary. The baseline
   whitespace from 4 KiB (LF 0.57–0.73 of `haswell`, CR LF 0.74–0.89), short
   decode against Rust in the harness (16 B 0.44–0.54), and short encode
   against `icelake` (0.80–0.91 at 16–256 B).
+- **Validation**: `src/validate.zig` and `src/scalar.zig`. Landed: every
+  public validator dispatches at runtime; long inputs load from 64-byte
+  boundaries in groups of four or eight blocks, AVX-512 short inputs take
+  one masked load, error positions come from lane masks for ASCII, UTF-16,
+  and UTF-32 (no scalar rerun), and the
+  [measurements](results/validate-wave2-20261031.md): harness geomean 1.28
+  of `icelake` and 2.45 of `haswell` over the ten validation operations
+  before the harness's out-of-line calls; on `d3cd9ab`, 1.22 as committed
+  and 1.32 once the harness row stops copying the 16-byte result back
+  whole, when ASCII and UTF-8 lead Rust at 16–256 B. Left: that copy (the
+  harness's) and `dispatch.call`'s `Result` copy (dispatch's), error inputs
+  of 64–256 B, and UTF-8 on non-ASCII text under 64 B (0.82–0.88 of
+  `icelake` in the suite).
 - **Dispatch**: `src/dispatch.zig`, `src/simd.zig`, and `build.zig`.
   Landed: decision 1's runtime dispatch, and `simd.bitmask` for vectors of
   fewer than 8 lanes on the self-hosted backends, so `convert.zig`'s `mask4`

@@ -1,0 +1,32 @@
+diff --git a/bench/zig/arm.zig b/bench/zig/arm.zig
+index f10cfe2..1a04c12 100644
+--- a/bench/zig/arm.zig
++++ b/bench/zig/arm.zig
+@@ -389,7 +389,13 @@ fn opBenchmark(comptime i: usize) testingx.Function {
+                 // and the call stays out of line, as a C call to simdutf
+                 // is, so the loop does not keep the kernel's constants.
+                 mem.doNotOptimizeAway(in.ptr);
+-                mem.doNotOptimizeAway(@call(.never_inline, f, .{ in, out }));
++                // One word of the result, not the 16-byte union: reading
++                // the union back whole after the callee's narrow stores
++                // stalls store-to-load forwarding, about 6 ns a call.
++                mem.doNotOptimizeAway(switch (@call(.never_inline, f, .{ in, out })) {
++                    .valid => |v| @intFromBool(v),
++                    .count, .len => |n| n,
++                });
+             }
+             b.setBytes(@intCast(in.len));
+         }
+diff --git a/src/dispatch.zig b/src/dispatch.zig
+index 17eed41..b3f6065 100644
+--- a/src/dispatch.zig
++++ b/src/dispatch.zig
+@@ -46,7 +46,7 @@ pub inline fn call(
+     args: std.meta.ArgsTuple(@TypeOf(f)),
+ ) Return(f) {
+     switch (role) {
+-        .off => return @call(.always_inline, f, args),
++        .off => return @call(.auto, f, args),
+         .kernel => {
+             comptime @export(&Entry(f).entry, .{ .name = symbol(src, simd.isa), .visibility = .hidden });
+             return @call(.always_inline, f, args);

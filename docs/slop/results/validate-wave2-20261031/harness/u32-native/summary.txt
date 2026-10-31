@@ -1,0 +1,4 @@
+utf/arm, geomean          rows  utf GB/s  simdutf   slowest vs simdutf
+ValidateUtf32               15     78.35     1.15   0.82 ascii-16
+ValidateUtf32Err            15     83.78     1.08   0.96 ascii-64
+all                         30     81.02     1.11

@@ -1,0 +1,5 @@
+peak RSS (MiB)              simdutf      utf      std     rust       go
+validate-utf16le                7.2      3.9        -      7.8        -
+validate-utf16le-err            7.2      3.9        -      7.8        -
+validate-utf16be                7.2      3.9        -        -        -
+validate-utf16be-err            7.2      3.9        -        -        -

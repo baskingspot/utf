@@ -1,0 +1,12 @@
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here

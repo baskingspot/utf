@@ -1,0 +1,246 @@
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 8305923	        14.00 ns/op	1110.18 MB/s
+BenchmarkValidateUtf8/ascii-64	25143205	         4.000 ns/op	13472.99 MB/s
+BenchmarkValidateUtf8/ascii-256	16974657	         6.000 ns/op	37106.29 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1638956	        73.00 ns/op	55883.19 MB/s
+BenchmarkValidateUtf8/ascii-65536	   97256	      1230 ns/op	53241.66 MB/s
+BenchmarkValidateUtf8/emoji	    3424	     34728 ns/op	1887.27 MB/s
+BenchmarkValidateUtf8/hebrew	     980	    122157 ns/op	 544.34 MB/s
+BenchmarkValidateUtf8/korean	    2911	     41074 ns/op	1621.43 MB/s
+BenchmarkValidateUtf8/japanese	    2890	     41484 ns/op	1634.55 MB/s
+BenchmarkValidateUtf8/chinese	    2740	     43887 ns/op	1591.32 MB/s
+BenchmarkValidateUtf8/arabic	     783	    151157 ns/op	 540.40 MB/s
+BenchmarkValidateUtf8/latin	   72267	      1661 ns/op	52316.13 MB/s
+BenchmarkValidateUtf8/hindi	    1552	     81319 ns/op	1082.12 MB/s
+BenchmarkValidateUtf8/russian	     476	    255314 ns/op	 410.36 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5217	     21001 ns/op	49928.40 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8437468	        16.00 ns/op	 970.82 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 4949236	        24.00 ns/op	2639.76 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4528755	        26.00 ns/op	9679.90 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38779.76 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   95512	      1257 ns/op	52106.50 MB/s
+BenchmarkValidateUtf8Err/emoji	    3550	     34776 ns/op	1884.64 MB/s
+BenchmarkValidateUtf8Err/hebrew	     978	    122282 ns/op	 543.78 MB/s
+BenchmarkValidateUtf8Err/korean	    2899	     40357 ns/op	1650.27 MB/s
+BenchmarkValidateUtf8Err/japanese	    2836	     41370 ns/op	1639.05 MB/s
+BenchmarkValidateUtf8Err/chinese	    2737	     44660 ns/op	1563.81 MB/s
+BenchmarkValidateUtf8Err/arabic	     788	    150926 ns/op	 541.22 MB/s
+BenchmarkValidateUtf8Err/latin	   72171	      1854 ns/op	46891.48 MB/s
+BenchmarkValidateUtf8Err/hindi	    1432	     81717 ns/op	1076.84 MB/s
+BenchmarkValidateUtf8Err/russian	     486	    244433 ns/op	 428.62 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    4902	     24088 ns/op	43529.53 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 7269535	        14.00 ns/op	1082.48 MB/s
+BenchmarkValidateUtf8/ascii-64	25010827	         4.000 ns/op	13275.98 MB/s
+BenchmarkValidateUtf8/ascii-256	16422433	         7.000 ns/op	35542.91 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1593975	        75.00 ns/op	54029.81 MB/s
+BenchmarkValidateUtf8/ascii-65536	   97596	      1250 ns/op	52422.78 MB/s
+BenchmarkValidateUtf8/emoji	    3445	     36109 ns/op	1815.08 MB/s
+BenchmarkValidateUtf8/hebrew	     981	    122892 ns/op	 541.08 MB/s
+BenchmarkValidateUtf8/korean	    2772	     42738 ns/op	1558.32 MB/s
+BenchmarkValidateUtf8/japanese	    2910	     43545 ns/op	1557.18 MB/s
+BenchmarkValidateUtf8/chinese	    2734	     44800 ns/op	1558.90 MB/s
+BenchmarkValidateUtf8/arabic	     789	    152942 ns/op	 534.09 MB/s
+BenchmarkValidateUtf8/latin	   72462	      1697 ns/op	51213.09 MB/s
+BenchmarkValidateUtf8/hindi	    1530	     77535 ns/op	1134.93 MB/s
+BenchmarkValidateUtf8/russian	     501	    318028 ns/op	 329.44 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5304	     25741 ns/op	40735.15 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8184380	        14.00 ns/op	1102.10 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 4889932	        24.00 ns/op	2633.31 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4480153	        26.00 ns/op	9559.73 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38797.00 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   95816	      1256 ns/op	52163.71 MB/s
+BenchmarkValidateUtf8Err/emoji	    3350	     34808 ns/op	1882.94 MB/s
+BenchmarkValidateUtf8Err/hebrew	     979	    122545 ns/op	 542.61 MB/s
+BenchmarkValidateUtf8Err/korean	    2935	     41157 ns/op	1618.18 MB/s
+BenchmarkValidateUtf8Err/japanese	    2860	     41394 ns/op	1638.08 MB/s
+BenchmarkValidateUtf8Err/chinese	    2716	     43912 ns/op	1590.43 MB/s
+BenchmarkValidateUtf8Err/arabic	     795	    150629 ns/op	 542.29 MB/s
+BenchmarkValidateUtf8Err/latin	   71985	      1667 ns/op	52131.42 MB/s
+BenchmarkValidateUtf8Err/hindi	    1502	     75868 ns/op	1159.86 MB/s
+BenchmarkValidateUtf8Err/russian	     499	    237538 ns/op	 441.07 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5924	     20241 ns/op	51804.45 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 7268607	        16.00 ns/op	 995.97 MB/s
+BenchmarkValidateUtf8/ascii-64	24620773	         4.000 ns/op	13305.55 MB/s
+BenchmarkValidateUtf8/ascii-256	17110830	         7.000 ns/op	32865.47 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1439331	        82.00 ns/op	49737.28 MB/s
+BenchmarkValidateUtf8/ascii-65536	   97237	      1269 ns/op	51635.46 MB/s
+BenchmarkValidateUtf8/emoji	    3464	     36766 ns/op	1782.67 MB/s
+BenchmarkValidateUtf8/hebrew	     952	    123090 ns/op	 540.21 MB/s
+BenchmarkValidateUtf8/korean	    2828	     43472 ns/op	1532.00 MB/s
+BenchmarkValidateUtf8/japanese	    2913	     43611 ns/op	1554.82 MB/s
+BenchmarkValidateUtf8/chinese	    2646	     46436 ns/op	1503.99 MB/s
+BenchmarkValidateUtf8/arabic	     781	    151886 ns/op	 537.80 MB/s
+BenchmarkValidateUtf8/latin	   71334	      1900 ns/op	45751.32 MB/s
+BenchmarkValidateUtf8/hindi	    1528	     76099 ns/op	1156.35 MB/s
+BenchmarkValidateUtf8/russian	     502	    239085 ns/op	 438.21 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5682	     20324 ns/op	51592.29 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8732700	        13.00 ns/op	1158.20 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 4959612	        24.00 ns/op	2633.09 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4509652	        26.00 ns/op	9600.59 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38966.80 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   95656	      1250 ns/op	52390.49 MB/s
+BenchmarkValidateUtf8Err/emoji	    3468	     34667 ns/op	1890.56 MB/s
+BenchmarkValidateUtf8Err/hebrew	     985	    121847 ns/op	 545.72 MB/s
+BenchmarkValidateUtf8Err/korean	    2978	     40072 ns/op	1661.97 MB/s
+BenchmarkValidateUtf8Err/japanese	    2900	     41183 ns/op	1646.48 MB/s
+BenchmarkValidateUtf8Err/chinese	    2757	     43979 ns/op	1588.00 MB/s
+BenchmarkValidateUtf8Err/arabic	     799	    150685 ns/op	 542.09 MB/s
+BenchmarkValidateUtf8Err/latin	   72519	      1654 ns/op	52541.61 MB/s
+BenchmarkValidateUtf8Err/hindi	    1534	     75582 ns/op	1164.26 MB/s
+BenchmarkValidateUtf8Err/russian	     501	    237078 ns/op	 441.92 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5202	     21480 ns/op	48815.19 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 8120516	        14.00 ns/op	1095.98 MB/s
+BenchmarkValidateUtf8/ascii-64	22302668	         5.000 ns/op	12108.99 MB/s
+BenchmarkValidateUtf8/ascii-256	15022503	         7.000 ns/op	35467.85 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1572387	        75.00 ns/op	54059.78 MB/s
+BenchmarkValidateUtf8/ascii-65536	   92133	      1263 ns/op	51881.56 MB/s
+BenchmarkValidateUtf8/emoji	    3409	     34876 ns/op	1879.26 MB/s
+BenchmarkValidateUtf8/hebrew	     979	    123042 ns/op	 540.42 MB/s
+BenchmarkValidateUtf8/korean	    2972	     40431 ns/op	1647.25 MB/s
+BenchmarkValidateUtf8/japanese	    2876	     59082 ns/op	1147.68 MB/s
+BenchmarkValidateUtf8/chinese	    2690	     44092 ns/op	1583.93 MB/s
+BenchmarkValidateUtf8/arabic	     793	    150881 ns/op	 541.39 MB/s
+BenchmarkValidateUtf8/latin	   62848	      1703 ns/op	51042.44 MB/s
+BenchmarkValidateUtf8/hindi	    1328	    103906 ns/op	 846.89 MB/s
+BenchmarkValidateUtf8/russian	     465	    243746 ns/op	 429.83 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5574	     20722 ns/op	50601.77 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8614969	        13.00 ns/op	1148.06 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 4859796	        24.00 ns/op	2634.17 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4502473	        31.00 ns/op	8035.32 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       123.0 ns/op	33260.25 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   62799	      1936 ns/op	33849.37 MB/s
+BenchmarkValidateUtf8Err/emoji	    2904	     39429 ns/op	1662.25 MB/s
+BenchmarkValidateUtf8Err/hebrew	     979	    122397 ns/op	 543.27 MB/s
+BenchmarkValidateUtf8Err/korean	    2883	     57686 ns/op	1154.52 MB/s
+BenchmarkValidateUtf8Err/japanese	    2869	     41889 ns/op	1618.72 MB/s
+BenchmarkValidateUtf8Err/chinese	    2530	     45698 ns/op	1528.28 MB/s
+BenchmarkValidateUtf8Err/arabic	     796	    150871 ns/op	 541.42 MB/s
+BenchmarkValidateUtf8Err/latin	   71230	      1687 ns/op	51522.18 MB/s
+BenchmarkValidateUtf8Err/hindi	    1512	     78744 ns/op	1117.50 MB/s
+BenchmarkValidateUtf8Err/russian	     469	    243980 ns/op	 429.42 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5367	     22808 ns/op	45972.56 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 7875484	        14.00 ns/op	1068.50 MB/s
+BenchmarkValidateUtf8/ascii-64	14819556	         8.000 ns/op	7643.76 MB/s
+BenchmarkValidateUtf8/ascii-256	17252179	         7.000 ns/op	36408.93 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1541610	        76.00 ns/op	53710.01 MB/s
+BenchmarkValidateUtf8/ascii-65536	   94730	      1244 ns/op	52649.10 MB/s
+BenchmarkValidateUtf8/emoji	    3357	     36484 ns/op	1796.42 MB/s
+BenchmarkValidateUtf8/hebrew	     787	    131552 ns/op	 505.46 MB/s
+BenchmarkValidateUtf8/korean	    2958	     40242 ns/op	1654.95 MB/s
+BenchmarkValidateUtf8/japanese	    2910	     41283 ns/op	1642.48 MB/s
+BenchmarkValidateUtf8/chinese	    2757	     43960 ns/op	1588.71 MB/s
+BenchmarkValidateUtf8/arabic	     794	    150393 ns/op	 543.14 MB/s
+BenchmarkValidateUtf8/latin	   70604	      1734 ns/op	50121.92 MB/s
+BenchmarkValidateUtf8/hindi	    1550	     77524 ns/op	1135.08 MB/s
+BenchmarkValidateUtf8/russian	     474	    241405 ns/op	 434.00 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5520	     20566 ns/op	50984.97 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8691612	        14.00 ns/op	1141.31 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 3986896	        28.00 ns/op	2211.89 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4493942	        27.00 ns/op	9359.96 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38699.04 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   89700	      1274 ns/op	51439.19 MB/s
+BenchmarkValidateUtf8Err/emoji	    3436	     34931 ns/op	1876.33 MB/s
+BenchmarkValidateUtf8Err/hebrew	     980	    122215 ns/op	 544.08 MB/s
+BenchmarkValidateUtf8Err/korean	    2971	     40936 ns/op	1626.91 MB/s
+BenchmarkValidateUtf8Err/japanese	    2899	     42928 ns/op	1579.57 MB/s
+BenchmarkValidateUtf8Err/chinese	    2750	     44235 ns/op	1578.84 MB/s
+BenchmarkValidateUtf8Err/arabic	     793	    150902 ns/op	 541.31 MB/s
+BenchmarkValidateUtf8Err/latin	   72030	      1661 ns/op	52316.51 MB/s
+BenchmarkValidateUtf8Err/hindi	    1513	     79024 ns/op	1113.54 MB/s
+BenchmarkValidateUtf8Err/russian	     501	    238921 ns/op	 438.51 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5625	     20774 ns/op	50474.25 MB/s
+# SKIP BenchmarkValidateAscii: Zig's std has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16le: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16be: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32: Zig's std has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Zig's std has no equivalent
+target: x86_64-linux-gnu
+cpu: icelake_server
+mode: ReleaseFast
+BenchmarkValidateUtf8/ascii-16	 8473490	        14.00 ns/op	1068.04 MB/s
+BenchmarkValidateUtf8/ascii-64	21871238	         5.000 ns/op	12254.25 MB/s
+BenchmarkValidateUtf8/ascii-256	16788798	         7.000 ns/op	34573.26 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1610300	        74.00 ns/op	55309.05 MB/s
+BenchmarkValidateUtf8/ascii-65536	   96692	      1232 ns/op	53166.26 MB/s
+BenchmarkValidateUtf8/emoji	    3416	     34777 ns/op	1884.60 MB/s
+BenchmarkValidateUtf8/hebrew	     981	    122111 ns/op	 544.54 MB/s
+BenchmarkValidateUtf8/korean	    2836	     40470 ns/op	1645.66 MB/s
+BenchmarkValidateUtf8/japanese	    2912	     41307 ns/op	1641.54 MB/s
+BenchmarkValidateUtf8/chinese	    2702	     43793 ns/op	1594.77 MB/s
+BenchmarkValidateUtf8/arabic	     799	    150396 ns/op	 543.13 MB/s
+BenchmarkValidateUtf8/latin	   72255	      1670 ns/op	52030.81 MB/s
+BenchmarkValidateUtf8/hindi	    1570	     84496 ns/op	1041.43 MB/s
+BenchmarkValidateUtf8/russian	     499	    237164 ns/op	 441.76 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    5445	     26397 ns/op	39722.16 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 6214904	        17.00 ns/op	 892.75 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 4952781	        24.00 ns/op	2639.65 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 4504052	        26.00 ns/op	9633.84 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       105.0 ns/op	38915.09 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   95043	      1567 ns/op	41799.14 MB/s
+BenchmarkValidateUtf8Err/emoji	    3435	     35486 ns/op	1846.98 MB/s
+BenchmarkValidateUtf8Err/hebrew	     976	    122364 ns/op	 543.42 MB/s
+BenchmarkValidateUtf8Err/korean	    2976	     40301 ns/op	1652.55 MB/s
+BenchmarkValidateUtf8Err/japanese	    2839	     41377 ns/op	1638.75 MB/s
+BenchmarkValidateUtf8Err/chinese	    2700	     43823 ns/op	1593.68 MB/s
+BenchmarkValidateUtf8Err/arabic	     796	    150636 ns/op	 542.27 MB/s
+BenchmarkValidateUtf8Err/latin	   72564	      1652 ns/op	52615.72 MB/s
+BenchmarkValidateUtf8Err/hindi	    1478	     78035 ns/op	1127.66 MB/s
+BenchmarkValidateUtf8Err/russian	     498	    238001 ns/op	 440.21 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    5198	     24740 ns/op	42382.95 MB/s
