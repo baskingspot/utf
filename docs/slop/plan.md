@@ -91,6 +91,12 @@ standard, not from simdutf's source.
    store-to-load forwarding and was half as fast.
 4. **Valid vs checked.** The checked conversion validates in the same pass;
    it must not cost more than validating and converting separately.
+   Measured for transcoding ([convert-20261030.md](results/convert-20261030.md)):
+   from 4 KiB the checked form is level with or ahead of simdutf's validator
+   followed by our valid form on every corpus (UTF-16 to UTF-8 Latin 16.2
+   vs 8.8 GB/s), and 10–12% behind it only on non-ASCII UTF-8 at 64 bytes.
+   It costs 10–25% over the valid form on non-ASCII UTF-8 and about 2× on
+   UTF-32 to UTF-16, whose valid loop is only a narrowing store.
 
 ## Order of work
 
@@ -109,7 +115,24 @@ Wave 1, in parallel:
   vector was made. `lookup16` uses the instruction only under the LLVM
   backend; Debug builds on x86_64 take a per-lane loop.
 - **Transcoding**: `src/convert.zig`, `src/length.zig`, and the scalar
-  transcoders in `src/scalar_convert.zig`.
+  transcoders in `src/scalar_convert.zig`. Landed: every conversion among
+  UTF-8, UTF-16LE/BE, UTF-32, and Latin-1, checked and valid, the length
+  functions and code-point counts, and the
+  [measurements](results/convert-20261030.md). UTF-8 decodes in Lemire and
+  Muła's 12-byte windows (comptime tables: 209 shuffles, a 4096-entry index)
+  after Keiser–Lemire validation of each 64-byte block; UTF-16 and UTF-32
+  encode by expanding to 32-bit lanes and packing with `lookup16`. Byte
+  shuffles go through `simd.lookup16`; where it has no instruction (generic,
+  and Debug on x86_64) only the ASCII paths stay vectorized and other
+  blocks go to the scalar code in steps of 16 units, doubling to 64 while
+  blocks keep failing, called between SIMD loops and never inlined, since
+  LLVM otherwise spills the loop's constants or splits its ASCII stores. Table entries and windows load volatile, as in
+  base64. The length functions handle 16–63 bytes with 16-byte vectors and
+  an overlapping masked last one. Left for wave 2: AVX-512 kernels (simdutf's
+  `icelake` is 1.6–2.8× ours on non-Latin text), Cyrillic and CJK UTF-8 to
+  UTF-16 against `haswell` (82–85%), UTF-16 and UTF-32 to UTF-8 for CJK
+  (55%, 68%), the generic path's valid CJK UTF-8 decode, and SSE UTF-16 to
+  UTF-8 on emoji.
 - **Base64**: `src/base64.zig`, scalar reference included. Landed: AVX2,
   SSSE3, NEON, and generic kernels, the reference in `src/scalar_base64.zig`,
   and the [measurements](results/base64-20261030.md). Left for wave 2: an

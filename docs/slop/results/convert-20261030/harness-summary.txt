@@ -1,0 +1,8 @@
+utf       30 rows match simdutf
+std       30 rows match simdutf
+rust      30 rows match simdutf
+go        30 rows match simdutf
+peak RSS (MiB)        simdutf      utf      std     rust       go
+utf8-to-utf16le           8.3      5.6      5.6      7.9     11.9
+utf16le-to-utf8           8.4      5.7      5.6      8.9     10.9
+
