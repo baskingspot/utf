@@ -484,6 +484,40 @@ inline fn storeBytes(d: []u8, v: anytype) void {
     }
 }
 
+/// Byte i of each 16-byte lane of `data` and `idx`: `data`'s byte
+/// `idx[i] % 16` of the same lane, or 0 where bit 7 of `idx[i]` is set
+/// (`pshufb`, `tbl`). Unlike `lookup16`, each lane looks up its own 16
+/// bytes, so one AVX2 `vpshufb` packs two groups of `data` at once.
+pub inline fn shuffleLanes(data: anytype, idx: @TypeOf(data)) @TypeOf(data) {
+    const n = @typeInfo(@TypeOf(data)).vector.len;
+    comptime std.debug.assert(@typeInfo(@TypeOf(data)).vector.child == u8 and n % 16 == 0);
+    const d: [n]u8 = data;
+    const in: [n]u8 = idx;
+    var out: [n]u8 = undefined;
+    if (!llvm or isa == .generic) {
+        for (in, &out, 0..) |i, *o, k| o.* = if (i & 0x80 != 0) 0 else d[k / 16 * 16 + (i & 0x0F)];
+        return out;
+    }
+    const Native = switch (isa) {
+        .avx512 => if (n % 64 == 0) 64 else if (n % 32 == 0) 32 else 16,
+        .avx2 => if (n % 32 == 0) 32 else 16,
+        .sse, .neon, .generic => 16,
+    };
+    inline for (0..n / Native) |c| {
+        const t: @Vector(Native, u8) = d[c * Native ..][0..Native].*;
+        const v: @Vector(Native, u8) = in[c * Native ..][0..Native].*;
+        out[c * Native ..][0..Native].* = switch (Native) {
+            64 => @"llvm.x86.avx512.pshuf.b.512"(t, v),
+            32 => @"llvm.x86.avx2.pshuf.b"(t, v),
+            else => switch (isa) {
+                .neon => @"llvm.aarch64.neon.tbl1.v16i8"(t, v & @as(@Vector(16, u8), @splat(0x8F))),
+                else => @"llvm.x86.ssse3.pshuf.b.128"(t, v),
+            },
+        };
+    }
+    return out;
+}
+
 /// The lanes of `v` that `keep` selects, in order, then zeros
 /// (`vpcompressb/w/d`). Byte and 16-bit lanes need VBMI2.
 pub inline fn compress(v: anytype, keep: @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.len)) @TypeOf(v) {
@@ -547,6 +581,37 @@ pub inline fn narrow(comptime To: type, v: anytype) @Vector(@typeInfo(@TypeOf(v)
     comptime std.debug.assert(@typeInfo(@TypeOf(v)).vector.child == u32);
     const sse41 = isa == .sse and hasX86(.sse4_1);
     if (!llvm) return @truncate(v);
+    if (has_vbmi and n % (64 / @sizeOf(To)) == 0) {
+        // Two-register byte permutes: one makes 64 bytes of `u16` from two
+        // registers, two and a blend make 64 of `u8` from four, where each
+        // `vpmovdw` or `vpmovdb` is two shuffle-port operations for 32 or
+        // 16 bytes.
+        const per = 64 / @sizeOf(To);
+        const q: [n / 16]@Vector(64, u8) = @bitCast(v);
+        var out: [n / per]@Vector(64, u8) = undefined;
+        // Byte j of the output is byte j % 2 of lane j / 2 of the two
+        // registers' 32 lanes.
+        const words = comptime blk: {
+            var t: [64]u8 = undefined;
+            for (&t, 0..) |*x, j| x.* = 4 * (j / 2) + j % 2;
+            break :blk t;
+        };
+        inline for (&out, 0..) |*o, h| {
+            if (To == u16) {
+                o.* = permute2(q[2 * h], words, q[2 * h + 1]);
+            } else {
+                // An index LLVM cannot see, or it rewrites the blend of two
+                // permutes as four `vpshufb`, two `vpermd`, and two 32-byte
+                // stores.
+                var t: *const [2][64]u8 = &narrow_bytes;
+                _ = &t;
+                const ab = permute2(q[4 * h], loadVolatile(@Vector(64, u8), &t[0]), q[4 * h + 1]);
+                const cd = permute2(q[4 * h + 2], loadVolatile(@Vector(64, u8), &t[1]), q[4 * h + 3]);
+                o.* = @select(u8, std.simd.iota(u8, 64) < @as(@Vector(64, u8), @splat(32)), ab, cd);
+            }
+        }
+        return @bitCast(out);
+    }
     if (To == u16 and isa == .avx2 and n % 16 == 0) {
         const q: [n / 8]@Vector(8, u32) = @bitCast(v);
         var out: [n / 16]@Vector(16, u16) = undefined;
@@ -575,6 +640,17 @@ pub inline fn narrow(comptime To: type, v: anytype) @Vector(@typeInfo(@TypeOf(v)
     }
     return @truncate(v);
 }
+
+/// `narrow`'s indexes to `u8`, for output bytes 0-31 from the first two
+/// registers and 32-63 from the last two, which it loads at run time.
+const narrow_bytes: [2][64]u8 = blk: {
+    var t: [2][64]u8 = @splat(@splat(0));
+    for (0..32) |j| {
+        t[0][j] = 4 * j;
+        t[1][32 + j] = 4 * j;
+    }
+    break :blk t;
+};
 
 extern fn @"llvm.x86.bmi.bzhi.64"(u64, u64) u64;
 extern fn @"llvm.x86.bmi.bzhi.32"(u32, u32) u32;
