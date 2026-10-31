@@ -1,0 +1,14 @@
+.{
+    .name = .utf_ab,
+    .version = "0.0.0",
+    .fingerprint = 0x4088e01e8212ebfb,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .utf = .{ .path = "../repo" },
+        .testingx = .{
+            .url = "https://baskingspot.dev/testingx/v0.2.0.tar.gz",
+            .hash = "testingx-0.2.0-ib95-5lNAwA8WZQH6Q6eDm2hgfC3ixFJuhkOrR8gcZAm",
+        },
+    },
+    .paths = .{""},
+}

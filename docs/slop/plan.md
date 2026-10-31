@@ -72,8 +72,46 @@ standard, not from simdutf's source.
    ([validate-20261031.md](results/validate-20261031.md)): non-ASCII text at
    21 GiB/s on AVX-512, 14 on AVX2, 9 on SSE, and 1.3 on baseline, where the
    scalar validator runs past the ASCII prefix; ASCII is 80–130 GiB/s on all
-   four. Runtime dispatch is worth about 10× on non-ASCII text for a baseline
-   build; still to decide.
+   four. **Decided: runtime dispatch on x86-64**
+   ([dispatch-20261031.md](results/dispatch-20261031.md)). build.zig compiles
+   the package once more per tier above the target's own ISA, as objects for
+   `x86_64_v2` (`.sse`), `x86_64_v3` (`.avx2`), and `x86_64_v4` plus VBMI,
+   VBMI2, BITALG, VPOPCNTDQ, and GFNI (`.avx512`), and links them into the
+   `utf` module, so `b.dependency("utf", ...).module("utf")` carries them.
+   `src/dispatch.zig` picks the best tier once with `cpuid` and XCR0. It is
+   on by default for a generic x86-64 CPU (baseline, `x86_64_v2`,
+   `x86_64_v3`, a cross target with no CPU) and off for a native or named
+   one, where `simd.isa` chooses at comptime as before; `-Ddispatch` (or
+   `.dispatch` in the dependency's arguments) overrides; aarch64 is always
+   comptime. A baseline build runs the AVX-512 kernels within 0–3.4% of a
+   build for the CPU from 1 KiB (8–19× the generic path on non-ASCII text);
+   each call costs 1.0–1.7 ns, 11–24% of `utf8` at 8–32 bytes. GFNI is in the
+   AVX-512 tier because LLVM shifts bytes with it (4–10% from 1 KiB). Wired:
+   `validate.utf8` and `validate.utf8WithErrors`. To wire another public
+   function:
+   - Move its body into a private function (`fooKernel`) and make the public
+     one `return dispatch.call(@src(), fooKernel, .{ a, b });`, with
+     `const dispatch = @import("dispatch.zig");`. `@src()` names the
+     exported symbol, so each public function calls `dispatch.call` itself,
+     never through a shared helper, and only non-generic functions can be
+     wired (wire the public wrappers of a generic one).
+   - Inside kernels, call other kernels directly (`barKernel`), not the
+     wired public function, which would check the tier again.
+   - Arguments: slices, pointers, integers, enums, bools, and packed structs
+     travel as words, other types (such as `base64.DecodeOptions`) by
+     pointer, up to six words (a slice is two). Results: `void`, `bool`,
+     `usize`, enums, and structs of up to two scalar fields, such as `Result`.
+     Anything else is a compile error in `dispatch.zig`; ask its owner.
+   - Comptime choices inside the kernels keep working unchanged: each object
+     is compiled for its tier, so `simd.isa`, `simd.has_vbmi`, and
+     `builtin.cpu` features (base64's `native`) see that tier's CPU.
+   - Tests: this repository's test builds pin every call to the `-Dcpu`
+     level, so the tests at each `-Dcpu` still check that level's kernels.
+     Wrap a differential test's body in `dispatch.forEachLevel(f, args)` to
+     run it once per tier the CPU has, through the path consumers call; at
+     `-Dcpu=baseline` on an AVX-512 machine that is all four.
+   - Benchmarks: a `-Dcpu=baseline` build now dispatches; pass
+     `.dispatch = false` to `b.dependency("utf", ...)` for the generic path.
 2. **Block size.** 64 bytes per iteration on every ISA (four 16-byte vectors,
    two 32-byte, one 64-byte), so the algorithm's carries are the same code and
    only the vector width changes. **Measure** 32 vs 64 on AVX2. Validation
@@ -150,3 +188,8 @@ bench-compare`, `just oracle`, and the layout and contract in
 
 Wave 2: the measured decisions above, AVX-512 paths where wave 1 did AVX2,
 and a performance pass against simdutf on every operation and corpus.
+
+- **Dispatch**: `src/dispatch.zig`, `src/simd.zig`, and `build.zig`.
+  Landed: decision 1's runtime dispatch, and `simd.bitmask` for vectors of
+  fewer than 8 lanes on the self-hosted backends, so `convert.zig`'s `mask4`
+  can call it directly.
