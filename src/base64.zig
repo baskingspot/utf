@@ -141,13 +141,12 @@ pub fn decodeWith(
     const t = scalar.trim(src);
     var i: usize = 0;
     var o: usize = 0;
-    // The 6-bit values of blocks with whitespace, compressed, not yet
-    // decoded, in the ring `K.stagePut` and `K.stageGet` keep: `w` values
-    // staged, the first `r` of them, whole blocks, decoded.
-    var stage: [K.stage_len]u8 align(64) = undefined;
-    var w: usize = 0;
-    var r: usize = 0;
-    blocks: while (true) {
+    // Where the current run of characters between whitespace starts, after
+    // whole chunks; `i` is whole blocks from it.
+    var run: usize = 0;
+    // Tested first, so that a short input skips the loop and the
+    // constants LLVM loads before it.
+    while (t.len - i >= 64) {
         // Blocks without whitespace go straight to `dst`, as many as fit
         // with the slack.
         var clean = @min((t.len - i) / 64, ((dst.len - o) -| K.slack) / 48);
@@ -155,41 +154,194 @@ pub fn decodeWith(
         while (clean >= 2) : (clean -= 2) {
             const a = K.classifyBlock(src[i..][0..64]);
             const b = K.classifyBlock(src[i + 64 ..][0..64]);
-            if (a.anyBadWith(b)) break;
+            if (a.anyBadWith(b)) {
+                if (!a.anyBad()) {
+                    K.packBlock(a.values, dst[o..][0 .. 48 + K.slack]);
+                    i += 64;
+                    o += 48;
+                }
+                break;
+            }
             K.packBlock(a.values, dst[o..][0 .. 48 + K.slack]);
             K.packBlock(b.values, dst[o + 48 ..][0 .. 48 + K.slack]);
             i += 128;
             o += 96;
-        }
-        while (clean > 0) : (clean -= 1) {
+        } else if (clean == 1) {
             const c = K.classifyBlock(src[i..][0..64]);
-            if (c.anyBad()) break;
-            K.packBlock(c.values, dst[o..][0 .. 48 + K.slack]);
-            i += 64;
-            o += 48;
-        }
-        // From the first with whitespace, all go through `stage`. A
-        // staged block is decoded once `K.lag` more values follow it: its
-        // load straddles the stores that wrote it, and would wait for them
-        // to reach the cache.
-        while (t.len - i >= 64 and dst.len - o >= 48 * ((w - r) / 64 + 1) + K.slack) {
-            const block = src[i..][0..64];
-            const c = K.classifyBlock(block);
-            var space: u64 = 0;
-            if (c.anyBad()) {
-                space = c.spaceMask();
-                if (c.badMask() & ~space != 0) break :blocks;
-            }
-            K.stagePut(&stage, w, c.values, space);
-            w += 64 - @popCount(space);
-            i += 64;
-            if (w - r >= 64 + K.lag) {
-                K.packBlock(K.stageGet(&stage, r), dst[o..][0 .. 48 + K.slack]);
-                r += 64;
+            if (!c.anyBad()) {
+                K.packBlock(c.values, dst[o..][0 .. 48 + K.slack]);
+                i += 64;
                 o += 48;
             }
         }
-        break;
+        if (t.len - i < 64) break;
+        // A whole block with whitespace or an error, or without room for
+        // the slack. Where each run of characters between whitespace is a
+        // multiple of four long and at least a block, as MIME's and PEM's
+        // lines are, the block that ends a run is decoded from `src`,
+        // overlapping what the run's earlier blocks wrote, and the
+        // whitespace skipped: nothing to compress. Anything else goes
+        // through `decodeStaged`.
+        if (dst.len - o < 48 + K.slack) break;
+        const c = K.classifyBlock(src[i..][0..64]);
+        const bad = c.badMask();
+        const space = c.spaceMask();
+        const p: u6 = @truncate(@ctz(bad));
+        if (space >> p & 1 == 0) break;
+        // The run ends at `i + p`.
+        const len = i - run + p;
+        if (p != 0) {
+            if (len % 4 != 0 or i == run) break;
+            const end = i + p;
+            K.packBlock(K.classifyBlock(src[end - 64 ..][0..64]).values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
+            o += p / 4 * 3;
+        }
+        const k = @ctz(~(space >> p));
+        i += @min(64, @as(usize, p) + k);
+        run = i;
+        if (len < 64 or len % 4 != 0 or k > 4 or p + k == 64) continue;
+        // Then lines of `len` characters, each followed by the same `k`
+        // whitespace characters as this one.
+        if (t.len - i < len + k or src.len - i < lineReach(K, len)) continue;
+        const gap = std.mem.readInt(u32, src[i - k ..][0..4], .little) & @as(u32, @truncate(simd.lowBits(u64, 8 * k)));
+        o = decodeLines(isa, alphabet, dst, src, t, &i, o, len, k, gap);
+        run = i;
+    }
+    if (t.len - i >= 64) return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
+    // The last block, fewer than 64 characters, zero-padded.
+    const n = t.len - i;
+    const live = simd.lowBits(u64, n);
+    const c = K.classifyBlock(simd.loadTail(src, i, t.len));
+    const bad = c.badMask() & live;
+    if (bad == 0) {
+        if (K.finish(c.values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+        return scalar.decodeFrom(dst, src, t, i, o, options);
+    }
+    // Whitespace in it, compressed out in registers.
+    if (K.finishSpaced(c, n, bad, live, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+    return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
+}
+
+/// Decodes lines of `len` characters from `src[i.*]`, a multiple of four
+/// and at least 64, each followed by `k` whitespace characters whose bytes
+/// are `gap`, into `dst[o..]`, while the lines are clean and end so; returns
+/// the new `o` and leaves `i.*` at the start of the line it stops at.
+inline fn decodeLines(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    t: scalar.Trim,
+    i: *usize,
+    out: usize,
+    len: usize,
+    k: usize,
+    gap: u32,
+) usize {
+    const K = Kernel(isa, alphabet);
+    const full = len / 64 * 64;
+    const rem = len - full;
+    const mask: u32 = @truncate(simd.lowBits(u64, 8 * k));
+    const reach = lineReach(K, len);
+    var o = out;
+    lines: while (t.len - i.* >= len + k and src.len - i.* >= reach and dst.len - o >= len / 4 * 3 + 64) {
+        const at = i.*;
+        var j: usize = 0;
+        while (j < full) : (j += 64) {
+            const b = K.classifyBlock(src[at + j ..][0..64]);
+            if (b.anyBad()) break :lines;
+            K.packBlock(b.values, dst[o + j / 4 * 3 ..][0 .. 48 + K.slack]);
+        }
+        if (rem != 0) {
+            if (K.lanes < 64) {
+                // The rest in vectors, not a whole block.
+                inline for (0..K.blocks) |v| {
+                    if (v * K.lanes < rem) {
+                        const in: K.V = src[at + full + v * K.lanes ..][0..K.lanes].*;
+                        const cv = K.classify(in);
+                        const live = simd.lowBits(@Int(.unsigned, K.lanes), rem - v * K.lanes);
+                        if (simd.bitmask(cv.bad) & live != 0) break :lines;
+                        K.packOne(cv.values, dst[o + (full + v * K.lanes) / 4 * 3 ..][0 .. K.lanes / 4 * 3 + K.slack]);
+                    }
+                }
+            } else {
+                const b = K.classifyBlock(src[at + len - 64 ..][0..64]);
+                if (b.anyBad()) break;
+                K.packBlock(b.values, dst[o + (len - 64) / 4 * 3 ..][0 .. 48 + K.slack]);
+            }
+        }
+        if (std.mem.readInt(u32, src[at + len ..][0..4], .little) & mask != gap) break;
+        o += len / 4 * 3;
+        i.* = at + len + k;
+    }
+    return o;
+}
+
+/// A `Result` as two words, the count in the low half: returned from an
+/// out-of-line function, LLVM keeps them in registers, where it returns a
+/// `Result` through memory and loads it back whole, which stalls on the
+/// two narrower stores that wrote it.
+const Words = @Int(.unsigned, 2 * @bitSizeOf(usize));
+
+inline fn toWords(r: Result) Words {
+    return @as(Words, @intFromEnum(r.err)) << @bitSizeOf(usize) | r.count;
+}
+
+inline fn fromWords(w: Words) Result {
+    return .{ .err = @enumFromInt(@as(u8, @truncate(w >> @bitSizeOf(usize)))), .count = @truncate(w) };
+}
+
+/// How far past a line's start `decodeLines` reads: the line, the four
+/// bytes after it, and its last vectors past its end.
+fn lineReach(comptime K: type, len: usize) usize {
+    const full = len / 64 * 64;
+    return @max(len + 4, if (K.lanes < 64) full + std.mem.alignForward(usize, len - full, K.lanes) else len);
+}
+
+/// `decodeWith` from a block at `from` with whitespace it does not decode
+/// in lines, or an error, or that `dst` has no room for with the slack,
+/// writing from `dst[out]`. Out of line, so that its staging buffer costs
+/// no stack frame where there is no such whitespace.
+noinline fn decodeStaged(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    t: scalar.Trim,
+    from: usize,
+    out: usize,
+    last_chunk: LastChunk,
+) Words {
+    const options: DecodeOptions = .{ .alphabet = alphabet, .last_chunk = last_chunk };
+    const K = Kernel(isa, alphabet);
+    var i = from;
+    var o = out;
+    // The 6-bit values of blocks with whitespace, compressed, not yet
+    // decoded, in the ring `K.stagePut` and `K.stageGet` keep: `w` values
+    // staged, the first `r` of them, whole blocks, decoded.
+    var stage: [K.stage_len]u8 align(64) = undefined;
+    var w: usize = 0;
+    var r: usize = 0;
+    // From the first with whitespace, all go through `stage`. A staged
+    // block is decoded once `K.lag` more values follow it: its load
+    // straddles the stores that wrote it, and would wait for them to reach
+    // the cache.
+    while (t.len - i >= 64 and dst.len - o >= 48 * ((w - r) / 64 + 1) + K.slack) {
+        const block = src[i..][0..64];
+        const c = K.classifyBlock(block);
+        var space: u64 = 0;
+        if (c.anyBad()) {
+            space = c.spaceMask();
+            if (c.badMask() & ~space != 0) break;
+        }
+        K.stagePut(&stage, w, c.values, space);
+        w += 64 - @popCount(space);
+        i += 64;
+        if (w - r >= 64 + K.lag) {
+            K.packBlock(K.stageGet(&stage, r), dst[o..][0 .. 48 + K.slack]);
+            r += 64;
+            o += 48;
+        }
     }
 
     // A block without whitespace that fits only without the slack.
@@ -211,8 +363,11 @@ pub fn decodeWith(
         const c = K.classifyBlock(block);
         const bad = c.badMask() & live;
         if (bad == 0 and w == 0) {
-            if (K.finish(c.values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
-            return scalar.decodeFrom(dst, src, t, i, o, options);
+            if (K.finish(c.values, n, dst[o..], t, last_chunk)) |len| return toWords(.ok(o + len));
+            return toWords(scalar.decodeFrom(dst, src, t, i, o, options));
+        }
+        if (w == 0) {
+            if (K.finishSpaced(c, n, bad, live, dst[o..], t, last_chunk)) |len| return toWords(.ok(o + len));
         }
         const space = if (bad == 0) 0 else c.spaceMask() & live;
         if (bad & ~space == 0) {
@@ -235,7 +390,7 @@ pub fn decodeWith(
         o += 48;
     }
     if (end == t.len and w - r < 64) {
-        if (K.finish(K.stageGet(&stage, r), w - r, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+        if (K.finish(K.stageGet(&stage, r), w - r, dst[o..], t, last_chunk)) |len| return toWords(.ok(o + len));
     }
     var start = end;
     var keep = w - r;
@@ -243,7 +398,7 @@ pub fn decodeWith(
         start -= 1;
         if (!scalar.isSpace(src[start])) keep -= 1;
     }
-    return scalar.decodeFrom(dst, src, t, start, o, options);
+    return toWords(scalar.decodeFrom(dst, src, t, start, o, options));
 }
 
 /// `encodedLen(n, .{ .padding = padding })`, whose options struct LLVM
@@ -546,22 +701,26 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// Turns 64 6-bit values into 48 bytes, and writes `slack` more.
         inline fn packBlock(values: [blocks]V, out: *[48 + slack]u8) void {
             // Whole vectors, each overwriting the slack of the one before.
+            inline for (0..blocks) |k| packOne(values[k], out[k * lanes / 4 * 3 ..][0 .. lanes / 4 * 3 + slack]);
+        }
+
+        /// Turns one vector of 6-bit values into `lanes / 4 * 3` bytes,
+        /// and writes `slack` more.
+        inline fn packOne(values: V, out: *[lanes / 4 * 3 + slack]u8) void {
             // The stores are volatile so that LLVM keeps them whole: it
             // would merge them with more shuffles than it saves.
-            inline for (0..blocks) |k| {
-                if (isa == .avx2) {
-                    // Each 16-byte half from its own store, which saves the
-                    // shuffle across halves, a shuffle-port instruction.
-                    const halves: [2]@Vector(16, u8) = @bitCast(@shuffle(u8, packWords(values[k]), undefined, blk: {
-                        // The lanes left over stay in their half too.
-                        var m: [lanes]i32 = std.simd.iota(i32, lanes);
-                        for (0..lanes / 4) |g| m[g / 4 * 16 + g % 4 * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
-                        break :blk m;
-                    }));
-                    inline for (halves, 0..) |h, j| simd.storeVolatile(out[k * 24 + j * 12 ..], h);
-                } else {
-                    simd.storeVolatile(out[k * lanes / 4 * 3 ..], pack(values[k]));
-                }
+            if (isa == .avx2) {
+                // Each 16-byte half from its own store, which saves the
+                // shuffle across halves, a shuffle-port instruction.
+                const halves: [2]@Vector(16, u8) = @bitCast(@shuffle(u8, packWords(values), undefined, blk: {
+                    // The lanes left over stay in their half too.
+                    var m: [lanes]i32 = std.simd.iota(i32, lanes);
+                    for (0..lanes / 4) |g| m[g / 4 * 16 + g % 4 * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
+                    break :blk m;
+                }));
+                inline for (halves, 0..) |h, j| simd.storeVolatile(out[j * 12 ..], h);
+            } else {
+                simd.storeVolatile(out, pack(values));
             }
         }
 
@@ -598,9 +757,31 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // bits after it, and the byte after its data holds its extra bits.
             const live = std.simd.iota(u8, 64) < @as(V64, @splat(@intCast(count)));
             const out = packAll(@bitCast(@select(u8, live, @as(V64, @bitCast(values)), @as(V64, @splat(0)))));
-            if (last == .strict and tail != 0 and @as([64]u8, out)[len] != 0) return null;
+            // In a vector: reading byte `len` stored `out` to the stack.
+            const at_len = std.simd.iota(u8, 64) == @as(V64, @splat(@intCast(len)));
+            const zero: V64 = @splat(0);
+            if (last == .strict and tail != 0 and @reduce(.Or, @select(u8, at_len, out, zero) != zero)) return null;
             simd.storePartial(dst, out, len);
             return len;
+        }
+
+        /// `finish` for the last block, of `n` characters, where `bad`
+        /// marks those outside the alphabet: when they are all whitespace
+        /// that `compressVec` removes, decodes the rest. Null where
+        /// `finish` is, or when they are not.
+        inline fn finishSpaced(
+            c: Block,
+            n: usize,
+            bad: u64,
+            live: u64,
+            dst: []u8,
+            t: scalar.Trim,
+            last: LastChunk,
+        ) ?usize {
+            const space = c.spaceMask() & live;
+            if (bad & ~space != 0) return null;
+            const v = compressVec(c.values, space) orelse return null;
+            return finish(@bitCast(v), n - @popCount(space), dst, t, last);
         }
 
         /// The staging ring: 512 values at `stage[64..]`, with 64 bytes
@@ -1043,6 +1224,51 @@ test "every kernel decodes line-wrapped and space-strewn input" {
             try expectSameDecode(maxDecodedLen(m), spaced[0..m], options);
             spaced[m / 2] = saved;
             try expectSameDecode(rand.uintAtMost(usize, maxDecodedLen(m)), spaced[0..m], options);
+        }
+    }
+}
+
+test "every kernel decodes regular lines, with a fault in any line" {
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const rand = prng.random();
+    var raw: [1200]u8 = undefined;
+    var enc: [1600]u8 = undefined;
+    var text: [2300]u8 = undefined;
+    // Widths that decode in lines, at one block and between two and four,
+    // and one that does not.
+    for ([_]usize{ 64, 68, 76, 100, 128, 132, 200, 62 }) |width| {
+        for ([_][]const u8{ "\n", "\r\n", " ", "\r\n\t\t", "\n\n\n\n\n" }) |gap| {
+            for (0..12) |_| {
+                const n = rand.uintLessThan(usize, raw.len);
+                rand.bytes(raw[0..n]);
+                const alphabet = randomAlphabet(rand);
+                const len = scalar.encode(&enc, raw[0..n], .{ .alphabet = alphabet, .padding = rand.boolean() });
+                var m: usize = 0;
+                for (enc[0..len], 1..) |c, j| {
+                    text[m] = c;
+                    m += 1;
+                    if (j % width == 0) {
+                        @memcpy(text[m..][0..gap.len], gap);
+                        m += gap.len;
+                    }
+                }
+                const options: DecodeOptions = .{ .alphabet = alphabet, .last_chunk = rand.enumValue(LastChunk) };
+                try expectSameDecode(maxDecodedLen(m), text[0..m], options);
+                try expectSameDecode(rand.uintAtMost(usize, maxDecodedLen(m)), text[0..m], options);
+                if (m == 0) continue;
+                // One fault, anywhere or around a line's end: another
+                // byte, a character where whitespace was, whitespace in a
+                // line, or `=`.
+                const line_end = (rand.uintLessThan(usize, len / width + 1) + 1) * (width + gap.len) - gap.len;
+                const near = @min(m - 1, line_end + rand.uintLessThan(usize, gap.len + 2) -| 1);
+                const at = if (rand.boolean()) rand.uintLessThan(usize, m) else near;
+                const saved = text[at];
+                for ([_]u8{ rand.int(u8), 'A', ' ', '=' }) |b| {
+                    text[at] = b;
+                    try expectSameDecode(maxDecodedLen(m), text[0..m], options);
+                }
+                text[at] = saved;
+            }
         }
     }
 }
