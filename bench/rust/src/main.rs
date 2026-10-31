@@ -148,46 +148,32 @@ fn base64_decode_mime(input: &Input, out: &mut [u8], _: &mut [u16]) -> Out {
     decoded(base64_simd::forgiving_decode(&input.bytes, base64_simd::Out::from_slice(out)))
 }
 
-/// The operations this arm has, by name, and `bench_op`, which times one
-/// with the function called directly. The Latin-1 conversions have one
+/// The operations this arm has, by name. The Latin-1 conversions have one
 /// form, which both rows time.
-macro_rules! impls {
-    ($($arg:literal => $f:ident,)*) => {
-        const IMPLS: &[(&str, Fn)] = &[$(($arg, $f),)*];
-
-        fn bench_op(arg: &str, input: &Input, out8: &mut [u8], out16: &mut [u16], goal: Duration) -> (u64, Duration) {
-            match arg {
-                $($arg => bench($f, input, out8, out16, goal),)*
-                _ => unreachable!(),
-            }
-        }
-    };
-}
-
-impls! {
-    "validate-ascii" => validate_ascii,
-    "validate-ascii-err" => validate_ascii,
-    "validate-utf8" => validate_utf8,
-    "validate-utf8-err" => validate_utf8_err,
-    "validate-utf16le" => validate_utf16le,
-    "validate-utf16le-err" => validate_utf16le,
-    "utf8-to-utf16le" => utf8_to_utf16le,
-    "valid-utf8-to-utf16le" => valid_utf8_to_utf16le,
-    "valid-utf8-to-latin1" => valid_utf8_to_latin1,
-    "utf16le-to-utf8" => utf16le_to_utf8,
-    "valid-utf16le-to-latin1" => valid_utf16le_to_latin1,
-    "latin1-to-utf8" => latin1_to_utf8,
-    "valid-latin1-to-utf8" => latin1_to_utf8,
-    "latin1-to-utf16le" => latin1_to_utf16le,
-    "valid-latin1-to-utf16le" => latin1_to_utf16le,
-    "count-utf8" => count_utf8,
-    "base64-encode" => base64_encode,
-    "base64-encode-url" => base64_encode_url,
-    "base64-decode" => base64_decode,
-    "base64-decode-url" => base64_decode_url,
-    "base64-decode-strict" => base64_decode,
-    "base64-decode-mime" => base64_decode_mime,
-}
+const IMPLS: &[(&str, Fn)] = &[
+    ("validate-ascii", validate_ascii),
+    ("validate-ascii-err", validate_ascii),
+    ("validate-utf8", validate_utf8),
+    ("validate-utf8-err", validate_utf8_err),
+    ("validate-utf16le", validate_utf16le),
+    ("validate-utf16le-err", validate_utf16le),
+    ("utf8-to-utf16le", utf8_to_utf16le),
+    ("valid-utf8-to-utf16le", valid_utf8_to_utf16le),
+    ("valid-utf8-to-latin1", valid_utf8_to_latin1),
+    ("utf16le-to-utf8", utf16le_to_utf8),
+    ("valid-utf16le-to-latin1", valid_utf16le_to_latin1),
+    ("latin1-to-utf8", latin1_to_utf8),
+    ("valid-latin1-to-utf8", latin1_to_utf8),
+    ("latin1-to-utf16le", latin1_to_utf16le),
+    ("valid-latin1-to-utf16le", latin1_to_utf16le),
+    ("count-utf8", count_utf8),
+    ("base64-encode", base64_encode),
+    ("base64-encode-url", base64_encode_url),
+    ("base64-decode", base64_decode),
+    ("base64-decode-url", base64_decode_url),
+    ("base64-decode-strict", base64_decode),
+    ("base64-decode-mime", base64_decode_mime),
+];
 
 fn fail(message: &str) -> ! {
     eprintln!("bench-rust: {message}");
@@ -234,28 +220,29 @@ fn fnv1a(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf29ce484222325u64, |h, &b| (h ^ b as u64).wrapping_mul(0x100000001b3))
 }
 
-/// Generic over the function, so the loop calls it directly, as the other
-/// arms' loops do, and not through a pointer.
-fn run<F: std::ops::Fn(&Input, &mut [u8], &mut [u16]) -> Out>(f: &F, input: &Input, out8: &mut [u8], out16: &mut [u16], n: u64) -> Duration {
+/// Calls `f` through its pointer, hidden from the optimizer, so the call
+/// stays out of line, as a C call to simdutf is, and the loop does not keep
+/// the function's constants.
+fn run(f: Fn, input: &Input, out8: &mut [u8], out16: &mut [u16], n: u64) -> Duration {
     let start = Instant::now();
     for _ in 0..n {
-        black_box(f(black_box(input), black_box(&mut *out8), black_box(&mut *out16)));
+        black_box(black_box(f)(black_box(input), black_box(&mut *out8), black_box(&mut *out16)));
     }
     start.elapsed()
 }
 
 /// Go's `testing.B` loop sizing: grow `n` until a run takes the goal.
-fn bench<F: std::ops::Fn(&Input, &mut [u8], &mut [u16]) -> Out>(f: F, input: &Input, out8: &mut [u8], out16: &mut [u16], goal: Duration) -> (u64, Duration) {
+fn bench(f: Fn, input: &Input, out8: &mut [u8], out16: &mut [u16], goal: Duration) -> (u64, Duration) {
     let max_n = 1_000_000_000;
     let mut n: u64 = 1;
-    let mut elapsed = run(&f, input, out8, out16, n);
+    let mut elapsed = run(f, input, out8, out16, n);
     while elapsed < goal && n < max_n {
         let last = n;
         let prev_ns = elapsed.as_nanos().max(1);
         let mut next = (goal.as_nanos() * last as u128 / prev_ns) as u64;
         next += next / 5;
         n = next.max(last + 1).min(100 * last).min(max_n);
-        elapsed = run(&f, input, out8, out16, n);
+        elapsed = run(f, input, out8, out16, n);
     }
     (n, elapsed)
 }
@@ -307,7 +294,13 @@ fn main() {
                 }
                 continue;
             }
-            let (n, elapsed) = bench_op(&op.arg, &input, &mut out8, &mut out16, goal);
+            // Fault every page in before timing: a masked store that
+            // overhangs into a page nothing has written takes a microcode
+            // assist on every call. Nonzero, so the fill is not dropped as
+            // redundant on zeroed memory.
+            out8.fill(1);
+            out16.fill(1);
+            let (n, elapsed) = bench(*f, &input, &mut out8, &mut out16, goal);
             let ns_per_op = elapsed.as_nanos() as f64 / n as f64;
             let mb_per_s = input.bytes.len() as f64 * n as f64 / 1e6 / elapsed.as_secs_f64();
             println!("Benchmark{}/{}\t{n}\t{ns_per_op:.2} ns/op\t{mb_per_s:.2} MB/s", op.row, input.name);

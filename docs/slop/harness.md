@@ -19,10 +19,10 @@ Notes for agents on `bench/`: the comparison benchmarks and the simdutf oracle. 
 ## Measurement notes
 
 - testingx prints ns/op as a whole number of nanoseconds (`Result.nsPerOp` is an integer), which is a 10–20% step for 16-byte inputs. MB/s is computed from the raw total, so `bench-compare` feeds benchstat only throughput, converted to GB/s. Raw rows keep ns/op.
-- The C++ and Rust loops are generic over the function, so the call is direct, as in the Zig arms; Go calls through a function value inside `testing.Benchmark`'s closure.
+- Every arm calls the function out of line, so a loop cannot keep a kernel's constants in registers across calls or fold its setup into the loop: the C++ loop calls into libsimdutf, the Zig loops use `@call(.never_inline, ...)`, Rust calls through a `black_box`ed function pointer, and Go through a function value inside `testing.Benchmark`'s closure. Inlined, `utf`'s 16-byte UTF-8 validation read 3.1 GB/s for a call that costs 10.4 ns, 1.5 GB/s ([harness-fix-20261031.md](results/harness-fix-20261031.md)).
 - Each loop iteration first escapes the input pointer with a memory clobber (`doNotOptimizeAway`, `asm volatile`, `black_box`), so a pure call cannot be hoisted out of the loop.
 - Peak RSS is GNU time around one `check` pass per arm and operation. The floor is the inputs and output buffers, about 2–14 MiB depending on the operation (UTF-32 inputs are the largest); the rest is runtime.
-- Every arm allocates `n * out + 64` bytes of output, from `bench/ops.tsv`, and leaves it unwritten until the call, so only the pages an arm writes count. `base64-decode-mime` gets one byte per input byte because Rust's `forgiving_decode` asserts it, compacting the input into the output before decoding there.
+- Every arm allocates `n * out + 64` bytes of output, from `bench/ops.tsv`, per input. `check` leaves it unwritten, so only the pages an arm writes count in RSS; `bench` writes all of it before timing. A masked AVX-512 store whose masked-off lanes overhang into a page nothing has written takes a microcode assist on every call, since it never faults the page in; the base64 orb saw simdutf's 4 KiB decode drop from 44 to 21 GB/s that way. No corpus size hit it in this harness, but a new size could. `base64-decode-mime` gets one byte per input byte because Rust's `forgiving_decode` asserts it, compacting the input into the output before decoding there.
 - `cpu`, `optimize`, and `dispatch` change only `bench-utf`; testingx's header (`cpu:`, `mode:`) in `raw-utf.txt` records the CPU and mode, and `config.txt` records the variables and simdutf's kernel. A `baseline` or `x86_64_v*` build dispatches at runtime unless `dispatch=false`, so on an AVX-512 machine `cpu=x86_64_v3` alone runs the AVX-512 kernels of whatever dispatches; compare with simdutf's `haswell` only with `dispatch=false`.
 - A full run (66 operations, 877 rows for simdutf and this package, 156 for std, 248 for Rust, 141 for Go) takes about 36 minutes for 6 rounds at the default `BENCHTIME_MS` on the 4-vCPU orb.
 
@@ -37,4 +37,5 @@ simdutf's error codes match `src/result.zig`'s `Error` by name except for ASCII,
 ## Results so far
 
 - `results/baseline-20261030.md`: simdutf, std, Rust, and Go on the whole corpus, and the oracle against `scalar.validateUtf8` (no mismatches).
+- `results/harness-fix-20261031.md`: the out-of-line calls and written output buffers, old harness against new; `utf`'s and Rust's 16–256-byte rows were overstated by up to 2×.
 - `results/baseline-20261031.md`: every operation, after wave 1 and runtime dispatch: the native build against simdutf's `icelake` and the AVX2 build against `haswell`, with the gap per operation.

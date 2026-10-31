@@ -330,6 +330,12 @@ func main() {
 				}
 				continue
 			}
+			// Fault every page in before timing: a masked store that
+			// overhangs into a page nothing has written takes a microcode
+			// assist on every call.
+			clear(b.b8)
+			clear(b.b16)
+			clear(b.b32)
 			result := testing.Benchmark(func(tb *testing.B) {
 				tb.SetBytes(int64(len(in.bytes)))
 				for tb.Loop() {

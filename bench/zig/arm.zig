@@ -373,6 +373,10 @@ fn opBenchmark(comptime i: usize) testingx.Function {
                 current = in;
                 current_out = try in.alloc();
                 defer std.heap.page_allocator.free(current_out);
+                // Fault every page in before timing: a masked store that
+                // overhangs into a page nothing has written takes a
+                // microcode assist on every call.
+                @memset(current_out, 0);
                 _ = try b.run(in.name, row);
             }
         }
@@ -381,9 +385,11 @@ fn opBenchmark(comptime i: usize) testingx.Function {
             const in = current.data;
             const out = current_out;
             while (try b.loop()) {
-                // The input escapes every iteration, so no call is hoisted.
+                // The input escapes every iteration, so no call is hoisted,
+                // and the call stays out of line, as a C call to simdutf
+                // is, so the loop does not keep the kernel's constants.
                 mem.doNotOptimizeAway(in.ptr);
-                mem.doNotOptimizeAway(f(in, out));
+                mem.doNotOptimizeAway(@call(.never_inline, f, .{ in, out }));
             }
             b.setBytes(@intCast(in.len));
         }

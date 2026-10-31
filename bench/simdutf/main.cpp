@@ -326,9 +326,10 @@ int main(int argc, char **argv) {
     }
     const Impl &f = found->second;
     for (Input &in : load(op.dir)) {
-      // Aligned for any code unit, and left uninitialized, as the other
-      // arms' buffers are, so only the pages written count in RSS.
-      std::unique_ptr<char32_t[]> buf(new char32_t[op.out_len(in.data.size()) / 4 + 1]);
+      // Aligned for any code unit, and left uninitialized for `check`, as
+      // the other arms' buffers are, so only the pages written count in RSS.
+      size_t words = op.out_len(in.data.size()) / 4 + 1;
+      std::unique_ptr<char32_t[]> buf(new char32_t[words]);
       char *out = reinterpret_cast<char *>(buf.get());
       const char *data = in.data.data();
       size_t len = in.data.size();
@@ -349,6 +350,10 @@ int main(int argc, char **argv) {
         }
         continue;
       }
+      // Fault every page in before timing: a masked store that overhangs
+      // into a page nothing has written takes a microcode assist on every
+      // call.
+      std::memset(out, 0, words * 4);
       // Go's testing.B loop sizing: grow n until a run takes the goal.
       const uint64_t max_n = 1'000'000'000;
       uint64_t n = 1;
