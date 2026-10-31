@@ -66,11 +66,29 @@ standard, not from simdutf's source.
    narrows partly used vector loads and merges overlapping vector stores into
    extra shuffles; volatile loads and stores keep them whole, worth 30–40% on
    the base64 loops ([results](results/base64-20261030.md)).
+   Validation's `src/simd.zig` landed: `isa` is `.avx512` with AVX-512BW,
+   `.avx2`, `.sse` with SSSE3 (the floor for `pshufb`), `.neon` on aarch64,
+   else `.generic`, so x86-64 baseline is generic. Measured for UTF-8 validation
+   ([validate-20261031.md](results/validate-20261031.md)): non-ASCII text at
+   21 GiB/s on AVX-512, 14 on AVX2, 9 on SSE, and 1.3 on baseline, where the
+   scalar validator runs past the ASCII prefix; ASCII is 80–130 GiB/s on all
+   four. Runtime dispatch is worth about 10× on non-ASCII text for a baseline
+   build; still to decide.
 2. **Block size.** 64 bytes per iteration on every ISA (four 16-byte vectors,
    two 32-byte, one 64-byte), so the algorithm's carries are the same code and
-   only the vector width changes. **Measure** 32 vs 64 on AVX2.
+   only the vector width changes. **Measure** 32 vs 64 on AVX2. Validation
+   writes each block as one `@Vector(64, u8)` and lets LLVM split it; the
+   generated loops are tight on every x86 level. Load blocks with
+   `simd.load`: coercing an array to a vector compiled to a load per lane
+   (4× slower). For UTF-8, the bytes one to three back come from unaligned
+   loads on AVX2 and SSE (+10%, +17%) and from shifts on AVX-512, where the
+   loads lost 11%.
 3. **Short inputs.** Below one block, the scalar path, unless a measured
-   masked or overlapping-load path beats it.
+   masked or overlapping-load path beats it. Landed for validation: an ASCII
+   check on overlapping loads, then one zero-padded block built in registers
+   (`simd.loadPartial`), which beats the scalar validator on non-ASCII text
+   from 16 bytes. Building the padded block in a stack buffer stalls
+   store-to-load forwarding and was half as fast.
 4. **Valid vs checked.** The checked conversion validates in the same pass;
    it must not cost more than validating and converting separately.
 
@@ -84,7 +102,12 @@ Wave 1, in parallel:
 - **Validation**: `src/validate.zig`, `src/simd.zig` (the shared vector
   helpers and ISA selection; the others may keep private helpers until it
   lands), and the scalar validators for ASCII, UTF-16, and UTF-32 in
-  `src/scalar.zig`.
+  `src/scalar.zig`. Landed: `simd.zig` has `isa`, `width`, `Block(T)`,
+  `load`, `load16`, `loadPartial`, `lookup16` (`pshufb`/`tbl`), `prev`, and
+  `bitmask`. Use `bitmask`, not `@bitCast`, for a lane mask: on aarch64_be
+  a bool-vector `@bitCast` orders bits differently depending on how the
+  vector was made. `lookup16` uses the instruction only under the LLVM
+  backend; Debug builds on x86_64 take a per-lane loop.
 - **Transcoding**: `src/convert.zig`, `src/length.zig`, and the scalar
   transcoders in `src/scalar_convert.zig`.
 - **Base64**: `src/base64.zig`, scalar reference included. Landed: AVX2,
