@@ -549,7 +549,10 @@ const x512 = struct {
 /// Combines a checked scalar tail at input `p` and output `o` with the
 /// work before it.
 inline fn tail(r: Result, p: usize, o: usize) Result {
-    return if (r.err == .none) .ok(o + r.count) else .fail(r.err, p + r.count);
+    // One result built from scalars: choosing between two built ones made
+    // LLVM write both fields to the stack and copy the pair with one 16-byte
+    // load, which stalls store forwarding (6 ns on a 16-byte input).
+    return .{ .err = r.err, .count = r.count + if (r.err == .none) o else p };
 }
 
 /// How many code units the next scalar step takes: 16 when the SIMD loop
