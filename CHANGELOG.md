@@ -16,3 +16,5 @@ All notable changes to utf are recorded here. The format follows
 ### Changed
 
 - `convert` and `length` select their kernels at runtime too in generic x86-64 builds, as `validate.utf8` does; the length functions that only return the input length do not dispatch.
+- `convert` and `length` run AVX-512 kernels on CPUs with AVX-512 VBMI2 (Ice Lake and later, Zen 4 and later): from 4 KiB, UTF-8 to UTF-16 is 1.8–3.6× faster on non-Latin text than with the AVX2 kernels, UTF-16 and UTF-32 to UTF-8 1.4–1.7×, UTF-8 to Latin-1 on Latin-1 text 8×, and the checked UTF-16 byte swap on emoji 7×.
+- `convert` on AVX2 and SSE: UTF-16 to UTF-8 is 1.4–2.0× faster on CJK, Korean, and Hindi text, and UTF-8 to UTF-16 on non-Latin text 1.4–2.1× on AVX2.
