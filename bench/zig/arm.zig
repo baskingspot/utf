@@ -373,14 +373,19 @@ const Placed = struct {
 
     const page = 4096;
 
+    /// Raw calls: `alignedAlloc` and `free` fill the memory with
+    /// `undefined` in a safe build, which made every output page resident
+    /// in `check`.
     fn init(len: usize, off: usize) !Placed {
         const size = (off + len + page) / page * page;
-        const mapping = try std.heap.page_allocator.alignedAlloc(u8, .fromByteUnits(page), size);
+        const ptr = std.heap.page_allocator.rawAlloc(size, .fromByteUnits(page), @returnAddress()) orelse
+            return error.OutOfMemory;
+        const mapping: []align(page) u8 = @alignCast(ptr[0..size]);
         return .{ .mapping = mapping, .bytes = @alignCast(mapping[off..][0..len]) };
     }
 
     fn deinit(p: Placed) void {
-        std.heap.page_allocator.free(p.mapping);
+        std.heap.page_allocator.rawFree(p.mapping, .fromByteUnits(page), @returnAddress());
     }
 
     /// Writes every page of the mapping but the data's bytes: a masked load
