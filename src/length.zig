@@ -23,7 +23,7 @@ pub fn countUtf8(src: []const u8) usize {
     return dispatch.call(@src(), countUtf8Kernel, .{src});
 }
 fn countUtf8Kernel(src: []const u8) usize {
-    if (k_masks and src.len >= 64) return popBlocks(u8, struct {
+    if (k_masks) return popBlocks(u8, struct {
         fn f(v: simd.Block(u8), live: u64) usize {
             return @as(usize, @popCount(simd.bitmask(notContinuation(v)) & live));
         }
@@ -57,7 +57,7 @@ pub fn utf16FromUtf8(src: []const u8) usize {
     return dispatch.call(@src(), utf16FromUtf8Kernel, .{src});
 }
 fn utf16FromUtf8Kernel(src: []const u8) usize {
-    if (k_masks and src.len >= 64) return popBlocks(u8, struct {
+    if (k_masks) return popBlocks(u8, struct {
         fn f(v: simd.Block(u8), live: u64) usize {
             return @as(usize, @popCount(simd.bitmask(notContinuation(v)) & live)) +
                 @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0xF0))) & live);
@@ -76,7 +76,7 @@ pub fn utf16FromUtf32(src: []const u32) usize {
     return dispatch.call(@src(), utf16FromUtf32Kernel, .{src});
 }
 fn utf16FromUtf32Kernel(src: []const u32) usize {
-    if (k_masks and src.len >= 16) return src.len + popBlocks(u32, struct {
+    if (k_masks) return src.len + popBlocks(u32, struct {
         fn f(v: simd.Block(u32), live: u16) usize {
             return @as(usize, @popCount(simd.bitmask(v > @as(@TypeOf(v), @splat(0xFFFF))) & live));
         }
@@ -144,7 +144,7 @@ pub fn utf8FromUtf32(src: []const u32) usize {
     return dispatch.call(@src(), utf8FromUtf32Kernel, .{src});
 }
 fn utf8FromUtf32Kernel(src: []const u32) usize {
-    if (k_masks and src.len >= 16) return src.len + popBlocks(u32, struct {
+    if (k_masks) return src.len + popBlocks(u32, struct {
         fn f(v: simd.Block(u32), live: u16) usize {
             const V = @TypeOf(v);
             return @as(usize, @popCount(simd.bitmask(v >= @as(V, @splat(0x80))) & live)) +
@@ -175,7 +175,7 @@ pub fn utf8FromLatin1(src: []const u8) usize {
     return dispatch.call(@src(), utf8FromLatin1Kernel, .{src});
 }
 fn utf8FromLatin1Kernel(src: []const u8) usize {
-    if (k_masks and src.len >= 64) return src.len + popBlocks(u8, struct {
+    if (k_masks) return src.len + popBlocks(u8, struct {
         fn f(v: simd.Block(u8), live: u64) usize {
             return @as(usize, @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0x80))) & live));
         }
@@ -207,7 +207,7 @@ pub fn latin1FromUtf32(src: []const u32) usize {
 }
 
 fn countUtf16(comptime e: Endian, src: []const u16) usize {
-    if (k_masks and src.len >= 32) return src.len - popBlocks(u16, struct {
+    if (k_masks) return src.len - popBlocks(u16, struct {
         fn f(v: simd.Block(u16), live: u32) usize {
             const V = @TypeOf(v);
             const lows = swap(e, v) & @as(V, @splat(0xFC00)) == @as(V, @splat(0xDC00));
@@ -224,7 +224,7 @@ fn countUtf16(comptime e: Endian, src: []const u16) usize {
 }
 
 fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
-    if (k_masks and src.len >= 32) return src.len + popBlocks(u16, struct {
+    if (k_masks) return src.len + popBlocks(u16, struct {
         fn f(raw: simd.Block(u16), live: u32) usize {
             const V = @TypeOf(raw);
             const v = swap(e, raw);
@@ -283,13 +283,21 @@ inline fn alignHead(comptime T: type, comptime size: usize, src: []const T) usiz
     return (std.mem.alignForward(usize, addr, size) - addr) / @sizeOf(T);
 }
 
-/// Sums `f(block, live)` over the 64-byte blocks of `src`, which holds at
-/// least one: `live` has a bit for each lane of the block to count. The
-/// last partial block is the whole one that ends with `src`, with the lanes
-/// already counted left out of `live`.
+/// Sums `f(block, live)` over the 64-byte blocks of `src`: `live` has a
+/// bit for each lane of the block to count. The last partial block is the
+/// whole one that ends with `src`, with the lanes already counted left out
+/// of `live`; an input shorter than a block is one masked load
+/// (`simd.loadShort`), where 16-byte vectors and the scalar code took
+/// 0.8-2.2 ns more at 16 bytes (docs/slop/results/calls-20261031.md).
 inline fn popBlocks(comptime T: type, comptime f: anytype, src: []const T) usize {
     const lanes = simd.block_len / @sizeOf(T);
     const M = @Int(.unsigned, lanes);
+    if (src.len <= lanes) {
+        // The zero padding counts only for `countUtf8`'s kind of `f`, so
+        // only there does `live` need its own mask.
+        const pad_counts = comptime f(@as(simd.Block(T), @splat(0)), ~@as(M, 0)) != 0;
+        return f(simd.loadShort(T, src), if (pad_counts) simd.lowBits(M, src.len) else ~@as(M, 0));
+    }
     var sum: usize = 0;
     var p: usize = 0;
     // From the second block on, loads are aligned: a load that crosses a
