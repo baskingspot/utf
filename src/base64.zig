@@ -658,29 +658,38 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             }
             // Line breaks put one or two whitespace characters in most
             // blocks: remove each by shifting what follows it down a lane,
-            // the last first.
+            // the last first, or a CR LF pair two lanes at once.
             if (@popCount(space) <= 2) {
+                if (space & (space >> 1) != 0) return @bitCast(shiftFrom(values, @ctz(space), 2));
                 var v = values;
                 var rest = space;
                 while (rest != 0) {
                     const pos: u8 = 63 - @clz(rest);
                     rest &= ~(@as(u64, 1) << @intCast(pos));
-                    inline for (0..blocks) |k| {
-                        const next = if (k + 1 < blocks) v[k + 1] else v[k];
-                        const shifted = @shuffle(u8, v[k], next, blk: {
-                            var m: [lanes]i32 = undefined;
-                            for (&m, 1..) |*x, j| x.* = if (j < lanes) j else ~@as(i32, 0);
-                            break :blk m;
-                        });
-                        // Lanes from `pos` on, from a load instead of a compare
-                        // with a broadcast, which take the shuffle port.
-                        const from: V = shift_masks[64 - @as(usize, pos) + k * lanes ..][0..lanes].*;
-                        v[k] = @select(u8, from == splat(0xff), shifted, v[k]);
-                    }
+                    v = shiftFrom(v, pos, 1);
                 }
                 return @bitCast(v);
             }
             return null;
+        }
+
+        /// `values` with the lanes from `pos` on taken from `by` lanes
+        /// later.
+        inline fn shiftFrom(values: [blocks]V, pos: usize, comptime by: usize) [blocks]V {
+            var v = values;
+            inline for (0..blocks) |k| {
+                const next = if (k + 1 < blocks) values[k + 1] else values[k];
+                const shifted = @shuffle(u8, values[k], next, blk: {
+                    var m: [lanes]i32 = undefined;
+                    for (&m, 0..) |*x, j| x.* = if (j + by < lanes) j + by else ~@as(i32, j + by - lanes);
+                    break :blk m;
+                });
+                // Lanes from `pos` on, from a load instead of a compare
+                // with a broadcast, which take the shuffle port.
+                const from: V = shift_masks[64 - pos + k * lanes ..][0..lanes].*;
+                v[k] = @select(u8, from == splat(0xff), shifted, values[k]);
+            }
+            return v;
         }
 
         /// Copies the bytes of `values` not in `space` to the front of
