@@ -189,6 +189,18 @@ bench-compare`, `just oracle`, and the layout and contract in
 Wave 2: the measured decisions above, AVX-512 paths where wave 1 did AVX2,
 and a performance pass against simdutf on every operation and corpus.
 
+- **Harness**: `bench/`. Landed: rows for all 66 operations simdutf shares
+  with the package (`bench/ops.tsv`, read by every arm), MIME base64,
+  `optimize`, `cpu`, `dispatch`, and `kernel` variables for `just
+bench-compare`, and a per-operation geomean summary. The baseline
+  ([baseline-20261031.md](results/baseline-20261031.md)) is the gap list:
+  0.81 of simdutf's `icelake` overall and 1.15 of `haswell`. Largest gaps
+  against `icelake`: UTF-8 to Latin-1 on Latin-1 text (0.11–0.19), Latin-1
+  to UTF-8 (0.22–0.30), UTF-16 to UTF-32 and the checked byte swap on emoji
+  (0.22–0.28), UTF-16 and UTF-32 validation (0.47–0.72), and MIME base64
+  (0.50). Against `haswell`: UTF-16 to UTF-8 on CJK (0.50), UTF-32 to
+  Latin-1 (0.45–0.52), 16-byte Latin-1 and UTF-16-to-Latin-1 (0.44–0.50),
+  and MIME base64 (0.77).
 - **Dispatch**: `src/dispatch.zig`, `src/simd.zig`, and `build.zig`.
   Landed: decision 1's runtime dispatch, and `simd.bitmask` for vectors of
   fewer than 8 lanes on the self-hosted backends, so `convert.zig`'s `mask4`

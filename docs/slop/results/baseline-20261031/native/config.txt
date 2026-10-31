@@ -1,0 +1,2 @@
+utf: ReleaseFast, cpu native
+bench-simdutf: simdutf 9.2.1, kernel icelake

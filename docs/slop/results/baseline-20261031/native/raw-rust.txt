@@ -1,0 +1,1752 @@
+BenchmarkValidateAscii/ascii-16	48461136	2.41 ns/op	6651.33 MB/s
+BenchmarkValidateAscii/ascii-64	44333364	2.73 ns/op	23471.96 MB/s
+BenchmarkValidateAscii/ascii-256	26432352	4.54 ns/op	56415.42 MB/s
+BenchmarkValidateAscii/ascii-4096	2752507	44.94 ns/op	91150.79 MB/s
+BenchmarkValidateAscii/ascii-65536	89326	1300.64 ns/op	50387.49 MB/s
+BenchmarkValidateAscii/latin	70989	1788.39 ns/op	48613.62 MB/s
+BenchmarkValidateAscii/ascii-1048576	5166	21467.81 ns/op	48844.10 MB/s
+BenchmarkValidateAsciiErr/ascii-16	64665728	1.88 ns/op	8526.67 MB/s
+BenchmarkValidateAsciiErr/ascii-64	56342074	2.16 ns/op	29656.62 MB/s
+BenchmarkValidateAsciiErr/ascii-256	27785115	4.46 ns/op	57410.07 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2744895	44.44 ns/op	92164.39 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	97669	1217.45 ns/op	53830.76 MB/s
+BenchmarkValidateAsciiErr/latin	56323	1917.84 ns/op	45332.21 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5504	20984.31 ns/op	49969.53 MB/s
+BenchmarkValidateUtf8/ascii-16	21774742	5.47 ns/op	2926.81 MB/s
+BenchmarkValidateUtf8/ascii-64	30515226	4.13 ns/op	15484.81 MB/s
+BenchmarkValidateUtf8/ascii-256	21357450	5.71 ns/op	44838.91 MB/s
+BenchmarkValidateUtf8/ascii-4096	3461125	34.37 ns/op	119158.95 MB/s
+BenchmarkValidateUtf8/ascii-65536	177834	681.31 ns/op	96190.87 MB/s
+BenchmarkValidateUtf8/emoji	24208	4744.59 ns/op	13814.05 MB/s
+BenchmarkValidateUtf8/hebrew	24466	4917.54 ns/op	13522.00 MB/s
+BenchmarkValidateUtf8/korean	25100	4790.98 ns/op	13901.12 MB/s
+BenchmarkValidateUtf8/japanese	24582	4883.24 ns/op	13885.85 MB/s
+BenchmarkValidateUtf8/chinese	23865	5063.50 ns/op	13792.84 MB/s
+BenchmarkValidateUtf8/arabic	19657	6014.43 ns/op	13581.50 MB/s
+BenchmarkValidateUtf8/latin	136126	943.47 ns/op	92149.62 MB/s
+BenchmarkValidateUtf8/hindi	16737	6882.12 ns/op	12786.32 MB/s
+BenchmarkValidateUtf8/russian	14890	7636.48 ns/op	13719.67 MB/s
+BenchmarkValidateUtf8/ascii-1048576	10000	12229.73 ns/op	85739.90 MB/s
+BenchmarkValidateUtf8Err/ascii-16	8582726	12.01 ns/op	1332.16 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7768748	15.24 ns/op	4200.31 MB/s
+BenchmarkValidateUtf8Err/ascii-256	6989113	17.65 ns/op	14507.52 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2212556	54.40 ns/op	75298.44 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	170918	755.41 ns/op	86755.25 MB/s
+BenchmarkValidateUtf8Err/emoji	21052	5117.33 ns/op	12807.84 MB/s
+BenchmarkValidateUtf8Err/hebrew	23764	5040.77 ns/op	13191.44 MB/s
+BenchmarkValidateUtf8Err/korean	23935	5325.71 ns/op	12505.37 MB/s
+BenchmarkValidateUtf8Err/japanese	23876	5146.52 ns/op	13175.50 MB/s
+BenchmarkValidateUtf8Err/chinese	22161	5220.51 ns/op	13377.99 MB/s
+BenchmarkValidateUtf8Err/arabic	18844	6182.16 ns/op	13213.02 MB/s
+BenchmarkValidateUtf8Err/latin	131721	922.34 ns/op	94260.56 MB/s
+BenchmarkValidateUtf8Err/hindi	18421	6503.24 ns/op	13531.25 MB/s
+BenchmarkValidateUtf8Err/russian	14962	7905.84 ns/op	13252.22 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	9918	11624.72 ns/op	90202.25 MB/s
+BenchmarkValidateUtf16le/ascii-16	14565721	8.33 ns/op	3842.10 MB/s
+BenchmarkValidateUtf16le/ascii-64	5122076	23.61 ns/op	5421.99 MB/s
+BenchmarkValidateUtf16le/ascii-256	1398745	86.99 ns/op	5885.90 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90110	1347.99 ns/op	6077.21 MB/s
+BenchmarkValidateUtf16le/japanese	15837	7607.19 ns/op	6145.50 MB/s
+BenchmarkValidateUtf16le/chinese	14331	8908.05 ns/op	5267.37 MB/s
+BenchmarkValidateUtf16le/korean	12591	8827.09 ns/op	6150.39 MB/s
+BenchmarkValidateUtf16le/hindi	10000	10635.47 ns/op	6161.64 MB/s
+BenchmarkValidateUtf16le/emoji	7269	17850.73 ns/op	3671.67 MB/s
+BenchmarkValidateUtf16le/hebrew	9625	12168.21 ns/op	6131.71 MB/s
+BenchmarkValidateUtf16le/arabic	8162	16180.99 ns/op	5656.64 MB/s
+BenchmarkValidateUtf16le/russian	6475	18665.37 ns/op	6212.68 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5608	21206.33 ns/op	6180.80 MB/s
+BenchmarkValidateUtf16le/latin	4231	29339.14 ns/op	5926.62 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	346	347179.45 ns/op	6040.54 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	8765119	13.14 ns/op	2435.97 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4308517	28.47 ns/op	4495.36 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1301866	90.72 ns/op	5644.05 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	89017	1331.87 ns/op	6150.77 MB/s
+BenchmarkValidateUtf16leErr/japanese	15704	7534.07 ns/op	6205.15 MB/s
+BenchmarkValidateUtf16leErr/chinese	15840	7739.68 ns/op	6062.52 MB/s
+BenchmarkValidateUtf16leErr/korean	13720	8964.12 ns/op	6056.37 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	10798.36 ns/op	6068.70 MB/s
+BenchmarkValidateUtf16leErr/emoji	6832	17746.22 ns/op	3693.29 MB/s
+BenchmarkValidateUtf16leErr/hebrew	9554	12076.01 ns/op	6178.53 MB/s
+BenchmarkValidateUtf16leErr/arabic	8037	15017.04 ns/op	6095.08 MB/s
+BenchmarkValidateUtf16leErr/russian	6345	19212.25 ns/op	6035.84 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	4750	22157.81 ns/op	5915.39 MB/s
+BenchmarkValidateUtf16leErr/latin	4005	28723.47 ns/op	6053.66 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	330	366674.43 ns/op	5719.38 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	10596672	12.00 ns/op	1333.84 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	7167411	17.48 ns/op	3660.42 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2303902	52.90 ns/op	4838.95 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	242700	523.62 ns/op	7822.46 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	15493	7979.16 ns/op	8213.40 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1948	63525.63 ns/op	1031.74 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1578	80202.35 ns/op	829.09 MB/s
+BenchmarkUtf8ToUtf16le/korean	1515	81129.83 ns/op	820.91 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2412	48748.62 ns/op	1390.97 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2582	47558.98 ns/op	1468.49 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1261	93070.01 ns/op	877.67 MB/s
+BenchmarkUtf8ToUtf16le/latin	11520	10773.34 ns/op	8069.92 MB/s
+BenchmarkUtf8ToUtf16le/hindi	1138	104538.30 ns/op	841.77 MB/s
+BenchmarkUtf8ToUtf16le/russian	699	169540.87 ns/op	617.96 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	801	145070.45 ns/op	7228.05 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	16534245	7.02 ns/op	2278.72 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9539991	12.51 ns/op	5117.18 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3506774	35.06 ns/op	7301.88 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	247616	483.54 ns/op	8470.92 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	16112	7474.18 ns/op	8768.32 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3860	30506.74 ns/op	2148.44 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1874	64233.35 ns/op	1035.21 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2335	52224.21 ns/op	1275.27 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3712	31988.58 ns/op	2119.76 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3986	30820.67 ns/op	2266.01 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1515	75991.64 ns/op	1074.92 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	10000	10228.86 ns/op	8499.48 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1320	89531.21 ns/op	982.86 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	726	169919.58 ns/op	616.59 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	888	134413.82 ns/op	7801.10 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	16935426	6.96 ns/op	2297.96 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	6739561	18.09 ns/op	1050.14 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9797762	12.25 ns/op	5224.22 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	2045599	58.43 ns/op	1266.50 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3513162	34.27 ns/op	7469.93 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	727821	168.44 ns/op	1686.02 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	251637	561.57 ns/op	7293.79 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	44712	2805.70 ns/op	1614.57 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	13407	8092.45 ns/op	8098.41 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1248	92174.03 ns/op	786.28 MB/s
+BenchmarkValidUtf8ToLatin1/latin	12142	10046.28 ns/op	8653.95 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	981	121453.97 ns/op	8633.53 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	57	2016846.60 ns/op	574.99 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	14174467	8.32 ns/op	3845.87 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	7978916	14.74 ns/op	8685.92 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2973676	40.44 ns/op	12661.96 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	200323	639.28 ns/op	12814.34 MB/s
+BenchmarkUtf16leToUtf8/japanese	1560	74995.70 ns/op	623.37 MB/s
+BenchmarkUtf16leToUtf8/chinese	1552	67903.72 ns/op	691.01 MB/s
+BenchmarkUtf16leToUtf8/korean	1891	63885.31 ns/op	849.80 MB/s
+BenchmarkUtf16leToUtf8/hindi	1042	112615.00 ns/op	581.91 MB/s
+BenchmarkUtf16leToUtf8/emoji	1840	74160.83 ns/op	883.78 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1869	63916.55 ns/op	1167.33 MB/s
+BenchmarkUtf16leToUtf8/arabic	1502	76611.35 ns/op	1194.73 MB/s
+BenchmarkUtf16leToUtf8/russian	700	159008.63 ns/op	729.28 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12954	9361.81 ns/op	14000.71 MB/s
+BenchmarkUtf16leToUtf8/latin	9512	12447.49 ns/op	13969.24 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	765	152018.53 ns/op	13795.37 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	27499945	4.14 ns/op	7732.77 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	29991332	4.00 ns/op	8005.82 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	15720722	7.56 ns/op	16927.93 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15901540	7.60 ns/op	16847.90 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5446621	22.04 ns/op	23232.92 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5411096	22.14 ns/op	23130.00 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	366699	320.50 ns/op	25560.09 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	376304	320.07 ns/op	25594.06 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	18247	6713.05 ns/op	19524.94 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	18201	6602.07 ns/op	19853.15 MB/s
+BenchmarkValidUtf16leToLatin1/latin	13144	9168.39 ns/op	18965.16 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	967	121309.70 ns/op	17287.59 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	988	119612.86 ns/op	17532.83 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	16126266	7.28 ns/op	2199.01 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5775388	20.82 ns/op	768.39 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10454794	11.57 ns/op	5532.10 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1749656	68.33 ns/op	936.59 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3627133	33.10 ns/op	7733.17 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	697184	173.98 ns/op	1471.44 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	252421	488.01 ns/op	8393.34 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	46753	2533.26 ns/op	1616.89 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	16071	7732.09 ns/op	8475.84 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1306	89781.58 ns/op	729.95 MB/s
+BenchmarkLatin1ToUtf8/latin	12117	9898.92 ns/op	8782.78 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	985	126582.08 ns/op	8283.76 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	55	2077323.18 ns/op	504.77 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	16946352	7.03 ns/op	2276.12 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	5814508	20.80 ns/op	769.19 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10702150	11.24 ns/op	5695.17 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1785752	72.95 ns/op	877.26 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	3043772	34.48 ns/op	7424.40 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	670735	201.48 ns/op	1270.61 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	251727	474.18 ns/op	8638.07 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	47505	2538.01 ns/op	1613.86 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	16124	7536.17 ns/op	8696.20 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1285	90316.14 ns/op	725.63 MB/s
+BenchmarkValidLatin1ToUtf8/latin	12136	9885.85 ns/op	8794.39 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	984	128171.87 ns/op	8181.02 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	55	2033433.22 ns/op	515.67 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	35365096	3.48 ns/op	4597.05 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	35519772	3.43 ns/op	4668.94 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	18867986	6.38 ns/op	10030.76 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	18768548	6.40 ns/op	9999.29 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	6086829	19.70 ns/op	12997.32 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	5423776	20.32 ns/op	12601.47 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	402009	292.26 ns/op	14014.92 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	404707	279.60 ns/op	14649.73 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15177	9751.25 ns/op	6720.78 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	13910	8015.03 ns/op	8176.63 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11344.54 ns/op	7663.60 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	871	136817.47 ns/op	7664.05 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	858	137854.22 ns/op	7606.41 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	34957893	3.37 ns/op	4743.05 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	35821910	3.36 ns/op	4763.57 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	18853454	6.37 ns/op	10047.21 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	18309964	6.37 ns/op	10044.49 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	6227392	19.65 ns/op	13030.86 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	5970026	19.53 ns/op	13109.06 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	422892	280.69 ns/op	14592.47 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	411536	280.36 ns/op	14609.94 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	15210	7895.40 ns/op	8300.53 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	15091	7954.21 ns/op	8239.16 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11237.62 ns/op	7736.52 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	868	136877.31 ns/op	7660.70 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	865	137339.45 ns/op	7634.92 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	30883411	3.34 ns/op	4786.19 MB/s
+BenchmarkCountUtf8/ascii-64	13732220	8.85 ns/op	7229.27 MB/s
+BenchmarkCountUtf8/ascii-256	7890826	15.21 ns/op	16829.18 MB/s
+BenchmarkCountUtf8/ascii-4096	988825	122.74 ns/op	33370.98 MB/s
+BenchmarkCountUtf8/ascii-65536	57015	2108.21 ns/op	31086.07 MB/s
+BenchmarkCountUtf8/emoji	55954	2151.32 ns/op	30465.91 MB/s
+BenchmarkCountUtf8/hebrew	56217	2136.81 ns/op	31118.83 MB/s
+BenchmarkCountUtf8/korean	55137	2167.92 ns/op	30720.71 MB/s
+BenchmarkCountUtf8/japanese	54289	2305.95 ns/op	29405.64 MB/s
+BenchmarkCountUtf8/chinese	52183	2291.95 ns/op	30471.80 MB/s
+BenchmarkCountUtf8/arabic	45114	2659.98 ns/op	30708.87 MB/s
+BenchmarkCountUtf8/latin	42195	2834.62 ns/op	30670.75 MB/s
+BenchmarkCountUtf8/hindi	41401	2919.49 ns/op	30141.18 MB/s
+BenchmarkCountUtf8/russian	35325	3405.56 ns/op	30764.39 MB/s
+BenchmarkCountUtf8/ascii-1048576	3361	35244.50 ns/op	29751.48 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12810560	9.43 ns/op	1696.39 MB/s
+BenchmarkBase64Encode/random-64	6735783	17.87 ns/op	3580.73 MB/s
+BenchmarkBase64Encode/random-256	3381682	35.52 ns/op	7207.53 MB/s
+BenchmarkBase64Encode/random-4096	265101	444.02 ns/op	9224.71 MB/s
+BenchmarkBase64Encode/random-65536	17170	7010.38 ns/op	9348.42 MB/s
+BenchmarkBase64Encode/random-1048576	1018	114964.96 ns/op	9120.83 MB/s
+BenchmarkBase64EncodeUrl/random-16	13438170	8.71 ns/op	1837.06 MB/s
+BenchmarkBase64EncodeUrl/random-64	6727156	17.74 ns/op	3606.90 MB/s
+BenchmarkBase64EncodeUrl/random-256	3361515	35.92 ns/op	7126.40 MB/s
+BenchmarkBase64EncodeUrl/random-4096	269600	455.85 ns/op	8985.48 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17024	7032.41 ns/op	9319.14 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1010	129194.29 ns/op	8116.27 MB/s
+BenchmarkBase64Decode/random-16	8532513	13.98 ns/op	1716.57 MB/s
+BenchmarkBase64Decode/random-64	5867422	20.45 ns/op	4303.03 MB/s
+BenchmarkBase64Decode/random-256	2559650	47.06 ns/op	7309.09 MB/s
+BenchmarkBase64Decode/random-4096	188980	626.19 ns/op	8725.77 MB/s
+BenchmarkBase64Decode/random-65536	10000	10497.35 ns/op	8324.38 MB/s
+BenchmarkBase64Decode/random-1048576	716	161018.20 ns/op	8682.89 MB/s
+BenchmarkBase64DecodeUrl/random-16	8978460	13.13 ns/op	1675.04 MB/s
+BenchmarkBase64DecodeUrl/random-64	6187329	19.78 ns/op	4347.67 MB/s
+BenchmarkBase64DecodeUrl/random-256	2583588	47.07 ns/op	7266.54 MB/s
+BenchmarkBase64DecodeUrl/random-4096	192052	618.87 ns/op	8825.76 MB/s
+BenchmarkBase64DecodeUrl/random-65536	12396	10475.26 ns/op	8341.75 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	741	178437.93 ns/op	7835.23 MB/s
+BenchmarkBase64DecodeStrict/random-16	4695278	22.31 ns/op	1075.67 MB/s
+BenchmarkBase64DecodeStrict/random-64	5895416	20.16 ns/op	4365.27 MB/s
+BenchmarkBase64DecodeStrict/random-256	2564162	47.06 ns/op	7309.75 MB/s
+BenchmarkBase64DecodeStrict/random-4096	190983	625.88 ns/op	8730.08 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12135	9866.29 ns/op	8856.83 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	747	161247.29 ns/op	8670.56 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4576932	26.24 ns/op	990.82 MB/s
+BenchmarkBase64DecodeMime/random-64	2682739	44.94 ns/op	2047.07 MB/s
+BenchmarkBase64DecodeMime/random-256	456424	258.10 ns/op	1371.55 MB/s
+BenchmarkBase64DecodeMime/random-4096	28981	4117.38 ns/op	1362.03 MB/s
+BenchmarkBase64DecodeMime/random-65536	1824	65963.97 ns/op	1359.59 MB/s
+BenchmarkBase64DecodeMime/random-1048576	74	1365860.42 ns/op	1050.55 MB/s
+BenchmarkValidateAscii/ascii-16	47320047	2.58 ns/op	6206.11 MB/s
+BenchmarkValidateAscii/ascii-64	43726598	2.74 ns/op	23388.94 MB/s
+BenchmarkValidateAscii/ascii-256	26274579	4.53 ns/op	56475.78 MB/s
+BenchmarkValidateAscii/ascii-4096	2756272	43.71 ns/op	93710.63 MB/s
+BenchmarkValidateAscii/ascii-65536	95211	1256.55 ns/op	52155.31 MB/s
+BenchmarkValidateAscii/latin	75260	1599.50 ns/op	54354.42 MB/s
+BenchmarkValidateAscii/ascii-1048576	5835	20260.33 ns/op	51755.12 MB/s
+BenchmarkValidateAsciiErr/ascii-16	60798373	1.81 ns/op	8825.45 MB/s
+BenchmarkValidateAsciiErr/ascii-64	57972722	2.06 ns/op	31118.21 MB/s
+BenchmarkValidateAsciiErr/ascii-256	28157367	4.31 ns/op	59408.82 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2788735	43.05 ns/op	95144.13 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	99951	1208.65 ns/op	54222.49 MB/s
+BenchmarkValidateAsciiErr/latin	71362	1669.20 ns/op	52084.77 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5314	21656.22 ns/op	48419.16 MB/s
+BenchmarkValidateUtf8/ascii-16	21426638	5.49 ns/op	2912.69 MB/s
+BenchmarkValidateUtf8/ascii-64	28926981	4.12 ns/op	15524.11 MB/s
+BenchmarkValidateUtf8/ascii-256	20939491	5.72 ns/op	44785.65 MB/s
+BenchmarkValidateUtf8/ascii-4096	3459012	34.68 ns/op	118097.88 MB/s
+BenchmarkValidateUtf8/ascii-65536	174346	679.69 ns/op	96420.42 MB/s
+BenchmarkValidateUtf8/emoji	25478	4798.07 ns/op	13660.07 MB/s
+BenchmarkValidateUtf8/hebrew	24405	4904.23 ns/op	13558.70 MB/s
+BenchmarkValidateUtf8/korean	25032	4796.14 ns/op	13886.18 MB/s
+BenchmarkValidateUtf8/japanese	24594	4885.36 ns/op	13879.83 MB/s
+BenchmarkValidateUtf8/chinese	23751	5036.70 ns/op	13866.21 MB/s
+BenchmarkValidateUtf8/arabic	19819	6126.93 ns/op	13332.14 MB/s
+BenchmarkValidateUtf8/latin	135415	908.66 ns/op	95679.67 MB/s
+BenchmarkValidateUtf8/hindi	18984	6324.51 ns/op	13913.65 MB/s
+BenchmarkValidateUtf8/russian	15675	7643.21 ns/op	13707.59 MB/s
+BenchmarkValidateUtf8/ascii-1048576	9418	12560.48 ns/op	83482.18 MB/s
+BenchmarkValidateUtf8Err/ascii-16	10294927	11.35 ns/op	1409.71 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7906476	15.30 ns/op	4184.29 MB/s
+BenchmarkValidateUtf8Err/ascii-256	7346596	16.21 ns/op	15788.58 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2347845	50.95 ns/op	80392.35 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	172479	693.04 ns/op	94563.17 MB/s
+BenchmarkValidateUtf8Err/emoji	24841	4845.18 ns/op	13527.25 MB/s
+BenchmarkValidateUtf8Err/hebrew	23998	5048.54 ns/op	13171.14 MB/s
+BenchmarkValidateUtf8Err/korean	24384	5412.05 ns/op	12305.88 MB/s
+BenchmarkValidateUtf8Err/japanese	19282	6028.87 ns/op	11247.21 MB/s
+BenchmarkValidateUtf8Err/chinese	23080	5749.32 ns/op	12147.53 MB/s
+BenchmarkValidateUtf8Err/arabic	19612	6922.37 ns/op	11800.14 MB/s
+BenchmarkValidateUtf8Err/latin	130459	905.09 ns/op	96056.88 MB/s
+BenchmarkValidateUtf8Err/hindi	18507	6479.72 ns/op	13580.37 MB/s
+BenchmarkValidateUtf8Err/russian	15469	7759.22 ns/op	13502.64 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	9726	12213.08 ns/op	85856.81 MB/s
+BenchmarkValidateUtf16le/ascii-16	14319926	8.13 ns/op	3935.82 MB/s
+BenchmarkValidateUtf16le/ascii-64	5117142	23.86 ns/op	5365.26 MB/s
+BenchmarkValidateUtf16le/ascii-256	1407447	85.41 ns/op	5994.96 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90901	1323.38 ns/op	6190.21 MB/s
+BenchmarkValidateUtf16le/japanese	15972	7513.11 ns/op	6222.46 MB/s
+BenchmarkValidateUtf16le/chinese	15880	7999.90 ns/op	5865.32 MB/s
+BenchmarkValidateUtf16le/korean	13740	8762.52 ns/op	6195.70 MB/s
+BenchmarkValidateUtf16le/hindi	10000	10943.92 ns/op	5987.98 MB/s
+BenchmarkValidateUtf16le/emoji	6770	17833.28 ns/op	3675.26 MB/s
+BenchmarkValidateUtf16le/hebrew	9526	11978.26 ns/op	6228.95 MB/s
+BenchmarkValidateUtf16le/arabic	8202	14681.57 ns/op	6234.35 MB/s
+BenchmarkValidateUtf16le/russian	6292	18584.99 ns/op	6239.55 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5691	21016.39 ns/op	6236.66 MB/s
+BenchmarkValidateUtf16le/latin	4335	27906.39 ns/op	6230.90 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	349	341980.75 ns/op	6132.37 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	9168384	13.00 ns/op	2460.92 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4314696	27.65 ns/op	4628.81 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1334757	95.73 ns/op	5348.11 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	89544	1343.14 ns/op	6099.16 MB/s
+BenchmarkValidateUtf16leErr/japanese	15854	7553.29 ns/op	6189.36 MB/s
+BenchmarkValidateUtf16leErr/chinese	15802	7580.22 ns/op	6190.06 MB/s
+BenchmarkValidateUtf16leErr/korean	13737	8737.20 ns/op	6213.66 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	13201.42 ns/op	4964.01 MB/s
+BenchmarkValidateUtf16leErr/emoji	6969	17846.25 ns/op	3672.59 MB/s
+BenchmarkValidateUtf16leErr/hebrew	10000	12006.40 ns/op	6214.35 MB/s
+BenchmarkValidateUtf16leErr/arabic	8163	14711.38 ns/op	6221.71 MB/s
+BenchmarkValidateUtf16leErr/russian	6402	18690.30 ns/op	6204.40 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	5706	21302.69 ns/op	6152.84 MB/s
+BenchmarkValidateUtf16leErr/latin	3788	28442.56 ns/op	6113.44 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	345	344127.69 ns/op	6094.11 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	10831304	10.98 ns/op	1456.59 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	7204789	16.62 ns/op	3849.70 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2300472	49.99 ns/op	5120.62 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	238696	496.00 ns/op	8258.07 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	16083	8239.62 ns/op	7953.76 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1914	63386.17 ns/op	1034.01 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1564	76018.90 ns/op	874.72 MB/s
+BenchmarkUtf8ToUtf16le/korean	1498	79150.19 ns/op	841.44 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2518	48117.24 ns/op	1409.22 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2610	45993.27 ns/op	1518.48 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1282	92484.01 ns/op	883.23 MB/s
+BenchmarkUtf8ToUtf16le/latin	10000	10248.28 ns/op	8483.38 MB/s
+BenchmarkUtf8ToUtf16le/hindi	1122	103811.23 ns/op	847.66 MB/s
+BenchmarkUtf8ToUtf16le/russian	700	164771.16 ns/op	635.85 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	886	133465.50 ns/op	7856.53 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	16502786	7.13 ns/op	2245.21 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9669471	17.64 ns/op	3627.31 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3502144	34.43 ns/op	7434.68 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	249192	477.33 ns/op	8581.06 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	16086	7469.03 ns/op	8774.37 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3859	30717.50 ns/op	2133.70 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1893	61806.01 ns/op	1075.87 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2232	51825.56 ns/op	1285.08 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3792	31618.34 ns/op	2144.58 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3729	30177.78 ns/op	2314.29 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1527	84393.18 ns/op	967.91 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	11439	10253.68 ns/op	8478.91 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1274	90357.94 ns/op	973.87 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	724	158902.71 ns/op	659.33 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	883	133976.72 ns/op	7826.55 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	16433098	6.97 ns/op	2296.43 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	5517878	20.55 ns/op	924.47 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9615840	12.28 ns/op	5213.68 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	2049384	59.53 ns/op	1243.15 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3516621	35.48 ns/op	7214.71 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	693322	169.26 ns/op	1677.86 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	244120	495.09 ns/op	8273.16 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	47115	2483.73 ns/op	1823.87 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	16095	7461.23 ns/op	8783.53 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1255	91425.00 ns/op	792.73 MB/s
+BenchmarkValidUtf8ToLatin1/latin	12067	9954.15 ns/op	8734.05 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	976	123985.19 ns/op	8457.27 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	57	1967998.98 ns/op	589.26 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	14357559	8.24 ns/op	3882.55 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	8085027	14.74 ns/op	8683.37 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2985945	40.36 ns/op	12684.86 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	203018	590.07 ns/op	13882.98 MB/s
+BenchmarkUtf16leToUtf8/japanese	1816	65958.15 ns/op	708.78 MB/s
+BenchmarkUtf16leToUtf8/chinese	1851	64645.83 ns/op	725.83 MB/s
+BenchmarkUtf16leToUtf8/korean	1898	64187.61 ns/op	845.80 MB/s
+BenchmarkUtf16leToUtf8/hindi	1052	112057.66 ns/op	584.81 MB/s
+BenchmarkUtf16leToUtf8/emoji	1783	66193.89 ns/op	990.15 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1837	61862.94 ns/op	1206.09 MB/s
+BenchmarkUtf16leToUtf8/arabic	1491	76435.13 ns/op	1197.49 MB/s
+BenchmarkUtf16leToUtf8/russian	757	157378.36 ns/op	736.84 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12574	9399.75 ns/op	13944.20 MB/s
+BenchmarkUtf16leToUtf8/latin	9573	12437.38 ns/op	13980.60 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	786	153724.71 ns/op	13642.26 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	29393299	3.95 ns/op	8097.88 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	29890146	4.05 ns/op	7898.72 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	15397287	7.63 ns/op	16778.15 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15422202	7.58 ns/op	16885.11 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5448333	22.08 ns/op	23191.11 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5457151	22.37 ns/op	22885.45 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	378830	319.82 ns/op	25614.63 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	374503	331.30 ns/op	24726.49 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	18159	6587.97 ns/op	19895.66 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	18314	6612.37 ns/op	19822.24 MB/s
+BenchmarkValidUtf16leToLatin1/latin	13114	9179.74 ns/op	18941.72 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	915	126442.96 ns/op	16585.76 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	882	120700.63 ns/op	17374.82 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	16325865	7.56 ns/op	2115.75 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5722285	20.76 ns/op	770.53 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10442310	11.54 ns/op	5545.03 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1776518	70.10 ns/op	913.01 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3504847	33.85 ns/op	7561.76 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	681660	178.19 ns/op	1436.66 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	250773	537.55 ns/op	7619.75 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	40453	2557.05 ns/op	1601.84 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	15728	7666.24 ns/op	8548.65 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1248	92928.50 ns/op	705.23 MB/s
+BenchmarkLatin1ToUtf8/latin	10000	10167.12 ns/op	8551.09 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	918	127787.13 ns/op	8205.65 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	56	2051081.57 ns/op	511.23 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	15198187	7.14 ns/op	2241.55 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	4543728	22.56 ns/op	709.21 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10566057	11.23 ns/op	5698.35 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1748031	92.63 ns/op	690.90 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	2586607	47.41 ns/op	5400.08 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	704092	192.07 ns/op	1332.83 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	251883	565.26 ns/op	7246.17 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	38184	3143.46 ns/op	1303.02 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	15398	7688.40 ns/op	8524.01 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1202	93492.99 ns/op	700.97 MB/s
+BenchmarkValidLatin1ToUtf8/latin	10000	10331.16 ns/op	8415.32 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	915	123241.70 ns/op	8508.29 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	56	2074114.91 ns/op	505.55 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	33846674	3.40 ns/op	4705.07 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	35759047	3.53 ns/op	4530.89 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	18593538	6.70 ns/op	9555.24 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	17827051	6.77 ns/op	9450.76 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	5979255	20.68 ns/op	12376.25 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	5877382	20.50 ns/op	12485.31 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	413358	281.65 ns/op	14542.82 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	421112	283.00 ns/op	14473.56 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15158	7911.29 ns/op	8283.86 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	15050	7978.97 ns/op	8213.59 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11303.62 ns/op	7691.34 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	873	137072.73 ns/op	7649.78 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	865	138242.85 ns/op	7585.03 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	33606432	3.38 ns/op	4731.66 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	34815930	3.36 ns/op	4757.26 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	18377395	6.36 ns/op	10062.91 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	18644251	6.38 ns/op	10025.48 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	6128384	19.63 ns/op	13037.99 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	6002420	19.58 ns/op	13076.49 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	418759	281.77 ns/op	14536.92 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	417579	313.31 ns/op	13073.21 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	15206	7923.65 ns/op	8270.94 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	15081	7954.73 ns/op	8238.62 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11237.58 ns/op	7736.54 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	877	139806.04 ns/op	7500.22 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	804	143219.53 ns/op	7321.46 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	32890011	3.66 ns/op	4365.93 MB/s
+BenchmarkCountUtf8/ascii-64	12216142	9.16 ns/op	6987.28 MB/s
+BenchmarkCountUtf8/ascii-256	7681369	15.78 ns/op	16219.23 MB/s
+BenchmarkCountUtf8/ascii-4096	979527	123.32 ns/op	33213.37 MB/s
+BenchmarkCountUtf8/ascii-65536	53248	2137.69 ns/op	30657.41 MB/s
+BenchmarkCountUtf8/emoji	50230	2202.32 ns/op	29760.43 MB/s
+BenchmarkCountUtf8/hebrew	55368	2154.03 ns/op	30870.10 MB/s
+BenchmarkCountUtf8/korean	54259	2208.74 ns/op	30152.99 MB/s
+BenchmarkCountUtf8/japanese	54208	2237.59 ns/op	30304.09 MB/s
+BenchmarkCountUtf8/chinese	51642	2307.93 ns/op	30260.90 MB/s
+BenchmarkCountUtf8/arabic	44905	2656.55 ns/op	30748.53 MB/s
+BenchmarkCountUtf8/latin	42758	2801.94 ns/op	31028.51 MB/s
+BenchmarkCountUtf8/hindi	41550	2896.83 ns/op	30377.03 MB/s
+BenchmarkCountUtf8/russian	35539	3394.21 ns/op	30867.27 MB/s
+BenchmarkCountUtf8/ascii-1048576	3334	36297.61 ns/op	28888.30 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12843633	9.31 ns/op	1718.80 MB/s
+BenchmarkBase64Encode/random-64	6742492	17.87 ns/op	3581.31 MB/s
+BenchmarkBase64Encode/random-256	3359689	35.38 ns/op	7234.91 MB/s
+BenchmarkBase64Encode/random-4096	270493	443.72 ns/op	9231.03 MB/s
+BenchmarkBase64Encode/random-65536	17068	7029.31 ns/op	9323.24 MB/s
+BenchmarkBase64Encode/random-1048576	1041	114047.49 ns/op	9194.20 MB/s
+BenchmarkBase64EncodeUrl/random-16	13618754	8.77 ns/op	1824.07 MB/s
+BenchmarkBase64EncodeUrl/random-64	6717099	18.13 ns/op	3530.35 MB/s
+BenchmarkBase64EncodeUrl/random-256	3307916	35.80 ns/op	7150.68 MB/s
+BenchmarkBase64EncodeUrl/random-4096	263179	449.54 ns/op	9111.44 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17029	7023.01 ns/op	9331.61 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1028	118985.81 ns/op	8812.61 MB/s
+BenchmarkBase64Decode/random-16	8541512	13.99 ns/op	1715.40 MB/s
+BenchmarkBase64Decode/random-64	5897151	20.60 ns/op	4272.78 MB/s
+BenchmarkBase64Decode/random-256	2498348	56.75 ns/op	6061.76 MB/s
+BenchmarkBase64Decode/random-4096	186325	654.59 ns/op	8347.25 MB/s
+BenchmarkBase64Decode/random-65536	12027	9915.69 ns/op	8812.70 MB/s
+BenchmarkBase64Decode/random-1048576	726	160499.82 ns/op	8710.94 MB/s
+BenchmarkBase64DecodeUrl/random-16	9252332	12.92 ns/op	1702.69 MB/s
+BenchmarkBase64DecodeUrl/random-64	6295358	19.49 ns/op	4413.30 MB/s
+BenchmarkBase64DecodeUrl/random-256	2587692	45.82 ns/op	7464.71 MB/s
+BenchmarkBase64DecodeUrl/random-4096	192688	623.51 ns/op	8760.01 MB/s
+BenchmarkBase64DecodeUrl/random-65536	12207	9939.52 ns/op	8791.37 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	764	159040.88 ns/op	8790.83 MB/s
+BenchmarkBase64DecodeStrict/random-16	8510282	14.04 ns/op	1708.92 MB/s
+BenchmarkBase64DecodeStrict/random-64	5912504	20.59 ns/op	4273.13 MB/s
+BenchmarkBase64DecodeStrict/random-256	2547518	46.91 ns/op	7332.90 MB/s
+BenchmarkBase64DecodeStrict/random-4096	192596	627.58 ns/op	8706.41 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12091	9915.29 ns/op	8813.06 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	734	170447.77 ns/op	8202.54 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4549603	26.41 ns/op	984.66 MB/s
+BenchmarkBase64DecodeMime/random-64	2668549	46.97 ns/op	1958.77 MB/s
+BenchmarkBase64DecodeMime/random-256	382150	264.80 ns/op	1336.87 MB/s
+BenchmarkBase64DecodeMime/random-4096	29254	4181.08 ns/op	1341.28 MB/s
+BenchmarkBase64DecodeMime/random-65536	1825	66024.05 ns/op	1358.35 MB/s
+BenchmarkBase64DecodeMime/random-1048576	90	1328653.34 ns/op	1079.96 MB/s
+BenchmarkValidateAscii/ascii-16	48261130	2.41 ns/op	6645.17 MB/s
+BenchmarkValidateAscii/ascii-64	44940066	2.72 ns/op	23529.88 MB/s
+BenchmarkValidateAscii/ascii-256	26415664	4.54 ns/op	56405.59 MB/s
+BenchmarkValidateAscii/ascii-4096	2682889	43.78 ns/op	93566.45 MB/s
+BenchmarkValidateAscii/ascii-65536	95071	1256.81 ns/op	52144.58 MB/s
+BenchmarkValidateAscii/latin	74955	1600.38 ns/op	54324.44 MB/s
+BenchmarkValidateAscii/ascii-1048576	5350	20090.82 ns/op	52191.80 MB/s
+BenchmarkValidateAsciiErr/ascii-16	61050744	1.82 ns/op	8783.78 MB/s
+BenchmarkValidateAsciiErr/ascii-64	57552051	2.06 ns/op	31000.88 MB/s
+BenchmarkValidateAsciiErr/ascii-256	27462272	4.29 ns/op	59655.63 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2760973	43.60 ns/op	93948.21 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	97314	1204.20 ns/op	54422.82 MB/s
+BenchmarkValidateAsciiErr/latin	71462	1670.88 ns/op	52032.58 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5682	22385.75 ns/op	46841.22 MB/s
+BenchmarkValidateUtf8/ascii-16	21106960	5.53 ns/op	2893.94 MB/s
+BenchmarkValidateUtf8/ascii-64	29972716	4.06 ns/op	15757.14 MB/s
+BenchmarkValidateUtf8/ascii-256	20659538	5.73 ns/op	44664.25 MB/s
+BenchmarkValidateUtf8/ascii-4096	3449958	35.43 ns/op	115621.89 MB/s
+BenchmarkValidateUtf8/ascii-65536	177567	689.36 ns/op	95067.62 MB/s
+BenchmarkValidateUtf8/emoji	23994	4731.48 ns/op	13852.32 MB/s
+BenchmarkValidateUtf8/hebrew	23911	4939.17 ns/op	13462.80 MB/s
+BenchmarkValidateUtf8/korean	24476	4809.08 ns/op	13848.80 MB/s
+BenchmarkValidateUtf8/japanese	24121	4977.52 ns/op	13622.84 MB/s
+BenchmarkValidateUtf8/chinese	23422	5200.31 ns/op	13429.97 MB/s
+BenchmarkValidateUtf8/arabic	18166	6703.82 ns/op	12184.85 MB/s
+BenchmarkValidateUtf8/latin	133368	905.40 ns/op	96023.87 MB/s
+BenchmarkValidateUtf8/hindi	18884	6408.30 ns/op	13731.72 MB/s
+BenchmarkValidateUtf8/russian	15450	7741.14 ns/op	13534.18 MB/s
+BenchmarkValidateUtf8/ascii-1048576	9924	11780.35 ns/op	89010.62 MB/s
+BenchmarkValidateUtf8Err/ascii-16	10478259	11.69 ns/op	1369.16 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7697095	15.31 ns/op	4180.76 MB/s
+BenchmarkValidateUtf8Err/ascii-256	7346953	16.44 ns/op	15568.02 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2334832	51.45 ns/op	79605.82 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	171339	702.86 ns/op	93241.56 MB/s
+BenchmarkValidateUtf8Err/emoji	24584	4811.85 ns/op	13620.96 MB/s
+BenchmarkValidateUtf8Err/hebrew	23856	5031.10 ns/op	13216.80 MB/s
+BenchmarkValidateUtf8Err/korean	24414	4931.04 ns/op	13506.27 MB/s
+BenchmarkValidateUtf8Err/japanese	23547	4987.25 ns/op	13596.27 MB/s
+BenchmarkValidateUtf8Err/chinese	23527	5103.50 ns/op	13684.71 MB/s
+BenchmarkValidateUtf8Err/arabic	19638	6107.78 ns/op	13373.93 MB/s
+BenchmarkValidateUtf8Err/latin	133218	901.49 ns/op	96440.29 MB/s
+BenchmarkValidateUtf8Err/hindi	18427	6482.90 ns/op	13573.70 MB/s
+BenchmarkValidateUtf8Err/russian	15475	7746.07 ns/op	13525.57 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	10000	11878.92 ns/op	88271.97 MB/s
+BenchmarkValidateUtf16le/ascii-16	14654019	8.15 ns/op	3924.66 MB/s
+BenchmarkValidateUtf16le/ascii-64	5113380	23.59 ns/op	5425.26 MB/s
+BenchmarkValidateUtf16le/ascii-256	1407015	85.64 ns/op	5978.26 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90927	1336.22 ns/op	6130.74 MB/s
+BenchmarkValidateUtf16le/japanese	15788	7711.30 ns/op	6062.53 MB/s
+BenchmarkValidateUtf16le/chinese	15528	7621.30 ns/op	6156.70 MB/s
+BenchmarkValidateUtf16le/korean	13472	8848.50 ns/op	6135.50 MB/s
+BenchmarkValidateUtf16le/hindi	10000	11021.95 ns/op	5945.59 MB/s
+BenchmarkValidateUtf16le/emoji	5888	19183.30 ns/op	3416.62 MB/s
+BenchmarkValidateUtf16le/hebrew	8718	12219.65 ns/op	6105.90 MB/s
+BenchmarkValidateUtf16le/arabic	6776	15142.47 ns/op	6044.59 MB/s
+BenchmarkValidateUtf16le/russian	5904	20256.04 ns/op	5724.81 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5418	21815.28 ns/op	6008.27 MB/s
+BenchmarkValidateUtf16le/latin	4168	28481.04 ns/op	6105.18 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	350	349622.34 ns/op	5998.34 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	7859726	14.73 ns/op	2172.99 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4345498	27.97 ns/op	4576.20 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1316406	93.12 ns/op	5498.14 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	89530	1335.88 ns/op	6132.29 MB/s
+BenchmarkValidateUtf16leErr/japanese	15835	7784.75 ns/op	6005.33 MB/s
+BenchmarkValidateUtf16leErr/chinese	15892	7579.11 ns/op	6190.97 MB/s
+BenchmarkValidateUtf16leErr/korean	12540	9772.90 ns/op	5555.16 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	11326.99 ns/op	5785.47 MB/s
+BenchmarkValidateUtf16leErr/emoji	6877	18038.25 ns/op	3633.50 MB/s
+BenchmarkValidateUtf16leErr/hebrew	9386	12462.79 ns/op	5986.78 MB/s
+BenchmarkValidateUtf16leErr/arabic	8023	14734.05 ns/op	6212.14 MB/s
+BenchmarkValidateUtf16leErr/russian	6493	18681.77 ns/op	6207.23 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	5742	21169.05 ns/op	6191.68 MB/s
+BenchmarkValidateUtf16leErr/latin	4312	28122.44 ns/op	6183.03 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	344	344452.14 ns/op	6088.37 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	10857796	11.07 ns/op	1444.94 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	6523820	16.64 ns/op	3847.04 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2075904	51.25 ns/op	4994.83 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	232557	511.74 ns/op	8004.14 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	15858	7676.09 ns/op	8537.68 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1905	61882.94 ns/op	1059.13 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1550	76722.50 ns/op	866.69 MB/s
+BenchmarkUtf8ToUtf16le/korean	1484	79381.36 ns/op	838.99 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2518	48325.47 ns/op	1403.15 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2593	46626.10 ns/op	1497.87 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1226	92632.33 ns/op	881.82 MB/s
+BenchmarkUtf8ToUtf16le/latin	10000	10493.24 ns/op	8285.34 MB/s
+BenchmarkUtf8ToUtf16le/hindi	986	103585.23 ns/op	849.51 MB/s
+BenchmarkUtf8ToUtf16le/russian	722	169052.16 ns/op	619.75 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	900	137161.37 ns/op	7644.83 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	16819239	7.09 ns/op	2258.10 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9678469	13.07 ns/op	4896.95 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3309164	36.00 ns/op	7110.18 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	249446	507.86 ns/op	8065.19 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	15585	10969.46 ns/op	5974.40 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3814	30372.59 ns/op	2157.93 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1866	62120.69 ns/op	1070.42 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2328	58521.21 ns/op	1138.05 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3784	39464.40 ns/op	1718.21 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3962	30485.95 ns/op	2290.89 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1533	75959.56 ns/op	1075.37 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	10000	10246.89 ns/op	8484.53 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1302	90853.17 ns/op	968.56 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	723	158716.80 ns/op	660.11 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	884	136542.14 ns/op	7679.50 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	16834213	7.38 ns/op	2167.35 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	6332481	22.10 ns/op	859.73 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9769742	12.69 ns/op	5043.83 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	2044249	60.78 ns/op	1217.56 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3290407	35.20 ns/op	7273.62 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	727488	171.67 ns/op	1654.36 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	251065	485.58 ns/op	8435.33 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	47044	2487.10 ns/op	1821.40 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	16086	7522.68 ns/op	8711.79 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1304	92221.54 ns/op	785.88 MB/s
+BenchmarkValidUtf8ToLatin1/latin	12115	9898.84 ns/op	8782.85 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	980	121146.42 ns/op	8655.44 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	57	1963820.47 ns/op	590.52 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	14009346	8.25 ns/op	3878.09 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	8206389	14.69 ns/op	8713.45 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2997697	39.98 ns/op	12807.14 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	213510	590.41 ns/op	13875.16 MB/s
+BenchmarkUtf16leToUtf8/japanese	1837	65686.55 ns/op	711.71 MB/s
+BenchmarkUtf16leToUtf8/chinese	1850	64457.86 ns/op	727.95 MB/s
+BenchmarkUtf16leToUtf8/korean	1843	65119.07 ns/op	833.70 MB/s
+BenchmarkUtf16leToUtf8/hindi	1032	111492.35 ns/op	587.77 MB/s
+BenchmarkUtf16leToUtf8/emoji	1773	68097.90 ns/op	962.47 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1743	63108.33 ns/op	1182.28 MB/s
+BenchmarkUtf16leToUtf8/arabic	1557	76308.15 ns/op	1199.48 MB/s
+BenchmarkUtf16leToUtf8/russian	706	192370.82 ns/op	602.80 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12645	9380.20 ns/op	13973.26 MB/s
+BenchmarkUtf16leToUtf8/latin	9561	12750.79 ns/op	13636.96 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	774	167427.29 ns/op	12525.75 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	27102788	4.86 ns/op	6580.89 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	26438146	4.25 ns/op	7531.57 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	15681096	7.74 ns/op	16530.65 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15827343	8.27 ns/op	15478.77 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5274879	22.53 ns/op	22728.89 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5267889	22.44 ns/op	22819.88 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	343658	333.45 ns/op	24567.73 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	363669	321.48 ns/op	25481.90 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	18180	6629.47 ns/op	19771.12 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	18099	6607.77 ns/op	19836.05 MB/s
+BenchmarkValidUtf16leToLatin1/latin	12788	9358.23 ns/op	18580.43 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	978	127338.63 ns/op	16469.10 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	982	119821.56 ns/op	17502.29 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	16302349	7.48 ns/op	2139.36 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5735112	21.49 ns/op	744.45 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10404426	11.61 ns/op	5513.21 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1703853	71.46 ns/op	895.64 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3634730	33.98 ns/op	7533.88 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	676840	188.89 ns/op	1355.30 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	252984	482.89 ns/op	8482.31 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	46892	2538.70 ns/op	1613.42 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	15999	7488.59 ns/op	8751.44 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1292	90761.65 ns/op	722.07 MB/s
+BenchmarkLatin1ToUtf8/latin	12062	9967.50 ns/op	8722.35 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	978	122155.42 ns/op	8583.95 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	56	2049718.21 ns/op	511.57 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	17022582	7.00 ns/op	2286.76 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	5777930	20.87 ns/op	766.68 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10440697	11.24 ns/op	5692.55 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1784557	67.95 ns/op	941.84 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	3648604	32.92 ns/op	7776.55 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	694491	173.98 ns/op	1471.46 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	247650	478.80 ns/op	8554.75 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	47043	2549.84 ns/op	1606.37 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	16059	7472.56 ns/op	8770.22 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1311	89290.73 ns/op	733.96 MB/s
+BenchmarkValidLatin1ToUtf8/latin	12060	10001.81 ns/op	8692.43 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	964	123574.02 ns/op	8485.41 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	50	2054151.02 ns/op	510.47 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	34777064	3.41 ns/op	4696.71 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	34823640	3.39 ns/op	4718.48 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	18381639	9.75 ns/op	6562.75 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	16966652	6.65 ns/op	9618.20 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	6083800	19.68 ns/op	13006.32 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	5891124	19.90 ns/op	12861.11 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	372484	320.05 ns/op	12797.95 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	420882	280.67 ns/op	14593.66 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15150	7966.33 ns/op	8226.63 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	15085	7951.83 ns/op	8241.62 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11264.42 ns/op	7718.11 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	876	136157.00 ns/op	7701.23 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	873	136553.24 ns/op	7678.88 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	34353174	3.36 ns/op	4758.32 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	35909833	3.36 ns/op	4758.41 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	18760086	6.56 ns/op	9751.52 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	18396733	6.42 ns/op	9972.69 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	6071130	19.68 ns/op	13008.30 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	6175568	19.70 ns/op	12992.05 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	427966	298.23 ns/op	13734.21 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	409765	281.35 ns/op	14558.36 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	15169	7920.68 ns/op	8274.04 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	15080	7962.01 ns/op	8231.09 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11266.11 ns/op	7716.95 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	873	136067.43 ns/op	7706.30 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	866	137166.65 ns/op	7644.54 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	34668573	3.33 ns/op	4809.26 MB/s
+BenchmarkCountUtf8/ascii-64	13623583	8.85 ns/op	7228.96 MB/s
+BenchmarkCountUtf8/ascii-256	7929171	15.25 ns/op	16783.13 MB/s
+BenchmarkCountUtf8/ascii-4096	985604	122.58 ns/op	33414.51 MB/s
+BenchmarkCountUtf8/ascii-65536	56881	2110.60 ns/op	31050.82 MB/s
+BenchmarkCountUtf8/emoji	56046	2158.78 ns/op	30360.68 MB/s
+BenchmarkCountUtf8/hebrew	55852	2149.03 ns/op	30941.92 MB/s
+BenchmarkCountUtf8/korean	55120	2179.28 ns/op	30560.55 MB/s
+BenchmarkCountUtf8/japanese	54164	2223.91 ns/op	30490.50 MB/s
+BenchmarkCountUtf8/chinese	52556	2282.35 ns/op	30600.01 MB/s
+BenchmarkCountUtf8/arabic	45271	2649.61 ns/op	30829.05 MB/s
+BenchmarkCountUtf8/latin	42722	2813.00 ns/op	30906.47 MB/s
+BenchmarkCountUtf8/hindi	41433	2895.23 ns/op	30393.77 MB/s
+BenchmarkCountUtf8/russian	35426	3390.39 ns/op	30902.05 MB/s
+BenchmarkCountUtf8/ascii-1048576	3303	35994.83 ns/op	29131.29 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12952957	9.27 ns/op	1725.73 MB/s
+BenchmarkBase64Encode/random-64	6733611	17.87 ns/op	3582.05 MB/s
+BenchmarkBase64Encode/random-256	3383563	35.52 ns/op	7206.36 MB/s
+BenchmarkBase64Encode/random-4096	268573	443.67 ns/op	9232.10 MB/s
+BenchmarkBase64Encode/random-65536	17097	7011.84 ns/op	9346.48 MB/s
+BenchmarkBase64Encode/random-1048576	1051	113961.39 ns/op	9201.15 MB/s
+BenchmarkBase64EncodeUrl/random-16	13420135	8.73 ns/op	1832.59 MB/s
+BenchmarkBase64EncodeUrl/random-64	6740050	17.77 ns/op	3601.97 MB/s
+BenchmarkBase64EncodeUrl/random-256	3341595	35.80 ns/op	7150.78 MB/s
+BenchmarkBase64EncodeUrl/random-4096	267699	448.90 ns/op	9124.49 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17157	6999.41 ns/op	9363.08 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1030	115431.43 ns/op	9083.97 MB/s
+BenchmarkBase64Decode/random-16	8590098	13.93 ns/op	1722.43 MB/s
+BenchmarkBase64Decode/random-64	5910927	20.35 ns/op	4324.91 MB/s
+BenchmarkBase64Decode/random-256	2615774	45.83 ns/op	7505.82 MB/s
+BenchmarkBase64Decode/random-4096	199008	606.01 ns/op	9016.34 MB/s
+BenchmarkBase64Decode/random-65536	12584	9539.33 ns/op	9160.39 MB/s
+BenchmarkBase64Decode/random-1048576	774	154883.17 ns/op	9026.83 MB/s
+BenchmarkBase64DecodeUrl/random-16	9314143	12.85 ns/op	1712.26 MB/s
+BenchmarkBase64DecodeUrl/random-64	6362960	18.90 ns/op	4551.20 MB/s
+BenchmarkBase64DecodeUrl/random-256	2690460	44.52 ns/op	7682.46 MB/s
+BenchmarkBase64DecodeUrl/random-4096	199243	603.39 ns/op	9052.20 MB/s
+BenchmarkBase64DecodeUrl/random-65536	12564	9578.15 ns/op	9123.05 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	757	157657.54 ns/op	8867.97 MB/s
+BenchmarkBase64DecodeStrict/random-16	8539926	13.98 ns/op	1716.73 MB/s
+BenchmarkBase64DecodeStrict/random-64	5971734	20.09 ns/op	4379.98 MB/s
+BenchmarkBase64DecodeStrict/random-256	2603062	45.78 ns/op	7513.40 MB/s
+BenchmarkBase64DecodeStrict/random-4096	197714	604.35 ns/op	9041.08 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12586	9536.56 ns/op	9163.05 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	771	155071.91 ns/op	9015.84 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4576017	26.30 ns/op	988.44 MB/s
+BenchmarkBase64DecodeMime/random-64	2658834	45.00 ns/op	2044.37 MB/s
+BenchmarkBase64DecodeMime/random-256	473382	282.71 ns/op	1252.16 MB/s
+BenchmarkBase64DecodeMime/random-4096	27969	4321.98 ns/op	1297.55 MB/s
+BenchmarkBase64DecodeMime/random-65536	1742	77181.35 ns/op	1161.99 MB/s
+BenchmarkBase64DecodeMime/random-1048576	100	1397857.92 ns/op	1026.50 MB/s
+BenchmarkValidateAscii/ascii-16	49493638	2.41 ns/op	6640.93 MB/s
+BenchmarkValidateAscii/ascii-64	43951374	2.72 ns/op	23511.71 MB/s
+BenchmarkValidateAscii/ascii-256	26608222	4.53 ns/op	56523.53 MB/s
+BenchmarkValidateAscii/ascii-4096	2303402	43.65 ns/op	93830.18 MB/s
+BenchmarkValidateAscii/ascii-65536	95733	1251.88 ns/op	52350.06 MB/s
+BenchmarkValidateAscii/latin	74998	1598.31 ns/op	54395.10 MB/s
+BenchmarkValidateAscii/ascii-1048576	5554	20572.23 ns/op	50970.47 MB/s
+BenchmarkValidateAsciiErr/ascii-16	63899124	1.93 ns/op	8307.56 MB/s
+BenchmarkValidateAsciiErr/ascii-64	56331733	2.07 ns/op	30906.96 MB/s
+BenchmarkValidateAsciiErr/ascii-256	27904050	4.31 ns/op	59365.65 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2785513	43.13 ns/op	94971.27 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	99589	1201.45 ns/op	54547.46 MB/s
+BenchmarkValidateAsciiErr/latin	72038	1668.42 ns/op	52109.22 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5186	22594.27 ns/op	46408.94 MB/s
+BenchmarkValidateUtf8/ascii-16	21574177	5.51 ns/op	2902.73 MB/s
+BenchmarkValidateUtf8/ascii-64	28073570	4.03 ns/op	15867.99 MB/s
+BenchmarkValidateUtf8/ascii-256	21102600	5.71 ns/op	44797.00 MB/s
+BenchmarkValidateUtf8/ascii-4096	3526390	34.36 ns/op	119223.61 MB/s
+BenchmarkValidateUtf8/ascii-65536	178406	675.65 ns/op	96996.45 MB/s
+BenchmarkValidateUtf8/emoji	25450	4709.11 ns/op	13918.13 MB/s
+BenchmarkValidateUtf8/hebrew	24550	4890.62 ns/op	13596.42 MB/s
+BenchmarkValidateUtf8/korean	25158	4798.22 ns/op	13880.14 MB/s
+BenchmarkValidateUtf8/japanese	24727	4865.50 ns/op	13936.50 MB/s
+BenchmarkValidateUtf8/chinese	24001	5001.11 ns/op	13964.90 MB/s
+BenchmarkValidateUtf8/arabic	20017	5996.12 ns/op	13622.98 MB/s
+BenchmarkValidateUtf8/latin	136578	878.73 ns/op	98938.51 MB/s
+BenchmarkValidateUtf8/hindi	19047	6299.50 ns/op	13968.88 MB/s
+BenchmarkValidateUtf8/russian	15748	7684.22 ns/op	13634.43 MB/s
+BenchmarkValidateUtf8/ascii-1048576	6836	21327.64 ns/op	49165.12 MB/s
+BenchmarkValidateUtf8Err/ascii-16	9822146	11.53 ns/op	1387.82 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7912542	15.28 ns/op	4187.61 MB/s
+BenchmarkValidateUtf8Err/ascii-256	7146531	16.44 ns/op	15571.58 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2298184	51.15 ns/op	80073.53 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	172344	693.13 ns/op	94550.65 MB/s
+BenchmarkValidateUtf8Err/emoji	25117	4824.18 ns/op	13586.13 MB/s
+BenchmarkValidateUtf8Err/hebrew	23962	5057.10 ns/op	13148.83 MB/s
+BenchmarkValidateUtf8Err/korean	24553	4888.77 ns/op	13623.06 MB/s
+BenchmarkValidateUtf8Err/japanese	24207	4975.55 ns/op	13628.25 MB/s
+BenchmarkValidateUtf8Err/chinese	23521	5098.86 ns/op	13697.17 MB/s
+BenchmarkValidateUtf8Err/arabic	19592	6116.96 ns/op	13353.85 MB/s
+BenchmarkValidateUtf8Err/latin	132931	911.54 ns/op	95377.02 MB/s
+BenchmarkValidateUtf8Err/hindi	18582	6447.08 ns/op	13649.12 MB/s
+BenchmarkValidateUtf8Err/russian	15459	7788.64 ns/op	13451.64 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	7767	14555.97 ns/op	72037.52 MB/s
+BenchmarkValidateUtf16le/ascii-16	14311839	8.13 ns/op	3934.74 MB/s
+BenchmarkValidateUtf16le/ascii-64	5109938	23.50 ns/op	5445.86 MB/s
+BenchmarkValidateUtf16le/ascii-256	1404388	86.63 ns/op	5910.32 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90373	1325.93 ns/op	6178.30 MB/s
+BenchmarkValidateUtf16le/japanese	15986	7513.73 ns/op	6221.95 MB/s
+BenchmarkValidateUtf16le/chinese	15856	7558.83 ns/op	6207.57 MB/s
+BenchmarkValidateUtf16le/korean	13722	9614.07 ns/op	5646.93 MB/s
+BenchmarkValidateUtf16le/hindi	10000	10560.48 ns/op	6205.40 MB/s
+BenchmarkValidateUtf16le/emoji	6750	18049.09 ns/op	3631.32 MB/s
+BenchmarkValidateUtf16le/hebrew	10000	12658.18 ns/op	5894.37 MB/s
+BenchmarkValidateUtf16le/arabic	7864	15455.77 ns/op	5922.06 MB/s
+BenchmarkValidateUtf16le/russian	6392	19121.27 ns/op	6064.56 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5682	21434.29 ns/op	6115.06 MB/s
+BenchmarkValidateUtf16le/latin	4300	28060.15 ns/op	6196.76 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	350	343123.65 ns/op	6111.94 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	8997963	13.13 ns/op	2436.96 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4375990	27.78 ns/op	4606.86 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1312185	90.45 ns/op	5660.33 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	90158	1333.09 ns/op	6145.11 MB/s
+BenchmarkValidateUtf16leErr/japanese	15913	7538.43 ns/op	6201.56 MB/s
+BenchmarkValidateUtf16leErr/chinese	15594	7627.13 ns/op	6151.99 MB/s
+BenchmarkValidateUtf16leErr/korean	13731	8753.44 ns/op	6202.13 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	10558.04 ns/op	6206.83 MB/s
+BenchmarkValidateUtf16leErr/emoji	6373	18223.28 ns/op	3596.61 MB/s
+BenchmarkValidateUtf16leErr/hebrew	9925	11995.63 ns/op	6219.93 MB/s
+BenchmarkValidateUtf16leErr/arabic	8253	14746.56 ns/op	6206.87 MB/s
+BenchmarkValidateUtf16leErr/russian	6409	18672.07 ns/op	6210.45 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	5749	21267.37 ns/op	6163.06 MB/s
+BenchmarkValidateUtf16leErr/latin	4248	27977.38 ns/op	6215.09 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	342	376040.74 ns/op	5576.93 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	9927280	10.96 ns/op	1459.77 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	7332409	16.96 ns/op	3773.32 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2372391	50.69 ns/op	5050.67 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	249434	485.24 ns/op	8441.13 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	16057	7463.79 ns/op	8780.52 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1941	61699.02 ns/op	1062.29 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1558	76253.01 ns/op	872.03 MB/s
+BenchmarkUtf8ToUtf16le/korean	1514	78890.66 ns/op	844.21 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2481	47665.21 ns/op	1422.59 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2617	45783.44 ns/op	1525.44 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1251	92520.63 ns/op	882.88 MB/s
+BenchmarkUtf8ToUtf16le/latin	10000	10350.80 ns/op	8399.35 MB/s
+BenchmarkUtf8ToUtf16le/hindi	1129	103628.36 ns/op	849.16 MB/s
+BenchmarkUtf8ToUtf16le/russian	694	168924.19 ns/op	620.22 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	884	133998.18 ns/op	7825.30 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	16552970	7.02 ns/op	2277.66 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9620462	12.40 ns/op	5160.67 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3517600	34.14 ns/op	7498.83 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	251577	496.88 ns/op	8243.40 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	16098	7564.73 ns/op	8663.36 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3934	30364.40 ns/op	2158.51 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1928	62870.65 ns/op	1057.65 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2236	51686.33 ns/op	1288.54 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3716	32389.50 ns/op	2093.52 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3817	30122.68 ns/op	2318.52 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1544	76049.77 ns/op	1074.10 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	10000	10193.59 ns/op	8528.89 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1318	89878.15 ns/op	979.07 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	723	157588.48 ns/op	664.83 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	879	135950.30 ns/op	7712.94 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	16959777	7.04 ns/op	2271.32 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	6786049	18.04 ns/op	1053.21 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9720957	12.29 ns/op	5208.71 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	1996474	58.69 ns/op	1260.78 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3491743	34.04 ns/op	7520.25 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	712806	168.00 ns/op	1690.44 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	251545	494.38 ns/op	8285.17 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	47955	3550.70 ns/op	1275.80 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	15355	7694.08 ns/op	8517.72 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1278	92841.33 ns/op	780.63 MB/s
+BenchmarkValidUtf8ToLatin1/latin	11599	9903.91 ns/op	8778.35 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	932	121773.15 ns/op	8610.90 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	58	1948768.52 ns/op	595.08 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	13305988	8.29 ns/op	3860.84 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	8270362	14.69 ns/op	8711.77 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2978196	40.25 ns/op	12720.94 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	201279	596.16 ns/op	13741.25 MB/s
+BenchmarkUtf16leToUtf8/japanese	1839	66400.40 ns/op	704.06 MB/s
+BenchmarkUtf16leToUtf8/chinese	1850	64531.71 ns/op	727.12 MB/s
+BenchmarkUtf16leToUtf8/korean	1826	64826.28 ns/op	837.47 MB/s
+BenchmarkUtf16leToUtf8/hindi	1065	112107.90 ns/op	584.54 MB/s
+BenchmarkUtf16leToUtf8/emoji	1861	64727.46 ns/op	1012.58 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1801	61297.31 ns/op	1217.21 MB/s
+BenchmarkUtf16leToUtf8/arabic	1509	75722.47 ns/op	1208.76 MB/s
+BenchmarkUtf16leToUtf8/russian	710	165808.59 ns/op	699.37 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12878	9237.23 ns/op	14189.53 MB/s
+BenchmarkUtf16leToUtf8/latin	10000	12342.65 ns/op	14087.90 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	770	155152.79 ns/op	13516.69 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	28970958	3.98 ns/op	8048.46 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	30303412	3.99 ns/op	8020.22 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	15890751	7.79 ns/op	16424.06 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15985273	7.55 ns/op	16943.33 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5440890	22.06 ns/op	23210.71 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5450508	22.81 ns/op	22445.54 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	376320	325.96 ns/op	25131.57 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	371864	330.63 ns/op	24776.88 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	17869	6928.08 ns/op	18918.95 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	17863	6686.58 ns/op	19602.26 MB/s
+BenchmarkValidUtf16leToLatin1/latin	12808	9471.44 ns/op	18358.35 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	973	124542.28 ns/op	16838.88 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	960	122560.82 ns/op	17111.11 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	14789118	7.50 ns/op	2132.53 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5727438	21.35 ns/op	749.38 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10323931	11.90 ns/op	5377.88 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1679688	70.72 ns/op	904.91 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3504776	34.83 ns/op	7349.90 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	662776	179.11 ns/op	1429.27 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	244348	486.55 ns/op	8418.43 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	45985	2597.93 ns/op	1576.64 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	15669	7960.27 ns/op	8232.89 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1315	90720.49 ns/op	722.39 MB/s
+BenchmarkLatin1ToUtf8/latin	10000	10127.46 ns/op	8584.58 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	920	125925.12 ns/op	8326.98 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	56	2040401.12 ns/op	513.91 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	16933854	6.99 ns/op	2288.63 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	5753874	20.97 ns/op	763.03 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10453435	11.28 ns/op	5672.79 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1801864	67.38 ns/op	949.88 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	3588211	67.99 ns/op	3765.17 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	420516	252.84 ns/op	1012.49 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	235971	511.70 ns/op	8004.65 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	45513	2576.11 ns/op	1590.00 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	15684	7703.28 ns/op	8507.55 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1302	89169.05 ns/op	734.96 MB/s
+BenchmarkValidLatin1ToUtf8/latin	10000	10026.81 ns/op	8670.75 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	934	123940.48 ns/op	8460.32 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	54	2047266.37 ns/op	512.18 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	34749560	3.37 ns/op	4749.58 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	35194454	3.39 ns/op	4716.82 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	18599883	6.45 ns/op	9925.53 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	17690631	6.45 ns/op	9919.76 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	6097958	20.40 ns/op	12548.96 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	5559428	25.78 ns/op	9930.03 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	414894	288.60 ns/op	14192.46 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	419712	398.77 ns/op	10271.46 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15172	7945.20 ns/op	8248.50 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	14990	8032.39 ns/op	8158.96 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11283.42 ns/op	7705.11 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	846	144759.75 ns/op	7243.56 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	705	146014.24 ns/op	7181.33 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	35256212	3.94 ns/op	4062.69 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	20923956	5.09 ns/op	3144.95 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	17577675	6.57 ns/op	9737.72 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	18811406	7.15 ns/op	8949.34 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	6099373	19.65 ns/op	13031.07 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	6095594	19.72 ns/op	12983.96 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	429194	280.93 ns/op	14580.13 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	403186	343.09 ns/op	11938.70 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	14066	7973.00 ns/op	8219.74 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	14689	10210.13 ns/op	6418.72 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11311.20 ns/op	7686.19 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	864	136498.08 ns/op	7681.98 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	860	136926.85 ns/op	7657.93 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	34946613	3.34 ns/op	4790.24 MB/s
+BenchmarkCountUtf8/ascii-64	13777690	8.79 ns/op	7280.12 MB/s
+BenchmarkCountUtf8/ascii-256	7910008	15.18 ns/op	16859.87 MB/s
+BenchmarkCountUtf8/ascii-4096	988952	122.91 ns/op	33326.22 MB/s
+BenchmarkCountUtf8/ascii-65536	56620	2118.22 ns/op	30939.13 MB/s
+BenchmarkCountUtf8/emoji	55725	2156.04 ns/op	30399.24 MB/s
+BenchmarkCountUtf8/hebrew	55831	2147.30 ns/op	30966.82 MB/s
+BenchmarkCountUtf8/korean	54993	2183.57 ns/op	30500.45 MB/s
+BenchmarkCountUtf8/japanese	52819	2319.22 ns/op	29237.38 MB/s
+BenchmarkCountUtf8/chinese	46968	2561.51 ns/op	27265.13 MB/s
+BenchmarkCountUtf8/arabic	45290	2657.07 ns/op	30742.52 MB/s
+BenchmarkCountUtf8/latin	42631	2815.95 ns/op	30874.08 MB/s
+BenchmarkCountUtf8/hindi	41388	2893.77 ns/op	30409.17 MB/s
+BenchmarkCountUtf8/russian	35365	3414.50 ns/op	30683.81 MB/s
+BenchmarkCountUtf8/ascii-1048576	3408	35441.99 ns/op	29585.70 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12643990	9.33 ns/op	1714.14 MB/s
+BenchmarkBase64Encode/random-64	6729448	18.08 ns/op	3539.88 MB/s
+BenchmarkBase64Encode/random-256	3372250	36.18 ns/op	7075.71 MB/s
+BenchmarkBase64Encode/random-4096	267954	446.20 ns/op	9179.81 MB/s
+BenchmarkBase64Encode/random-65536	17067	7038.10 ns/op	9311.60 MB/s
+BenchmarkBase64Encode/random-1048576	1047	113839.15 ns/op	9211.03 MB/s
+BenchmarkBase64EncodeUrl/random-16	13606738	8.73 ns/op	1831.97 MB/s
+BenchmarkBase64EncodeUrl/random-64	6774339	17.76 ns/op	3603.98 MB/s
+BenchmarkBase64EncodeUrl/random-256	3342958	35.83 ns/op	7145.12 MB/s
+BenchmarkBase64EncodeUrl/random-4096	267840	455.76 ns/op	8987.19 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17066	7022.75 ns/op	9331.95 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1034	118063.40 ns/op	8881.47 MB/s
+BenchmarkBase64Decode/random-16	8559152	13.92 ns/op	1723.81 MB/s
+BenchmarkBase64Decode/random-64	5905911	20.29 ns/op	4337.40 MB/s
+BenchmarkBase64Decode/random-256	2559422	46.93 ns/op	7329.73 MB/s
+BenchmarkBase64Decode/random-4096	187465	624.05 ns/op	8755.68 MB/s
+BenchmarkBase64Decode/random-65536	12170	9857.58 ns/op	8864.65 MB/s
+BenchmarkBase64Decode/random-1048576	746	160528.29 ns/op	8709.39 MB/s
+BenchmarkBase64DecodeUrl/random-16	9317188	13.14 ns/op	1674.76 MB/s
+BenchmarkBase64DecodeUrl/random-64	6336952	22.14 ns/op	3884.95 MB/s
+BenchmarkBase64DecodeUrl/random-256	2513886	48.70 ns/op	7022.36 MB/s
+BenchmarkBase64DecodeUrl/random-4096	191247	627.81 ns/op	8700.04 MB/s
+BenchmarkBase64DecodeUrl/random-65536	10000	10052.82 ns/op	8692.29 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	732	161306.19 ns/op	8667.38 MB/s
+BenchmarkBase64DecodeStrict/random-16	8499354	14.00 ns/op	1714.52 MB/s
+BenchmarkBase64DecodeStrict/random-64	5979937	20.15 ns/op	4368.11 MB/s
+BenchmarkBase64DecodeStrict/random-256	2615960	45.93 ns/op	7489.50 MB/s
+BenchmarkBase64DecodeStrict/random-4096	198194	606.78 ns/op	9004.85 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12519	9566.45 ns/op	9134.42 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	765	160290.07 ns/op	8722.34 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4578459	26.26 ns/op	990.06 MB/s
+BenchmarkBase64DecodeMime/random-64	2683654	44.86 ns/op	2050.99 MB/s
+BenchmarkBase64DecodeMime/random-256	482131	254.35 ns/op	1391.76 MB/s
+BenchmarkBase64DecodeMime/random-4096	29305	4098.18 ns/op	1368.41 MB/s
+BenchmarkBase64DecodeMime/random-65536	1819	65907.26 ns/op	1360.76 MB/s
+BenchmarkBase64DecodeMime/random-1048576	98	1379834.23 ns/op	1039.91 MB/s
+BenchmarkValidateAscii/ascii-16	48554472	2.39 ns/op	6696.49 MB/s
+BenchmarkValidateAscii/ascii-64	44527363	2.73 ns/op	23473.15 MB/s
+BenchmarkValidateAscii/ascii-256	25512074	4.52 ns/op	56578.67 MB/s
+BenchmarkValidateAscii/ascii-4096	2767593	43.48 ns/op	94194.91 MB/s
+BenchmarkValidateAscii/ascii-65536	95893	1254.21 ns/op	52252.87 MB/s
+BenchmarkValidateAscii/latin	75374	1594.59 ns/op	54521.71 MB/s
+BenchmarkValidateAscii/ascii-1048576	5799	20397.20 ns/op	51407.85 MB/s
+BenchmarkValidateAsciiErr/ascii-16	64566810	1.81 ns/op	8829.08 MB/s
+BenchmarkValidateAsciiErr/ascii-64	58284596	2.07 ns/op	30855.26 MB/s
+BenchmarkValidateAsciiErr/ascii-256	27935092	4.33 ns/op	59180.50 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2786193	43.63 ns/op	93884.81 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	99100	1203.70 ns/op	54445.50 MB/s
+BenchmarkValidateAsciiErr/latin	72118	1666.41 ns/op	52171.94 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5379	21607.61 ns/op	48528.09 MB/s
+BenchmarkValidateUtf8/ascii-16	20894041	5.44 ns/op	2938.67 MB/s
+BenchmarkValidateUtf8/ascii-64	29412686	4.03 ns/op	15872.25 MB/s
+BenchmarkValidateUtf8/ascii-256	21025828	5.65 ns/op	45272.96 MB/s
+BenchmarkValidateUtf8/ascii-4096	3460683	34.57 ns/op	118474.85 MB/s
+BenchmarkValidateUtf8/ascii-65536	177646	674.89 ns/op	97106.43 MB/s
+BenchmarkValidateUtf8/emoji	25438	4715.84 ns/op	13898.26 MB/s
+BenchmarkValidateUtf8/hebrew	24495	4899.09 ns/op	13572.94 MB/s
+BenchmarkValidateUtf8/korean	25077	4792.78 ns/op	13895.89 MB/s
+BenchmarkValidateUtf8/japanese	24639	4918.87 ns/op	13785.27 MB/s
+BenchmarkValidateUtf8/chinese	23904	5040.93 ns/op	13854.58 MB/s
+BenchmarkValidateUtf8/arabic	19921	6479.24 ns/op	12607.19 MB/s
+BenchmarkValidateUtf8/latin	118644	972.68 ns/op	89382.13 MB/s
+BenchmarkValidateUtf8/hindi	18892	6343.76 ns/op	13871.42 MB/s
+BenchmarkValidateUtf8/russian	15657	7655.54 ns/op	13685.51 MB/s
+BenchmarkValidateUtf8/ascii-1048576	9478	12474.83 ns/op	84055.33 MB/s
+BenchmarkValidateUtf8Err/ascii-16	10664000	11.37 ns/op	1406.71 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7906886	15.18 ns/op	4214.86 MB/s
+BenchmarkValidateUtf8Err/ascii-256	7417609	16.30 ns/op	15705.64 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2345488	51.12 ns/op	80131.21 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	172749	694.35 ns/op	94384.97 MB/s
+BenchmarkValidateUtf8Err/emoji	24555	4813.03 ns/op	13617.62 MB/s
+BenchmarkValidateUtf8Err/hebrew	23912	5009.66 ns/op	13273.37 MB/s
+BenchmarkValidateUtf8Err/korean	24574	4881.00 ns/op	13644.73 MB/s
+BenchmarkValidateUtf8Err/japanese	24194	4959.38 ns/op	13672.68 MB/s
+BenchmarkValidateUtf8Err/chinese	23270	5102.05 ns/op	13688.62 MB/s
+BenchmarkValidateUtf8Err/arabic	19646	6114.05 ns/op	13360.20 MB/s
+BenchmarkValidateUtf8Err/latin	123892	902.49 ns/op	96333.64 MB/s
+BenchmarkValidateUtf8Err/hindi	18609	6445.45 ns/op	13652.57 MB/s
+BenchmarkValidateUtf8Err/russian	15488	7742.38 ns/op	13532.02 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	9422	12555.85 ns/op	83512.96 MB/s
+BenchmarkValidateUtf16le/ascii-16	14628932	8.19 ns/op	3907.70 MB/s
+BenchmarkValidateUtf16le/ascii-64	5125507	23.43 ns/op	5463.15 MB/s
+BenchmarkValidateUtf16le/ascii-256	1403762	88.54 ns/op	5782.74 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90474	1370.52 ns/op	5977.29 MB/s
+BenchmarkValidateUtf16le/japanese	15964	7633.44 ns/op	6124.37 MB/s
+BenchmarkValidateUtf16le/chinese	15720	7558.35 ns/op	6207.97 MB/s
+BenchmarkValidateUtf16le/korean	13737	8735.61 ns/op	6214.79 MB/s
+BenchmarkValidateUtf16le/hindi	10000	10571.16 ns/op	6199.13 MB/s
+BenchmarkValidateUtf16le/emoji	7132	17619.90 ns/op	3719.77 MB/s
+BenchmarkValidateUtf16le/hebrew	10000	11973.24 ns/op	6231.56 MB/s
+BenchmarkValidateUtf16le/arabic	8264	14751.00 ns/op	6205.00 MB/s
+BenchmarkValidateUtf16le/russian	6490	18855.73 ns/op	6149.96 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5720	21071.72 ns/op	6220.28 MB/s
+BenchmarkValidateUtf16le/latin	4148	27932.98 ns/op	6224.97 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	350	342535.95 ns/op	6122.43 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	9029569	13.17 ns/op	2430.63 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4355202	27.97 ns/op	4577.12 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1327072	91.08 ns/op	5621.16 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	88858	1332.73 ns/op	6146.77 MB/s
+BenchmarkValidateUtf16leErr/japanese	15966	7542.01 ns/op	6198.61 MB/s
+BenchmarkValidateUtf16leErr/chinese	15910	7538.62 ns/op	6224.21 MB/s
+BenchmarkValidateUtf16leErr/korean	13654	8755.76 ns/op	6200.49 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	10716.01 ns/op	6115.34 MB/s
+BenchmarkValidateUtf16leErr/emoji	6721	17638.33 ns/op	3715.88 MB/s
+BenchmarkValidateUtf16leErr/hebrew	8521	12035.58 ns/op	6199.29 MB/s
+BenchmarkValidateUtf16leErr/arabic	8282	14742.46 ns/op	6208.60 MB/s
+BenchmarkValidateUtf16leErr/russian	6038	18775.77 ns/op	6176.15 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	5409	21203.38 ns/op	6181.66 MB/s
+BenchmarkValidateUtf16leErr/latin	4273	28039.04 ns/op	6201.43 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	348	342116.27 ns/op	6129.94 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	10464453	10.95 ns/op	1461.33 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	7335045	16.38 ns/op	3907.26 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2409668	50.11 ns/op	5108.34 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	249640	495.07 ns/op	8273.52 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	16003	7480.93 ns/op	8760.40 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1948	61842.94 ns/op	1059.81 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1585	75658.36 ns/op	878.89 MB/s
+BenchmarkUtf8ToUtf16le/korean	1358	81393.18 ns/op	818.25 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2508	47629.14 ns/op	1423.67 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2600	46701.89 ns/op	1495.44 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1292	92314.96 ns/op	884.85 MB/s
+BenchmarkUtf8ToUtf16le/latin	10000	10348.46 ns/op	8401.25 MB/s
+BenchmarkUtf8ToUtf16le/hindi	1126	103578.22 ns/op	849.57 MB/s
+BenchmarkUtf8ToUtf16le/russian	718	164910.68 ns/op	635.31 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	897	131824.90 ns/op	7954.31 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	16743009	7.00 ns/op	2284.71 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9698152	12.41 ns/op	5158.48 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3266384	34.14 ns/op	7499.21 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	253088	476.21 ns/op	8601.22 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	16131	7434.37 ns/op	8815.28 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3768	30257.52 ns/op	2166.14 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1945	63023.71 ns/op	1055.08 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2042	71546.55 ns/op	930.86 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3781	32186.69 ns/op	2106.71 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3978	30409.29 ns/op	2296.67 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1556	76646.58 ns/op	1065.74 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	10000	11070.39 ns/op	7853.38 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1262	92405.45 ns/op	952.29 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	704	160718.88 ns/op	651.88 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	882	137016.74 ns/op	7652.90 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	16822885	7.05 ns/op	2268.24 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	6628872	17.92 ns/op	1060.33 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9540060	12.33 ns/op	5190.27 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	2025925	63.40 ns/op	1167.13 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3482738	34.48 ns/op	7424.48 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	703816	170.82 ns/op	1662.59 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	251223	483.15 ns/op	8477.76 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	48374	2537.82 ns/op	1785.00 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	15914	7477.90 ns/op	8763.95 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1276	94294.61 ns/op	768.60 MB/s
+BenchmarkValidUtf8ToLatin1/latin	10000	10410.68 ns/op	8351.04 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	933	128292.70 ns/op	8173.31 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	56	2073492.54 ns/op	559.28 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	8421495	14.55 ns/op	2198.58 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	7789938	15.58 ns/op	8217.86 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2785950	42.73 ns/op	11981.19 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	189525	625.97 ns/op	13086.80 MB/s
+BenchmarkUtf16leToUtf8/japanese	1800	66730.52 ns/op	700.58 MB/s
+BenchmarkUtf16leToUtf8/chinese	1870	64456.65 ns/op	727.96 MB/s
+BenchmarkUtf16leToUtf8/korean	1872	64143.45 ns/op	846.38 MB/s
+BenchmarkUtf16leToUtf8/hindi	1064	131308.47 ns/op	499.07 MB/s
+BenchmarkUtf16leToUtf8/emoji	1488	67316.71 ns/op	973.64 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1887	61042.82 ns/op	1222.29 MB/s
+BenchmarkUtf16leToUtf8/arabic	1576	75492.03 ns/op	1212.45 MB/s
+BenchmarkUtf16leToUtf8/russian	714	166897.79 ns/op	694.81 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12646	9539.94 ns/op	13739.29 MB/s
+BenchmarkUtf16leToUtf8/latin	8529	12214.86 ns/op	14235.29 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	783	152124.92 ns/op	13785.72 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	29572725	3.96 ns/op	8075.33 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	30329437	3.97 ns/op	8057.94 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	15856288	7.60 ns/op	16836.13 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15854694	7.58 ns/op	16888.38 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5395482	22.06 ns/op	23209.71 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5442993	22.09 ns/op	23183.07 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	372008	320.28 ns/op	25577.32 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	371265	321.79 ns/op	25457.67 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	18238	6568.91 ns/op	19953.39 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	18213	6979.17 ns/op	18780.47 MB/s
+BenchmarkValidUtf16leToLatin1/latin	13186	9093.22 ns/op	19121.93 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	963	123689.32 ns/op	16955.00 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	978	121729.53 ns/op	17227.96 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	16380370	7.27 ns/op	2199.58 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5783355	20.78 ns/op	770.11 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10412317	11.51 ns/op	5559.02 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1729153	69.13 ns/op	925.76 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3631623	32.97 ns/op	7765.13 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	692886	174.19 ns/op	1469.66 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	253336	475.33 ns/op	8617.26 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	47122	2539.23 ns/op	1613.09 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	16113	7447.45 ns/op	8799.79 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1308	90698.46 ns/op	722.57 MB/s
+BenchmarkLatin1ToUtf8/latin	12090	9930.18 ns/op	8755.13 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	986	123542.63 ns/op	8487.56 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	56	2028549.20 ns/op	516.91 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	16991599	6.99 ns/op	2288.48 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	5697070	20.84 ns/op	767.92 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10602828	11.24 ns/op	5692.62 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1785782	67.54 ns/op	947.59 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	3658056	32.77 ns/op	7812.26 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	691590	172.66 ns/op	1482.67 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	251364	475.10 ns/op	8621.30 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	46707	2537.25 ns/op	1614.35 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	16100	7466.74 ns/op	8777.06 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1311	88480.68 ns/op	740.68 MB/s
+BenchmarkValidLatin1ToUtf8/latin	12024	9901.15 ns/op	8780.80 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	972	122508.26 ns/op	8559.23 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	55	2085208.55 ns/op	502.86 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	32222324	3.46 ns/op	4622.89 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	35590185	3.41 ns/op	4694.29 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	17875867	6.56 ns/op	9760.47 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	17995852	6.61 ns/op	9686.96 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	6098793	20.00 ns/op	12800.79 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	6048980	19.90 ns/op	12862.34 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	390248	286.32 ns/op	14305.89 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	405963	280.08 ns/op	14624.34 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15199	7902.88 ns/op	8292.68 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	15073	7940.63 ns/op	8253.25 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11316.66 ns/op	7682.48 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	866	137838.53 ns/op	7607.28 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	852	140082.48 ns/op	7485.42 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	33797722	3.51 ns/op	4552.80 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	34577588	3.53 ns/op	4532.33 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	17925196	6.69 ns/op	9568.35 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	17662707	7.02 ns/op	9120.95 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	5604663	21.27 ns/op	12033.45 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	5546581	21.47 ns/op	11923.98 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	330553	304.04 ns/op	13471.76 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	389790	297.48 ns/op	13768.91 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	14688	8048.36 ns/op	8142.77 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	14900	8036.93 ns/op	8154.35 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11277.44 ns/op	7709.20 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	862	137993.77 ns/op	7598.72 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	866	137477.77 ns/op	7627.24 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	34782517	3.33 ns/op	4806.01 MB/s
+BenchmarkCountUtf8/ascii-64	13721524	9.06 ns/op	7061.96 MB/s
+BenchmarkCountUtf8/ascii-256	7724487	15.24 ns/op	16798.69 MB/s
+BenchmarkCountUtf8/ascii-4096	988467	123.00 ns/op	33302.02 MB/s
+BenchmarkCountUtf8/ascii-65536	56526	2121.84 ns/op	30886.37 MB/s
+BenchmarkCountUtf8/emoji	55106	2158.21 ns/op	30368.70 MB/s
+BenchmarkCountUtf8/hebrew	55687	2171.53 ns/op	30621.24 MB/s
+BenchmarkCountUtf8/korean	55143	2171.69 ns/op	30667.41 MB/s
+BenchmarkCountUtf8/japanese	54159	2224.42 ns/op	30483.40 MB/s
+BenchmarkCountUtf8/chinese	49722	2289.27 ns/op	30507.56 MB/s
+BenchmarkCountUtf8/arabic	45364	2711.97 ns/op	30120.23 MB/s
+BenchmarkCountUtf8/latin	42579	2817.67 ns/op	30855.33 MB/s
+BenchmarkCountUtf8/hindi	41601	2902.56 ns/op	30317.02 MB/s
+BenchmarkCountUtf8/russian	35358	3388.89 ns/op	30915.73 MB/s
+BenchmarkCountUtf8/ascii-1048576	3393	35399.68 ns/op	29621.06 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12296859	9.39 ns/op	1703.88 MB/s
+BenchmarkBase64Encode/random-64	6526084	17.99 ns/op	3556.85 MB/s
+BenchmarkBase64Encode/random-256	3358632	36.01 ns/op	7108.82 MB/s
+BenchmarkBase64Encode/random-4096	270907	447.41 ns/op	9154.82 MB/s
+BenchmarkBase64Encode/random-65536	17029	7015.90 ns/op	9341.06 MB/s
+BenchmarkBase64Encode/random-1048576	1042	114925.82 ns/op	9123.94 MB/s
+BenchmarkBase64EncodeUrl/random-16	13686080	9.29 ns/op	1723.01 MB/s
+BenchmarkBase64EncodeUrl/random-64	6612424	17.89 ns/op	3576.89 MB/s
+BenchmarkBase64EncodeUrl/random-256	3357604	35.84 ns/op	7142.29 MB/s
+BenchmarkBase64EncodeUrl/random-4096	267284	448.65 ns/op	9129.60 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17076	7037.41 ns/op	9312.52 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1033	115725.12 ns/op	9060.92 MB/s
+BenchmarkBase64Decode/random-16	8486745	13.93 ns/op	1722.34 MB/s
+BenchmarkBase64Decode/random-64	5881172	20.47 ns/op	4299.73 MB/s
+BenchmarkBase64Decode/random-256	2541705	47.08 ns/op	7306.20 MB/s
+BenchmarkBase64Decode/random-4096	192126	626.16 ns/op	8726.19 MB/s
+BenchmarkBase64Decode/random-65536	12158	9887.95 ns/op	8837.42 MB/s
+BenchmarkBase64Decode/random-1048576	663	174585.14 ns/op	8008.15 MB/s
+BenchmarkBase64DecodeUrl/random-16	9215680	12.85 ns/op	1711.85 MB/s
+BenchmarkBase64DecodeUrl/random-64	6362568	18.86 ns/op	4560.99 MB/s
+BenchmarkBase64DecodeUrl/random-256	2562223	46.09 ns/op	7419.99 MB/s
+BenchmarkBase64DecodeUrl/random-4096	193129	621.00 ns/op	8795.48 MB/s
+BenchmarkBase64DecodeUrl/random-65536	12205	9834.51 ns/op	8885.24 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	745	160440.44 ns/op	8714.15 MB/s
+BenchmarkBase64DecodeStrict/random-16	8466802	14.01 ns/op	1712.97 MB/s
+BenchmarkBase64DecodeStrict/random-64	5974448	20.22 ns/op	4352.45 MB/s
+BenchmarkBase64DecodeStrict/random-256	2516654	47.64 ns/op	7220.59 MB/s
+BenchmarkBase64DecodeStrict/random-4096	191548	626.04 ns/op	8727.90 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12147	9864.51 ns/op	8858.42 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	745	160887.03 ns/op	8689.97 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4574524	26.12 ns/op	995.53 MB/s
+BenchmarkBase64DecodeMime/random-64	2689953	44.96 ns/op	2046.15 MB/s
+BenchmarkBase64DecodeMime/random-256	461203	278.52 ns/op	1270.98 MB/s
+BenchmarkBase64DecodeMime/random-4096	29162	4126.34 ns/op	1359.07 MB/s
+BenchmarkBase64DecodeMime/random-65536	1820	65710.02 ns/op	1364.85 MB/s
+BenchmarkBase64DecodeMime/random-1048576	78	1402667.64 ns/op	1022.98 MB/s
+BenchmarkValidateAscii/ascii-16	43686801	2.57 ns/op	6236.89 MB/s
+BenchmarkValidateAscii/ascii-64	41261912	3.06 ns/op	20902.31 MB/s
+BenchmarkValidateAscii/ascii-256	24579979	4.85 ns/op	52811.55 MB/s
+BenchmarkValidateAscii/ascii-4096	2647592	45.34 ns/op	90338.74 MB/s
+BenchmarkValidateAscii/ascii-65536	93576	1287.30 ns/op	50909.70 MB/s
+BenchmarkValidateAscii/latin	73076	1645.69 ns/op	52828.93 MB/s
+BenchmarkValidateAscii/ascii-1048576	5317	21553.16 ns/op	48650.67 MB/s
+BenchmarkValidateAsciiErr/ascii-16	60426063	1.91 ns/op	8374.17 MB/s
+BenchmarkValidateAsciiErr/ascii-64	55645928	2.17 ns/op	29457.27 MB/s
+BenchmarkValidateAsciiErr/ascii-256	25643748	4.54 ns/op	56433.84 MB/s
+BenchmarkValidateAsciiErr/ascii-4096	2633458	45.33 ns/op	90355.44 MB/s
+BenchmarkValidateAsciiErr/ascii-65536	97560	1234.90 ns/op	53069.90 MB/s
+BenchmarkValidateAsciiErr/latin	70064	1706.57 ns/op	50944.23 MB/s
+BenchmarkValidateAsciiErr/ascii-1048576	5229	21367.86 ns/op	49072.58 MB/s
+BenchmarkValidateUtf8/ascii-16	18261404	5.73 ns/op	2790.30 MB/s
+BenchmarkValidateUtf8/ascii-64	28623830	4.27 ns/op	14995.63 MB/s
+BenchmarkValidateUtf8/ascii-256	20108767	5.98 ns/op	42778.22 MB/s
+BenchmarkValidateUtf8/ascii-4096	3304443	36.15 ns/op	113304.75 MB/s
+BenchmarkValidateUtf8/ascii-65536	168752	731.63 ns/op	89574.73 MB/s
+BenchmarkValidateUtf8/emoji	24156	4966.97 ns/op	13195.56 MB/s
+BenchmarkValidateUtf8/hebrew	23322	5118.48 ns/op	12991.16 MB/s
+BenchmarkValidateUtf8/korean	23829	4982.82 ns/op	13365.93 MB/s
+BenchmarkValidateUtf8/japanese	23652	5050.19 ns/op	13426.83 MB/s
+BenchmarkValidateUtf8/chinese	23103	5202.44 ns/op	13424.48 MB/s
+BenchmarkValidateUtf8/arabic	19114	7181.44 ns/op	11374.47 MB/s
+BenchmarkValidateUtf8/latin	125104	934.23 ns/op	93060.61 MB/s
+BenchmarkValidateUtf8/hindi	17740	6582.36 ns/op	13368.61 MB/s
+BenchmarkValidateUtf8/russian	15129	7911.41 ns/op	13242.90 MB/s
+BenchmarkValidateUtf8/ascii-1048576	9920	11090.67 ns/op	94545.79 MB/s
+BenchmarkValidateUtf8Err/ascii-16	10416045	11.50 ns/op	1391.32 MB/s
+BenchmarkValidateUtf8Err/ascii-64	7511956	15.97 ns/op	4007.93 MB/s
+BenchmarkValidateUtf8Err/ascii-256	7050639	16.97 ns/op	15089.00 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	2226922	53.61 ns/op	76400.49 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	165672	726.73 ns/op	90179.39 MB/s
+BenchmarkValidateUtf8Err/emoji	24277	4948.72 ns/op	13244.24 MB/s
+BenchmarkValidateUtf8Err/hebrew	23107	5206.99 ns/op	12770.33 MB/s
+BenchmarkValidateUtf8Err/korean	21224	5189.83 ns/op	12832.80 MB/s
+BenchmarkValidateUtf8Err/japanese	23170	5159.44 ns/op	13142.50 MB/s
+BenchmarkValidateUtf8Err/chinese	22617	5295.54 ns/op	13188.46 MB/s
+BenchmarkValidateUtf8Err/arabic	18948	6328.14 ns/op	12908.22 MB/s
+BenchmarkValidateUtf8Err/latin	126769	946.16 ns/op	91887.08 MB/s
+BenchmarkValidateUtf8Err/hindi	17979	6674.71 ns/op	13183.64 MB/s
+BenchmarkValidateUtf8Err/russian	14804	8031.85 ns/op	13044.31 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	10000	11220.93 ns/op	93448.19 MB/s
+BenchmarkValidateUtf16le/ascii-16	14162804	8.43 ns/op	3794.05 MB/s
+BenchmarkValidateUtf16le/ascii-64	4877521	24.57 ns/op	5210.39 MB/s
+BenchmarkValidateUtf16le/ascii-256	1349373	87.11 ns/op	5877.74 MB/s
+BenchmarkValidateUtf16le/ascii-4096	90508	1326.51 ns/op	6175.61 MB/s
+BenchmarkValidateUtf16le/japanese	15914	7567.58 ns/op	6177.67 MB/s
+BenchmarkValidateUtf16le/chinese	15792	7555.82 ns/op	6210.05 MB/s
+BenchmarkValidateUtf16le/korean	13680	8740.56 ns/op	6211.27 MB/s
+BenchmarkValidateUtf16le/hindi	10000	10585.28 ns/op	6190.86 MB/s
+BenchmarkValidateUtf16le/emoji	6610	17521.90 ns/op	3740.58 MB/s
+BenchmarkValidateUtf16le/hebrew	9951	12009.69 ns/op	6212.65 MB/s
+BenchmarkValidateUtf16le/arabic	8161	14722.23 ns/op	6217.13 MB/s
+BenchmarkValidateUtf16le/russian	6390	18645.02 ns/op	6219.46 MB/s
+BenchmarkValidateUtf16le/ascii-65536	5679	21076.37 ns/op	6218.91 MB/s
+BenchmarkValidateUtf16le/latin	4256	27949.17 ns/op	6221.36 MB/s
+BenchmarkValidateUtf16le/ascii-1048576	349	343169.86 ns/op	6111.12 MB/s
+BenchmarkValidateUtf16leErr/ascii-16	8535618	13.38 ns/op	2391.41 MB/s
+BenchmarkValidateUtf16leErr/ascii-64	4353648	27.79 ns/op	4605.19 MB/s
+BenchmarkValidateUtf16leErr/ascii-256	1317313	90.42 ns/op	5662.48 MB/s
+BenchmarkValidateUtf16leErr/ascii-4096	90553	1334.02 ns/op	6140.83 MB/s
+BenchmarkValidateUtf16leErr/japanese	15945	7530.63 ns/op	6207.98 MB/s
+BenchmarkValidateUtf16leErr/chinese	15904	7551.83 ns/op	6213.33 MB/s
+BenchmarkValidateUtf16leErr/korean	13695	8789.73 ns/op	6176.53 MB/s
+BenchmarkValidateUtf16leErr/hindi	10000	10543.05 ns/op	6215.66 MB/s
+BenchmarkValidateUtf16leErr/emoji	7027	17866.91 ns/op	3668.35 MB/s
+BenchmarkValidateUtf16leErr/hebrew	9456	12149.19 ns/op	6141.31 MB/s
+BenchmarkValidateUtf16leErr/arabic	8011	14934.57 ns/op	6128.73 MB/s
+BenchmarkValidateUtf16leErr/russian	6172	18687.48 ns/op	6205.33 MB/s
+BenchmarkValidateUtf16leErr/ascii-65536	5692	21068.52 ns/op	6221.22 MB/s
+BenchmarkValidateUtf16leErr/latin	4303	27923.55 ns/op	6227.07 MB/s
+BenchmarkValidateUtf16leErr/ascii-1048576	350	341843.62 ns/op	6134.83 MB/s
+# SKIP BenchmarkValidateUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf16beErr: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidateUtf32Err: Rust has no equivalent here
+BenchmarkUtf8ToUtf16le/ascii-16	10877350	11.11 ns/op	1440.02 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	7201929	16.52 ns/op	3873.42 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	2404837	50.47 ns/op	5072.82 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	236228	489.16 ns/op	8373.54 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	16063	7477.64 ns/op	8764.27 MB/s
+BenchmarkUtf8ToUtf16le/emoji	1939	61769.82 ns/op	1061.07 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	1590	75380.61 ns/op	882.12 MB/s
+BenchmarkUtf8ToUtf16le/korean	1507	78993.57 ns/op	843.11 MB/s
+BenchmarkUtf8ToUtf16le/japanese	2532	47624.53 ns/op	1423.80 MB/s
+BenchmarkUtf8ToUtf16le/chinese	2624	46137.56 ns/op	1513.73 MB/s
+BenchmarkUtf8ToUtf16le/arabic	1262	92601.32 ns/op	882.11 MB/s
+BenchmarkUtf8ToUtf16le/latin	10000	10231.18 ns/op	8497.55 MB/s
+BenchmarkUtf8ToUtf16le/hindi	1153	103639.87 ns/op	849.07 MB/s
+BenchmarkUtf8ToUtf16le/russian	718	163324.84 ns/op	641.48 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	897	132086.48 ns/op	7938.56 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-16	15862470	6.99 ns/op	2288.45 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-64	9661939	12.41 ns/op	5156.63 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-256	3509046	34.19 ns/op	7488.48 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-4096	252735	476.11 ns/op	8603.06 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-65536	16113	7451.91 ns/op	8794.53 MB/s
+BenchmarkValidUtf8ToUtf16le/emoji	3968	30253.04 ns/op	2166.46 MB/s
+BenchmarkValidUtf8ToUtf16le/hebrew	1905	62250.90 ns/op	1068.18 MB/s
+BenchmarkValidUtf8ToUtf16le/korean	2325	51622.54 ns/op	1290.13 MB/s
+BenchmarkValidUtf8ToUtf16le/japanese	3746	31748.98 ns/op	2135.75 MB/s
+BenchmarkValidUtf8ToUtf16le/chinese	3964	30278.76 ns/op	2306.57 MB/s
+BenchmarkValidUtf8ToUtf16le/arabic	1506	76217.49 ns/op	1071.74 MB/s
+BenchmarkValidUtf8ToUtf16le/latin	10000	10149.25 ns/op	8566.15 MB/s
+BenchmarkValidUtf8ToUtf16le/hindi	1273	92075.43 ns/op	955.71 MB/s
+BenchmarkValidUtf8ToUtf16le/russian	735	157375.97 ns/op	665.73 MB/s
+BenchmarkValidUtf8ToUtf16le/ascii-1048576	890	133976.37 ns/op	7826.57 MB/s
+# SKIP BenchmarkUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf8ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8ToLatin1: Rust has no equivalent here
+BenchmarkValidUtf8ToLatin1/ascii-16	17130776	6.99 ns/op	2288.31 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-16	6667777	17.75 ns/op	1070.22 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-64	9776220	12.28 ns/op	5213.77 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-64	2058128	58.82 ns/op	1258.12 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-256	3526950	34.06 ns/op	7516.84 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-256	702853	173.24 ns/op	1639.32 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-4096	230172	508.42 ns/op	8056.32 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-4096	45435	2642.65 ns/op	1714.19 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-65536	15063	8722.66 ns/op	7513.30 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-65536	1202	98681.27 ns/op	734.44 MB/s
+BenchmarkValidUtf8ToLatin1/latin	10000	10539.96 ns/op	8248.61 MB/s
+BenchmarkValidUtf8ToLatin1/ascii-1048576	926	128746.19 ns/op	8144.52 MB/s
+BenchmarkValidUtf8ToLatin1/latin1-1048576	56	2018860.45 ns/op	574.42 MB/s
+BenchmarkUtf16leToUtf8/ascii-16	13473795	8.74 ns/op	3661.51 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	7709512	15.54 ns/op	8237.67 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	2804036	42.64 ns/op	12007.44 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	200678	619.62 ns/op	13220.92 MB/s
+BenchmarkUtf16leToUtf8/japanese	1738	69066.23 ns/op	676.89 MB/s
+BenchmarkUtf16leToUtf8/chinese	1773	65451.38 ns/op	716.90 MB/s
+BenchmarkUtf16leToUtf8/korean	1808	64777.75 ns/op	838.10 MB/s
+BenchmarkUtf16leToUtf8/hindi	1042	113048.41 ns/op	579.68 MB/s
+BenchmarkUtf16leToUtf8/emoji	1868	66737.51 ns/op	982.09 MB/s
+BenchmarkUtf16leToUtf8/hebrew	1701	65741.64 ns/op	1134.93 MB/s
+BenchmarkUtf16leToUtf8/arabic	1519	75724.73 ns/op	1208.72 MB/s
+BenchmarkUtf16leToUtf8/russian	718	164812.31 ns/op	703.60 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	12723	9267.88 ns/op	14142.61 MB/s
+BenchmarkUtf16leToUtf8/latin	9381	13660.33 ns/op	12728.97 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	740	195896.71 ns/op	10705.40 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16leToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16leToLatin1: Rust has no equivalent here
+BenchmarkValidUtf16leToLatin1/ascii-16	27373510	7.23 ns/op	4428.71 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-16	16065379	7.30 ns/op	4383.04 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-64	14317704	7.71 ns/op	16596.81 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-64	15885542	7.94 ns/op	16116.75 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-256	5432154	22.62 ns/op	22638.34 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-256	5437759	22.12 ns/op	23146.83 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-4096	375963	319.73 ns/op	25621.88 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-4096	374248	319.89 ns/op	25608.51 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-65536	18052	6581.56 ns/op	19915.03 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-65536	18262	6580.28 ns/op	19918.92 MB/s
+BenchmarkValidUtf16leToLatin1/latin	12944	9105.04 ns/op	19097.11 MB/s
+BenchmarkValidUtf16leToLatin1/ascii-1048576	969	122318.21 ns/op	17145.05 MB/s
+BenchmarkValidUtf16leToLatin1/latin1-1048576	987	120968.75 ns/op	17336.31 MB/s
+# SKIP BenchmarkUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf16beToLatin1: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf32ToLatin1: Rust has no equivalent here
+# SKIP BenchmarkValidUtf32ToLatin1: Rust has no equivalent here
+BenchmarkLatin1ToUtf8/ascii-16	16325896	7.27 ns/op	2200.98 MB/s
+BenchmarkLatin1ToUtf8/latin1-16	5697522	20.87 ns/op	766.65 MB/s
+BenchmarkLatin1ToUtf8/ascii-64	10382358	11.54 ns/op	5545.21 MB/s
+BenchmarkLatin1ToUtf8/latin1-64	1734835	69.83 ns/op	916.47 MB/s
+BenchmarkLatin1ToUtf8/ascii-256	3644388	32.97 ns/op	7763.83 MB/s
+BenchmarkLatin1ToUtf8/latin1-256	676244	173.10 ns/op	1478.89 MB/s
+BenchmarkLatin1ToUtf8/ascii-4096	253485	474.93 ns/op	8624.44 MB/s
+BenchmarkLatin1ToUtf8/latin1-4096	46530	2531.17 ns/op	1618.23 MB/s
+BenchmarkLatin1ToUtf8/ascii-65536	16095	7448.66 ns/op	8798.36 MB/s
+BenchmarkLatin1ToUtf8/latin1-65536	1275	88759.31 ns/op	738.36 MB/s
+BenchmarkLatin1ToUtf8/latin	10000	10061.76 ns/op	8640.63 MB/s
+BenchmarkLatin1ToUtf8/ascii-1048576	966	123450.57 ns/op	8493.89 MB/s
+BenchmarkLatin1ToUtf8/latin1-1048576	56	2044489.11 ns/op	512.88 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-16	16938490	7.00 ns/op	2286.58 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-16	5835326	20.74 ns/op	771.30 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-64	10738900	11.25 ns/op	5690.39 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-64	1792789	66.91 ns/op	956.55 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-256	3673532	32.70 ns/op	7827.91 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-256	708627	171.90 ns/op	1489.25 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-4096	253003	473.96 ns/op	8642.10 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-4096	47432	2522.83 ns/op	1623.57 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-65536	16101	7437.42 ns/op	8811.66 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-65536	1316	88981.82 ns/op	736.51 MB/s
+BenchmarkValidLatin1ToUtf8/latin	12128	9872.53 ns/op	8806.25 MB/s
+BenchmarkValidLatin1ToUtf8/ascii-1048576	960	121052.67 ns/op	8662.15 MB/s
+BenchmarkValidLatin1ToUtf8/latin1-1048576	56	2027935.98 ns/op	517.07 MB/s
+BenchmarkLatin1ToUtf16le/ascii-16	34914301	3.36 ns/op	4764.62 MB/s
+BenchmarkLatin1ToUtf16le/latin1-16	35634817	3.36 ns/op	4761.01 MB/s
+BenchmarkLatin1ToUtf16le/ascii-64	18270735	6.43 ns/op	9956.55 MB/s
+BenchmarkLatin1ToUtf16le/latin1-64	18611420	6.38 ns/op	10027.32 MB/s
+BenchmarkLatin1ToUtf16le/ascii-256	5984598	19.56 ns/op	13086.47 MB/s
+BenchmarkLatin1ToUtf16le/latin1-256	6051084	19.69 ns/op	13004.25 MB/s
+BenchmarkLatin1ToUtf16le/ascii-4096	429788	280.33 ns/op	14611.12 MB/s
+BenchmarkLatin1ToUtf16le/latin1-4096	420754	279.83 ns/op	14637.32 MB/s
+BenchmarkLatin1ToUtf16le/ascii-65536	15168	7917.93 ns/op	8276.91 MB/s
+BenchmarkLatin1ToUtf16le/latin1-65536	15070	7967.33 ns/op	8225.60 MB/s
+BenchmarkLatin1ToUtf16le/latin	10000	11266.41 ns/op	7716.74 MB/s
+BenchmarkLatin1ToUtf16le/ascii-1048576	855	139227.37 ns/op	7531.39 MB/s
+BenchmarkLatin1ToUtf16le/latin1-1048576	846	139974.58 ns/op	7491.19 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-16	34581334	3.37 ns/op	4752.22 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-16	35526638	3.36 ns/op	4758.79 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-64	18777062	6.38 ns/op	10032.40 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-64	18364567	6.37 ns/op	10041.36 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-256	6227466	19.63 ns/op	13041.12 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-256	6110216	19.64 ns/op	13031.68 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-4096	391795	283.55 ns/op	14445.53 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-4096	414826	280.53 ns/op	14600.78 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-65536	15147	7925.34 ns/op	8269.17 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-65536	15064	7970.89 ns/op	8221.92 MB/s
+BenchmarkValidLatin1ToUtf16le/latin	10000	11294.48 ns/op	7697.57 MB/s
+BenchmarkValidLatin1ToUtf16le/ascii-1048576	858	140089.34 ns/op	7485.05 MB/s
+BenchmarkValidLatin1ToUtf16le/latin1-1048576	853	136965.34 ns/op	7655.78 MB/s
+# SKIP BenchmarkLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf16be: Rust has no equivalent here
+# SKIP BenchmarkLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkValidLatin1ToUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf8: Rust has no equivalent here
+# SKIP BenchmarkUtf16FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16le: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf16be: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromUtf32: Rust has no equivalent here
+# SKIP BenchmarkUtf8FromLatin1: Rust has no equivalent here
+BenchmarkCountUtf8/ascii-16	35317894	3.34 ns/op	4793.74 MB/s
+BenchmarkCountUtf8/ascii-64	13665536	8.81 ns/op	7263.79 MB/s
+BenchmarkCountUtf8/ascii-256	7755297	15.23 ns/op	16814.03 MB/s
+BenchmarkCountUtf8/ascii-4096	989386	122.45 ns/op	33449.56 MB/s
+BenchmarkCountUtf8/ascii-65536	57076	2106.09 ns/op	31117.41 MB/s
+BenchmarkCountUtf8/emoji	56073	2141.05 ns/op	30612.06 MB/s
+BenchmarkCountUtf8/hebrew	56328	2153.40 ns/op	30879.06 MB/s
+BenchmarkCountUtf8/korean	55002	2186.94 ns/op	30453.47 MB/s
+BenchmarkCountUtf8/japanese	54229	2226.44 ns/op	30455.81 MB/s
+BenchmarkCountUtf8/chinese	51708	2312.82 ns/op	30196.84 MB/s
+BenchmarkCountUtf8/arabic	44986	2666.52 ns/op	30633.56 MB/s
+BenchmarkCountUtf8/latin	42655	2822.97 ns/op	30797.38 MB/s
+BenchmarkCountUtf8/hindi	41350	2902.82 ns/op	30314.27 MB/s
+BenchmarkCountUtf8/russian	35526	3398.81 ns/op	30825.46 MB/s
+BenchmarkCountUtf8/ascii-1048576	3268	36654.80 ns/op	28606.79 MB/s
+# SKIP BenchmarkCountUtf16le: Rust has no equivalent here
+# SKIP BenchmarkCountUtf16be: Rust has no equivalent here
+BenchmarkBase64Encode/random-16	12686941	9.38 ns/op	1705.49 MB/s
+BenchmarkBase64Encode/random-64	6699632	17.96 ns/op	3563.60 MB/s
+BenchmarkBase64Encode/random-256	3359791	35.49 ns/op	7214.24 MB/s
+BenchmarkBase64Encode/random-4096	271285	443.56 ns/op	9234.32 MB/s
+BenchmarkBase64Encode/random-65536	17100	7028.90 ns/op	9323.79 MB/s
+BenchmarkBase64Encode/random-1048576	1034	115256.18 ns/op	9097.79 MB/s
+BenchmarkBase64EncodeUrl/random-16	13703988	8.72 ns/op	1834.71 MB/s
+BenchmarkBase64EncodeUrl/random-64	6720405	17.92 ns/op	3570.60 MB/s
+BenchmarkBase64EncodeUrl/random-256	3348759	35.77 ns/op	7157.39 MB/s
+BenchmarkBase64EncodeUrl/random-4096	268147	448.01 ns/op	9142.56 MB/s
+BenchmarkBase64EncodeUrl/random-65536	17127	7006.15 ns/op	9354.07 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	1022	116493.78 ns/op	9001.13 MB/s
+BenchmarkBase64Decode/random-16	8565152	13.92 ns/op	1724.45 MB/s
+BenchmarkBase64Decode/random-64	5933175	20.31 ns/op	4332.22 MB/s
+BenchmarkBase64Decode/random-256	2553002	47.10 ns/op	7303.35 MB/s
+BenchmarkBase64Decode/random-4096	191419	625.68 ns/op	8732.94 MB/s
+BenchmarkBase64Decode/random-65536	12148	9867.16 ns/op	8856.05 MB/s
+BenchmarkBase64Decode/random-1048576	742	161906.45 ns/op	8635.26 MB/s
+BenchmarkBase64DecodeUrl/random-16	9270836	12.92 ns/op	1703.24 MB/s
+BenchmarkBase64DecodeUrl/random-64	6345448	18.89 ns/op	4552.28 MB/s
+BenchmarkBase64DecodeUrl/random-256	2602399	46.37 ns/op	7375.51 MB/s
+BenchmarkBase64DecodeUrl/random-4096	194119	629.14 ns/op	8681.67 MB/s
+BenchmarkBase64DecodeUrl/random-65536	12084	9915.03 ns/op	8813.09 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	741	161186.62 ns/op	8673.81 MB/s
+BenchmarkBase64DecodeStrict/random-16	8517294	14.01 ns/op	1713.42 MB/s
+BenchmarkBase64DecodeStrict/random-64	5951880	20.15 ns/op	4366.90 MB/s
+BenchmarkBase64DecodeStrict/random-256	2555862	46.98 ns/op	7322.77 MB/s
+BenchmarkBase64DecodeStrict/random-4096	191689	627.09 ns/op	8713.25 MB/s
+BenchmarkBase64DecodeStrict/random-65536	12159	9868.60 ns/op	8854.75 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	745	160670.32 ns/op	8701.69 MB/s
+# SKIP BenchmarkBase64DecodePartial: Rust has no equivalent here
+BenchmarkBase64DecodeMime/random-16	4567838	26.16 ns/op	993.85 MB/s
+BenchmarkBase64DecodeMime/random-64	2684320	44.72 ns/op	2057.38 MB/s
+BenchmarkBase64DecodeMime/random-256	471518	253.81 ns/op	1394.75 MB/s
+BenchmarkBase64DecodeMime/random-4096	29281	4098.72 ns/op	1368.23 MB/s
+BenchmarkBase64DecodeMime/random-65536	1828	65910.00 ns/op	1360.70 MB/s
+BenchmarkBase64DecodeMime/random-1048576	85	1350983.44 ns/op	1062.11 MB/s

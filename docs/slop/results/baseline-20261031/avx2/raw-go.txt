@@ -1,0 +1,1164 @@
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 8070372	        14.73 ns/op	1086.15 MB/s
+BenchmarkValidateUtf8/ascii-64	 7644640	        15.61 ns/op	4099.57 MB/s
+BenchmarkValidateUtf8/ascii-256	 6095874	        19.49 ns/op	13136.46 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       110.6 ns/op	37044.47 MB/s
+BenchmarkValidateUtf8/ascii-65536	   59454	      2020 ns/op	32436.43 MB/s
+BenchmarkValidateUtf8/emoji	    2398	     49604 ns/op	1321.30 MB/s
+BenchmarkValidateUtf8/hebrew	    1764	     68691 ns/op	 968.03 MB/s
+BenchmarkValidateUtf8/korean	    2005	     59002 ns/op	1128.77 MB/s
+BenchmarkValidateUtf8/japanese	    1962	     60548 ns/op	1119.91 MB/s
+BenchmarkValidateUtf8/chinese	    2037	     58053 ns/op	1203.03 MB/s
+BenchmarkValidateUtf8/arabic	    1398	     83309 ns/op	 980.51 MB/s
+BenchmarkValidateUtf8/latin	   45144	      2660 ns/op	32679.06 MB/s
+BenchmarkValidateUtf8/hindi	    1020	    114162 ns/op	 770.81 MB/s
+BenchmarkValidateUtf8/russian	     668	    177512 ns/op	 590.21 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3438	     32888 ns/op	31883.08 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8397534	        14.23 ns/op	1124.69 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7565380	        15.60 ns/op	4103.78 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6099465	        19.58 ns/op	13074.34 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       112.5 ns/op	36420.48 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59260	      2071 ns/op	31639.26 MB/s
+BenchmarkValidateUtf8Err/emoji	    2397	     49621 ns/op	1320.86 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1730	     67587 ns/op	 983.84 MB/s
+BenchmarkValidateUtf8Err/korean	    2020	     58810 ns/op	1132.46 MB/s
+BenchmarkValidateUtf8Err/japanese	    1958	     60672 ns/op	1117.61 MB/s
+BenchmarkValidateUtf8Err/chinese	    2047	     58144 ns/op	1201.15 MB/s
+BenchmarkValidateUtf8Err/arabic	    1446	     82099 ns/op	 994.96 MB/s
+BenchmarkValidateUtf8Err/latin	   45038	      2662 ns/op	32661.58 MB/s
+BenchmarkValidateUtf8Err/hindi	    1022	    115065 ns/op	 764.76 MB/s
+BenchmarkValidateUtf8Err/russian	     672	    177726 ns/op	 589.50 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    3451	     32840 ns/op	31929.81 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 2619306	        45.66 ns/op	 350.44 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  621373	       184.3 ns/op	 347.23 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  165205	       708.4 ns/op	 361.37 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	   10000	     11164 ns/op	 366.88 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     669	    178591 ns/op	 366.96 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1161	    103523 ns/op	 633.12 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     544	    221521 ns/op	 300.17 MB/s
+BenchmarkUtf8ToUtf16le/korean	     739	    161021 ns/op	 413.61 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     852	    139997 ns/op	 484.35 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     876	    136136 ns/op	 513.01 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     440	    270137 ns/op	 302.38 MB/s
+BenchmarkUtf8ToUtf16le/latin	     506	    237537 ns/op	 366.01 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     540	    220406 ns/op	 399.25 MB/s
+BenchmarkUtf8ToUtf16le/russian	     315	    379968 ns/op	 275.73 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      40	   2902495 ns/op	 361.27 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 5216635	        23.15 ns/op	 691.29 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1464670	        81.75 ns/op	 782.92 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  366223	       323.6 ns/op	 790.99 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   23997	      5001 ns/op	 819.04 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1473	     79977 ns/op	 819.43 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1395	     84630 ns/op	 774.45 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     644	    181382 ns/op	 366.60 MB/s
+BenchmarkUtf8ToUtf32/korean	    1077	    107293 ns/op	 620.73 MB/s
+BenchmarkUtf8ToUtf32/japanese	    1000	    118820 ns/op	 570.68 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1068	    111726 ns/op	 625.10 MB/s
+BenchmarkUtf8ToUtf32/arabic	     549	    214235 ns/op	 381.29 MB/s
+BenchmarkUtf8ToUtf32/latin	    1112	    106399 ns/op	 817.11 MB/s
+BenchmarkUtf8ToUtf32/hindi	     609	    196307 ns/op	 448.26 MB/s
+BenchmarkUtf8ToUtf32/russian	     362	    329384 ns/op	 318.08 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      88	   1320314 ns/op	 794.19 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 5132424	        22.89 ns/op	1397.74 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	 1476685	        81.31 ns/op	1574.31 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  366726	       321.7 ns/op	1591.72 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   23977	      5001 ns/op	1638.12 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1365	     85203 ns/op	 548.69 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1456	     81404 ns/op	 576.41 MB/s
+BenchmarkUtf16leToUtf8/korean	    1390	     84843 ns/op	 639.88 MB/s
+BenchmarkUtf16leToUtf8/hindi	     781	    152746 ns/op	 429.03 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1410	     85084 ns/op	 770.32 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     667	    162966 ns/op	 457.84 MB/s
+BenchmarkUtf16leToUtf8/arabic	     603	    194583 ns/op	 470.39 MB/s
+BenchmarkUtf16leToUtf8/russian	     468	    255728 ns/op	 453.46 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1482	     79962 ns/op	1639.19 MB/s
+BenchmarkUtf16leToUtf8/latin	    1128	    106024 ns/op	1640.03 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      91	   1300898 ns/op	1612.08 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 6259245	        18.54 ns/op	3452.29 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1873909	        63.84 ns/op	4009.91 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  464100	       252.5 ns/op	4054.94 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31980	      3772 ns/op	4344.11 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1770	     65958 ns/op	 993.72 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1387	     86651 ns/op	1079.00 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1484	     80791 ns/op	1161.52 MB/s
+BenchmarkUtf32ToUtf8/korean	    1327	     87130 ns/op	1246.13 MB/s
+BenchmarkUtf32ToUtf8/hindi	     783	    154329 ns/op	 849.22 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     781	    151558 ns/op	 984.57 MB/s
+BenchmarkUtf32ToUtf8/arabic	     644	    182947 ns/op	1000.59 MB/s
+BenchmarkUtf32ToUtf8/russian	     434	    284980 ns/op	 813.81 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1665	     71178 ns/op	3682.96 MB/s
+BenchmarkUtf32ToUtf8/latin	    1476	     94139 ns/op	3694.13 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     120	   1008342 ns/op	4159.60 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 8513474	        13.64 ns/op	1172.71 MB/s
+BenchmarkCountUtf8/ascii-64	 2792700	        42.33 ns/op	1511.86 MB/s
+BenchmarkCountUtf8/ascii-256	  602466	       168.3 ns/op	1521.27 MB/s
+BenchmarkCountUtf8/ascii-4096	   47775	      2554 ns/op	1604.00 MB/s
+BenchmarkCountUtf8/ascii-65536	    2955	     39837 ns/op	1645.10 MB/s
+BenchmarkCountUtf8/emoji	    1224	     82471 ns/op	 794.73 MB/s
+BenchmarkCountUtf8/hebrew	    1198	     97853 ns/op	 679.54 MB/s
+BenchmarkCountUtf8/korean	    1358	     87816 ns/op	 758.40 MB/s
+BenchmarkCountUtf8/japanese	    1177	    100633 ns/op	 673.81 MB/s
+BenchmarkCountUtf8/chinese	    1196	     99537 ns/op	 701.65 MB/s
+BenchmarkCountUtf8/arabic	     975	    122009 ns/op	 669.50 MB/s
+BenchmarkCountUtf8/latin	    2247	     52985 ns/op	1640.84 MB/s
+BenchmarkCountUtf8/hindi	     684	    165149 ns/op	 532.84 MB/s
+BenchmarkCountUtf8/russian	     471	    249319 ns/op	 420.22 MB/s
+BenchmarkCountUtf8/ascii-1048576	     186	    644255 ns/op	1627.58 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5643553	        21.03 ns/op	 760.86 MB/s
+BenchmarkBase64Encode/random-64	 1863280	        64.26 ns/op	 995.99 MB/s
+BenchmarkBase64Encode/random-256	  493008	       241.3 ns/op	1060.92 MB/s
+BenchmarkBase64Encode/random-4096	   32002	      3750 ns/op	1092.37 MB/s
+BenchmarkBase64Encode/random-65536	    1990	     59826 ns/op	1095.44 MB/s
+BenchmarkBase64Encode/random-1048576	     123	    965783 ns/op	1085.73 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5591764	        21.33 ns/op	 750.13 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1852497	        64.55 ns/op	 991.46 MB/s
+BenchmarkBase64EncodeUrl/random-256	  507180	       239.6 ns/op	1068.41 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   31915	      3747 ns/op	1093.05 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    2001	     59452 ns/op	1102.33 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     122	    972201 ns/op	1078.56 MB/s
+BenchmarkBase64Decode/random-16	 2874430	        41.41 ns/op	 579.56 MB/s
+BenchmarkBase64Decode/random-64	 1418899	        84.40 ns/op	1042.62 MB/s
+BenchmarkBase64Decode/random-256	  476950	       247.0 ns/op	1392.84 MB/s
+BenchmarkBase64Decode/random-4096	   33714	      3545 ns/op	1541.18 MB/s
+BenchmarkBase64Decode/random-65536	    2092	     56151 ns/op	1556.25 MB/s
+BenchmarkBase64Decode/random-1048576	     130	    914610 ns/op	1528.63 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4484763	        26.55 ns/op	 828.52 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1775808	        67.53 ns/op	1273.52 MB/s
+BenchmarkBase64DecodeUrl/random-256	  493443	       231.0 ns/op	1480.20 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   34212	      3507 ns/op	1557.56 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    2120	     55948 ns/op	1561.85 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     130	    914513 ns/op	1528.79 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2694519	        43.25 ns/op	 554.86 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1405858	        85.23 ns/op	1032.47 MB/s
+BenchmarkBase64DecodeStrict/random-256	  457237	       248.6 ns/op	1383.56 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33898	      3538 ns/op	1544.48 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2125	     56078 ns/op	1558.24 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    912948 ns/op	1531.42 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2785630	        42.93 ns/op	 605.61 MB/s
+BenchmarkBase64DecodeMime/random-64	 1000000	       110.3 ns/op	 834.11 MB/s
+BenchmarkBase64DecodeMime/random-256	  380002	       307.3 ns/op	1151.97 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25803	      4642 ns/op	1208.08 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1605	     73975 ns/op	1212.36 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      98	   1217304 ns/op	1178.75 MB/s
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 8455506	        14.70 ns/op	1088.57 MB/s
+BenchmarkValidateUtf8/ascii-64	 7547581	        15.74 ns/op	4065.72 MB/s
+BenchmarkValidateUtf8/ascii-256	 6012094	        20.09 ns/op	12741.21 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       109.9 ns/op	37266.16 MB/s
+BenchmarkValidateUtf8/ascii-65536	   59090	      2015 ns/op	32530.29 MB/s
+BenchmarkValidateUtf8/emoji	    2389	     49630 ns/op	1320.61 MB/s
+BenchmarkValidateUtf8/hebrew	    1777	     66861 ns/op	 994.52 MB/s
+BenchmarkValidateUtf8/korean	    2012	     58924 ns/op	1130.27 MB/s
+BenchmarkValidateUtf8/japanese	    1965	     60595 ns/op	1119.03 MB/s
+BenchmarkValidateUtf8/chinese	    2011	     58159 ns/op	1200.84 MB/s
+BenchmarkValidateUtf8/arabic	    1300	     84255 ns/op	 969.50 MB/s
+BenchmarkValidateUtf8/latin	   45046	      2654 ns/op	32760.25 MB/s
+BenchmarkValidateUtf8/hindi	    1034	    114298 ns/op	 769.89 MB/s
+BenchmarkValidateUtf8/russian	     673	    176759 ns/op	 592.73 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3490	     33266 ns/op	31521.05 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8092273	        14.33 ns/op	1116.68 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7195564	        15.80 ns/op	4049.95 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6217444	        19.59 ns/op	13066.11 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       109.9 ns/op	37271.18 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59468	      2014 ns/op	32541.42 MB/s
+BenchmarkValidateUtf8Err/emoji	    2397	     49605 ns/op	1321.29 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1584	     68057 ns/op	 977.04 MB/s
+BenchmarkValidateUtf8Err/korean	    2019	     58918 ns/op	1130.39 MB/s
+BenchmarkValidateUtf8Err/japanese	    1945	     60725 ns/op	1116.64 MB/s
+BenchmarkValidateUtf8Err/chinese	    2053	     58045 ns/op	1203.20 MB/s
+BenchmarkValidateUtf8Err/arabic	    1440	     84251 ns/op	 969.54 MB/s
+BenchmarkValidateUtf8Err/latin	   44959	      2891 ns/op	30072.85 MB/s
+BenchmarkValidateUtf8Err/hindi	     936	    149529 ns/op	 588.50 MB/s
+BenchmarkValidateUtf8Err/russian	     541	    220816 ns/op	 474.47 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    2685	     40916 ns/op	25627.78 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 1983026	        57.27 ns/op	 279.35 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  482769	       216.5 ns/op	 295.64 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  138519	       890.3 ns/op	 287.55 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	    9604	     12293 ns/op	 333.19 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     670	    180725 ns/op	 362.63 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1149	    103915 ns/op	 630.73 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     535	    221063 ns/op	 300.80 MB/s
+BenchmarkUtf8ToUtf16le/korean	     734	    160672 ns/op	 414.51 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     856	    141262 ns/op	 480.02 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     831	    142723 ns/op	 489.34 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     433	    272256 ns/op	 300.03 MB/s
+BenchmarkUtf8ToUtf16le/latin	     501	    237919 ns/op	 365.42 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     547	    218951 ns/op	 401.90 MB/s
+BenchmarkUtf8ToUtf16le/russian	     316	    381182 ns/op	 274.86 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      39	   2933649 ns/op	 357.43 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 5201664	        23.00 ns/op	 695.65 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1470792	        81.55 ns/op	 784.76 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  364276	       322.6 ns/op	 793.52 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   24033	      4988 ns/op	 821.13 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1472	     79888 ns/op	 820.35 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1395	     86289 ns/op	 759.56 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     656	    181846 ns/op	 365.67 MB/s
+BenchmarkUtf8ToUtf32/korean	    1089	    107019 ns/op	 622.32 MB/s
+BenchmarkUtf8ToUtf32/japanese	    1005	    116669 ns/op	 581.20 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1064	    111379 ns/op	 627.05 MB/s
+BenchmarkUtf8ToUtf32/arabic	     547	    217155 ns/op	 376.16 MB/s
+BenchmarkUtf8ToUtf32/latin	    1128	    106072 ns/op	 819.63 MB/s
+BenchmarkUtf8ToUtf32/hindi	     607	    196238 ns/op	 448.42 MB/s
+BenchmarkUtf8ToUtf32/russian	     360	    331014 ns/op	 316.51 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      88	   1322884 ns/op	 792.64 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 5128664	        22.83 ns/op	1401.59 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	 1477731	        81.10 ns/op	1578.26 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  370314	       336.6 ns/op	1521.08 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   18982	      5707 ns/op	1435.50 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1372	     85245 ns/op	 548.42 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1462	     81417 ns/op	 576.32 MB/s
+BenchmarkUtf16leToUtf8/korean	    1366	     85309 ns/op	 636.39 MB/s
+BenchmarkUtf16leToUtf8/hindi	     778	    153144 ns/op	 427.91 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1406	     84805 ns/op	 772.86 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     736	    160338 ns/op	 465.34 MB/s
+BenchmarkUtf16leToUtf8/arabic	     607	    194839 ns/op	 469.77 MB/s
+BenchmarkUtf16leToUtf8/russian	     466	    255292 ns/op	 454.23 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1494	     79909 ns/op	1640.27 MB/s
+BenchmarkUtf16leToUtf8/latin	    1129	    106498 ns/op	1632.72 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      90	   1314247 ns/op	1595.71 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 6424382	        18.60 ns/op	3440.69 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1875958	        74.50 ns/op	3436.44 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  442778	       261.4 ns/op	3916.71 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31802	      3770 ns/op	4346.18 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1815	     66345 ns/op	 987.93 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1377	     86156 ns/op	1085.20 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1448	     80676 ns/op	1163.17 MB/s
+BenchmarkUtf32ToUtf8/korean	    1344	     87415 ns/op	1242.07 MB/s
+BenchmarkUtf32ToUtf8/hindi	     784	    153138 ns/op	 855.83 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     783	    151171 ns/op	 987.09 MB/s
+BenchmarkUtf32ToUtf8/arabic	     645	    184121 ns/op	 994.22 MB/s
+BenchmarkUtf32ToUtf8/russian	     487	    246507 ns/op	 940.82 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1951	     60027 ns/op	4367.13 MB/s
+BenchmarkUtf32ToUtf8/latin	    1479	     79486 ns/op	4375.11 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     120	    991202 ns/op	4231.53 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 9288469	        12.77 ns/op	1252.69 MB/s
+BenchmarkCountUtf8/ascii-64	 2807006	        42.16 ns/op	1517.88 MB/s
+BenchmarkCountUtf8/ascii-256	  691014	       167.4 ns/op	1529.15 MB/s
+BenchmarkCountUtf8/ascii-4096	   47905	      2499 ns/op	1638.79 MB/s
+BenchmarkCountUtf8/ascii-65536	    2962	     39766 ns/op	1648.05 MB/s
+BenchmarkCountUtf8/emoji	    1294	     82186 ns/op	 797.48 MB/s
+BenchmarkCountUtf8/hebrew	    1208	     97455 ns/op	 682.32 MB/s
+BenchmarkCountUtf8/korean	    1365	     87281 ns/op	 763.06 MB/s
+BenchmarkCountUtf8/japanese	    1200	    100552 ns/op	 674.36 MB/s
+BenchmarkCountUtf8/chinese	    1208	     99746 ns/op	 700.18 MB/s
+BenchmarkCountUtf8/arabic	     972	    121860 ns/op	 670.32 MB/s
+BenchmarkCountUtf8/latin	    2260	     52980 ns/op	1640.99 MB/s
+BenchmarkCountUtf8/hindi	     679	    166937 ns/op	 527.13 MB/s
+BenchmarkCountUtf8/russian	     469	    249790 ns/op	 419.43 MB/s
+BenchmarkCountUtf8/ascii-1048576	     184	    645027 ns/op	1625.63 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5673460	        21.13 ns/op	 757.17 MB/s
+BenchmarkBase64Encode/random-64	 1853432	        64.48 ns/op	 992.59 MB/s
+BenchmarkBase64Encode/random-256	  460129	       238.6 ns/op	1072.95 MB/s
+BenchmarkBase64Encode/random-4096	   32108	      3735 ns/op	1096.73 MB/s
+BenchmarkBase64Encode/random-65536	    1970	     59714 ns/op	1097.50 MB/s
+BenchmarkBase64Encode/random-1048576	     122	    972871 ns/op	1077.82 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5596815	        21.30 ns/op	 751.00 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1858292	        64.54 ns/op	 991.58 MB/s
+BenchmarkBase64EncodeUrl/random-256	  477877	       238.6 ns/op	1072.73 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   31953	      3746 ns/op	1093.55 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    1995	     64302 ns/op	1019.19 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     122	    973354 ns/op	1077.28 MB/s
+BenchmarkBase64Decode/random-16	 2858090	        41.91 ns/op	 572.68 MB/s
+BenchmarkBase64Decode/random-64	 1422134	        84.51 ns/op	1041.26 MB/s
+BenchmarkBase64Decode/random-256	  471379	       247.7 ns/op	1388.63 MB/s
+BenchmarkBase64Decode/random-4096	   33848	      3544 ns/op	1541.93 MB/s
+BenchmarkBase64Decode/random-65536	    2104	     56044 ns/op	1559.20 MB/s
+BenchmarkBase64Decode/random-1048576	     129	    922126 ns/op	1516.17 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4458334	        26.66 ns/op	 825.09 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1779274	        67.39 ns/op	1276.12 MB/s
+BenchmarkBase64DecodeUrl/random-256	  512890	       231.0 ns/op	1480.20 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   34050	      3511 ns/op	1555.48 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    2128	     56074 ns/op	1558.32 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     129	    916724 ns/op	1525.11 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2660163	        43.65 ns/op	 549.81 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1399098	        85.67 ns/op	1027.23 MB/s
+BenchmarkBase64DecodeStrict/random-256	  462852	       250.0 ns/op	1375.90 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33624	      3546 ns/op	1540.85 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2102	     56120 ns/op	1557.08 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    913803 ns/op	1529.98 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2811903	        43.04 ns/op	 604.07 MB/s
+BenchmarkBase64DecodeMime/random-64	  962035	       114.6 ns/op	 802.64 MB/s
+BenchmarkBase64DecodeMime/random-256	  380082	       312.2 ns/op	1134.00 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25699	      4671 ns/op	1200.61 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1602	     74164 ns/op	1209.27 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      98	   1215585 ns/op	1180.42 MB/s
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 6799616	        15.90 ns/op	1006.13 MB/s
+BenchmarkValidateUtf8/ascii-64	 7026193	        16.90 ns/op	3788.08 MB/s
+BenchmarkValidateUtf8/ascii-256	 5720790	        19.89 ns/op	12870.59 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       110.1 ns/op	37194.10 MB/s
+BenchmarkValidateUtf8/ascii-65536	   58945	      2030 ns/op	32289.03 MB/s
+BenchmarkValidateUtf8/emoji	    2376	     49818 ns/op	1315.63 MB/s
+BenchmarkValidateUtf8/hebrew	    1711	     66912 ns/op	 993.77 MB/s
+BenchmarkValidateUtf8/korean	    1978	     59840 ns/op	1112.97 MB/s
+BenchmarkValidateUtf8/japanese	    1843	     64142 ns/op	1057.16 MB/s
+BenchmarkValidateUtf8/chinese	    1869	     62000 ns/op	1126.46 MB/s
+BenchmarkValidateUtf8/arabic	    1340	     85843 ns/op	 951.56 MB/s
+BenchmarkValidateUtf8/latin	   43263	      2776 ns/op	31322.57 MB/s
+BenchmarkValidateUtf8/hindi	     986	    119003 ns/op	 739.45 MB/s
+BenchmarkValidateUtf8/russian	     649	    182845 ns/op	 573.00 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3160	     34634 ns/op	30276.35 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 7657382	        15.50 ns/op	1032.09 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 6922851	        17.14 ns/op	3734.05 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 5956508	        19.57 ns/op	13083.84 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       110.3 ns/op	37150.49 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59186	      2017 ns/op	32486.24 MB/s
+BenchmarkValidateUtf8Err/emoji	    2404	     49667 ns/op	1319.63 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1809	     66898 ns/op	 993.98 MB/s
+BenchmarkValidateUtf8Err/korean	    1971	     58891 ns/op	1130.89 MB/s
+BenchmarkValidateUtf8Err/japanese	    1929	     61083 ns/op	1110.09 MB/s
+BenchmarkValidateUtf8Err/chinese	    2011	     58177 ns/op	1200.47 MB/s
+BenchmarkValidateUtf8Err/arabic	    1418	     82934 ns/op	 984.94 MB/s
+BenchmarkValidateUtf8Err/latin	   44763	      2669 ns/op	32572.20 MB/s
+BenchmarkValidateUtf8Err/hindi	    1022	    114526 ns/op	 768.36 MB/s
+BenchmarkValidateUtf8Err/russian	     669	    177549 ns/op	 590.09 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    3404	     39179 ns/op	26763.67 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 2001320	        53.67 ns/op	 298.13 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  627806	       185.2 ns/op	 345.52 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  165410	       844.7 ns/op	 303.06 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	   10000	     11134 ns/op	 367.87 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     668	    178791 ns/op	 366.55 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1156	    103438 ns/op	 633.63 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     532	    239355 ns/op	 277.81 MB/s
+BenchmarkUtf8ToUtf16le/korean	     746	    159485 ns/op	 417.59 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     834	    142998 ns/op	 474.19 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     849	    136190 ns/op	 512.81 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     440	    276381 ns/op	 295.55 MB/s
+BenchmarkUtf8ToUtf16le/latin	     507	    235752 ns/op	 368.78 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     547	    217611 ns/op	 404.38 MB/s
+BenchmarkUtf8ToUtf16le/russian	     302	    383202 ns/op	 273.41 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      40	   2913958 ns/op	 359.85 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 5201524	        22.93 ns/op	 697.77 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1465119	        81.61 ns/op	 784.24 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  364485	       324.6 ns/op	 788.69 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   23625	      5027 ns/op	 814.81 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1467	     80392 ns/op	 815.21 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1396	     84938 ns/op	 771.65 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     679	    176173 ns/op	 377.44 MB/s
+BenchmarkUtf8ToUtf32/korean	    1082	    108790 ns/op	 612.19 MB/s
+BenchmarkUtf8ToUtf32/japanese	    1024	    115106 ns/op	 589.09 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1099	    110524 ns/op	 631.90 MB/s
+BenchmarkUtf8ToUtf32/arabic	     548	    221152 ns/op	 369.36 MB/s
+BenchmarkUtf8ToUtf32/latin	    1104	    108867 ns/op	 798.59 MB/s
+BenchmarkUtf8ToUtf32/hindi	     612	    197214 ns/op	 446.20 MB/s
+BenchmarkUtf8ToUtf32/russian	     360	    332401 ns/op	 315.19 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      85	   1354984 ns/op	 773.87 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 4997368	        25.55 ns/op	1252.27 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	  725480	       151.0 ns/op	 847.54 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  369296	       330.5 ns/op	1548.98 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   23588	      5049 ns/op	1622.39 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1376	     85299 ns/op	 548.07 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1446	     83302 ns/op	 563.27 MB/s
+BenchmarkUtf16leToUtf8/korean	    1392	     85551 ns/op	 634.59 MB/s
+BenchmarkUtf16leToUtf8/hindi	     571	    233259 ns/op	 280.94 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1075	    102967 ns/op	 636.54 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     673	    167956 ns/op	 444.23 MB/s
+BenchmarkUtf16leToUtf8/arabic	     603	    200627 ns/op	 456.22 MB/s
+BenchmarkUtf16leToUtf8/russian	     469	    254672 ns/op	 455.34 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1502	     79424 ns/op	1650.29 MB/s
+BenchmarkUtf16leToUtf8/latin	    1120	    106176 ns/op	1637.68 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      87	   1339870 ns/op	1565.19 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 5868207	        19.36 ns/op	3305.40 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1909159	        62.64 ns/op	4086.60 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  431808	       252.9 ns/op	4048.84 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31946	      3741 ns/op	4380.04 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1809	     65524 ns/op	1000.31 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1384	     85844 ns/op	1089.14 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1476	     80780 ns/op	1161.67 MB/s
+BenchmarkUtf32ToUtf8/korean	    1365	     87505 ns/op	1240.79 MB/s
+BenchmarkUtf32ToUtf8/hindi	     768	    153259 ns/op	 855.15 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     784	    150789 ns/op	 989.59 MB/s
+BenchmarkUtf32ToUtf8/arabic	     643	    185522 ns/op	 986.71 MB/s
+BenchmarkUtf32ToUtf8/russian	     486	    252025 ns/op	 920.22 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1946	     61128 ns/op	4288.45 MB/s
+BenchmarkUtf32ToUtf8/latin	    1506	     79300 ns/op	4385.35 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     121	    984829 ns/op	4258.92 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 9317120	        12.78 ns/op	1252.16 MB/s
+BenchmarkCountUtf8/ascii-64	 2773784	        42.38 ns/op	1510.25 MB/s
+BenchmarkCountUtf8/ascii-256	  687279	       167.2 ns/op	1531.10 MB/s
+BenchmarkCountUtf8/ascii-4096	   47564	      2501 ns/op	1637.71 MB/s
+BenchmarkCountUtf8/ascii-65536	    2959	     39723 ns/op	1649.82 MB/s
+BenchmarkCountUtf8/emoji	    1261	     83984 ns/op	 780.41 MB/s
+BenchmarkCountUtf8/hebrew	    1150	     99385 ns/op	 669.06 MB/s
+BenchmarkCountUtf8/korean	    1310	     88678 ns/op	 751.03 MB/s
+BenchmarkCountUtf8/japanese	    1185	    109455 ns/op	 619.51 MB/s
+BenchmarkCountUtf8/chinese	    1214	     98921 ns/op	 706.02 MB/s
+BenchmarkCountUtf8/arabic	    1002	    120188 ns/op	 679.64 MB/s
+BenchmarkCountUtf8/latin	    2211	     53110 ns/op	1636.97 MB/s
+BenchmarkCountUtf8/hindi	     680	    165298 ns/op	 532.35 MB/s
+BenchmarkCountUtf8/russian	     468	    252902 ns/op	 414.27 MB/s
+BenchmarkCountUtf8/ascii-1048576	     158	    714287 ns/op	1468.00 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5619092	        21.18 ns/op	 755.37 MB/s
+BenchmarkBase64Encode/random-64	 1850185	        64.85 ns/op	 986.96 MB/s
+BenchmarkBase64Encode/random-256	  488684	       241.5 ns/op	1059.99 MB/s
+BenchmarkBase64Encode/random-4096	   32038	      3736 ns/op	1096.49 MB/s
+BenchmarkBase64Encode/random-65536	    1989	     59599 ns/op	1099.61 MB/s
+BenchmarkBase64Encode/random-1048576	     122	    973214 ns/op	1077.44 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5563219	        21.39 ns/op	 748.09 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1856370	        64.59 ns/op	 990.91 MB/s
+BenchmarkBase64EncodeUrl/random-256	  464130	       241.0 ns/op	1062.23 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   31796	      3787 ns/op	1081.71 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    1989	     59513 ns/op	1101.21 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     122	    973558 ns/op	1077.06 MB/s
+BenchmarkBase64Decode/random-16	 2848158	        41.69 ns/op	 575.63 MB/s
+BenchmarkBase64Decode/random-64	 1426509	        84.15 ns/op	1045.73 MB/s
+BenchmarkBase64Decode/random-256	  471045	       247.2 ns/op	1391.33 MB/s
+BenchmarkBase64Decode/random-4096	   32116	      3597 ns/op	1518.88 MB/s
+BenchmarkBase64Decode/random-65536	    2125	     56059 ns/op	1558.79 MB/s
+BenchmarkBase64Decode/random-1048576	     130	    912269 ns/op	1532.56 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4465076	        26.66 ns/op	 825.36 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1742102	        68.85 ns/op	1249.05 MB/s
+BenchmarkBase64DecodeUrl/random-256	  513748	       230.0 ns/op	1486.99 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   34176	      3610 ns/op	1513.21 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    2101	     56264 ns/op	1553.06 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     128	    922189 ns/op	1516.07 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2795898	        42.68 ns/op	 562.27 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1405466	        85.48 ns/op	1029.46 MB/s
+BenchmarkBase64DecodeStrict/random-256	  463782	       254.0 ns/op	1354.28 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33822	      3644 ns/op	1499.66 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2113	     56430 ns/op	1548.54 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    913903 ns/op	1529.82 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2747613	        44.49 ns/op	 584.46 MB/s
+BenchmarkBase64DecodeMime/random-64	 1000000	       111.0 ns/op	 829.04 MB/s
+BenchmarkBase64DecodeMime/random-256	  378438	       311.1 ns/op	1137.89 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25945	      4618 ns/op	1214.42 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1581	     77147 ns/op	1162.51 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      94	   1272747 ns/op	1127.40 MB/s
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 8201538	        14.93 ns/op	1071.83 MB/s
+BenchmarkValidateUtf8/ascii-64	 7641532	        15.82 ns/op	4044.40 MB/s
+BenchmarkValidateUtf8/ascii-256	 5965518	        19.95 ns/op	12834.15 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       114.7 ns/op	35715.63 MB/s
+BenchmarkValidateUtf8/ascii-65536	   58408	      2149 ns/op	30498.07 MB/s
+BenchmarkValidateUtf8/emoji	    2342	     50466 ns/op	1298.74 MB/s
+BenchmarkValidateUtf8/hebrew	    1695	     68473 ns/op	 971.12 MB/s
+BenchmarkValidateUtf8/korean	    1982	     59707 ns/op	1115.44 MB/s
+BenchmarkValidateUtf8/japanese	    1524	     73913 ns/op	 917.40 MB/s
+BenchmarkValidateUtf8/chinese	    1906	     65370 ns/op	1068.38 MB/s
+BenchmarkValidateUtf8/arabic	    1396	     82795 ns/op	 986.60 MB/s
+BenchmarkValidateUtf8/latin	   44872	      2673 ns/op	32522.00 MB/s
+BenchmarkValidateUtf8/hindi	    1035	    114259 ns/op	 770.15 MB/s
+BenchmarkValidateUtf8/russian	     666	    177777 ns/op	 589.33 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3463	     32829 ns/op	31940.86 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8155803	        14.47 ns/op	1106.06 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7670407	        15.70 ns/op	4076.66 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6186115	        19.36 ns/op	13226.55 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       110.6 ns/op	37041.04 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59242	      2023 ns/op	32395.59 MB/s
+BenchmarkValidateUtf8Err/emoji	    2344	     49894 ns/op	1313.64 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1776	     66954 ns/op	 993.14 MB/s
+BenchmarkValidateUtf8Err/korean	    1944	     59380 ns/op	1121.59 MB/s
+BenchmarkValidateUtf8Err/japanese	    1950	     60792 ns/op	1115.41 MB/s
+BenchmarkValidateUtf8Err/chinese	    2038	     62224 ns/op	1122.39 MB/s
+BenchmarkValidateUtf8Err/arabic	    1410	     83227 ns/op	 981.48 MB/s
+BenchmarkValidateUtf8Err/latin	   44716	      2657 ns/op	32717.76 MB/s
+BenchmarkValidateUtf8Err/hindi	    1038	    114556 ns/op	 768.16 MB/s
+BenchmarkValidateUtf8Err/russian	     672	    178244 ns/op	 587.79 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    3463	     32808 ns/op	31960.56 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 2571399	        46.62 ns/op	 343.17 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  649027	       185.3 ns/op	 345.47 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  169609	       707.7 ns/op	 361.72 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	   10000	     11190 ns/op	 366.03 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     666	    178938 ns/op	 366.25 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1155	    104642 ns/op	 626.34 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     538	    220524 ns/op	 301.53 MB/s
+BenchmarkUtf8ToUtf16le/korean	     739	    161262 ns/op	 412.99 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     840	    142186 ns/op	 476.90 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     873	    137200 ns/op	 509.04 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     439	    273164 ns/op	 299.03 MB/s
+BenchmarkUtf8ToUtf16le/latin	     499	    238666 ns/op	 364.27 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     544	    219014 ns/op	 401.79 MB/s
+BenchmarkUtf8ToUtf16le/russian	     313	    379448 ns/op	 276.11 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      34	   3138520 ns/op	 334.10 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 4569542	        23.76 ns/op	 673.44 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1465899	        81.55 ns/op	 784.81 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  361650	       322.8 ns/op	 792.94 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   24076	      4992 ns/op	 820.49 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1491	     79781 ns/op	 821.45 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1390	     84629 ns/op	 774.46 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     654	    179987 ns/op	 369.44 MB/s
+BenchmarkUtf8ToUtf32/korean	    1077	    107241 ns/op	 621.03 MB/s
+BenchmarkUtf8ToUtf32/japanese	    1016	    116599 ns/op	 581.55 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1065	    113229 ns/op	 616.80 MB/s
+BenchmarkUtf8ToUtf32/arabic	     560	    219532 ns/op	 372.09 MB/s
+BenchmarkUtf8ToUtf32/latin	    1116	    106606 ns/op	 815.52 MB/s
+BenchmarkUtf8ToUtf32/hindi	     610	    196476 ns/op	 447.88 MB/s
+BenchmarkUtf8ToUtf32/russian	     362	    329371 ns/op	 318.09 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      88	   1319988 ns/op	 794.38 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 5131671	        22.85 ns/op	1400.62 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	 1469192	        81.44 ns/op	1571.70 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  371767	       320.8 ns/op	1596.06 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   23989	      4985 ns/op	1643.24 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1406	     84734 ns/op	 551.73 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1450	     81419 ns/op	 576.30 MB/s
+BenchmarkUtf16leToUtf8/korean	    1401	     85331 ns/op	 636.23 MB/s
+BenchmarkUtf16leToUtf8/hindi	     778	    152553 ns/op	 429.57 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1402	     85383 ns/op	 767.63 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     744	    161780 ns/op	 461.19 MB/s
+BenchmarkUtf16leToUtf8/arabic	     598	    194758 ns/op	 469.97 MB/s
+BenchmarkUtf16leToUtf8/russian	     464	    256698 ns/op	 451.75 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1494	     81777 ns/op	1602.81 MB/s
+BenchmarkUtf16leToUtf8/latin	    1099	    105974 ns/op	1640.80 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      91	   1299289 ns/op	1614.08 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 6392452	        18.58 ns/op	3443.80 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1914830	        62.54 ns/op	4093.10 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  470647	       252.2 ns/op	4060.37 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31729	      3762 ns/op	4355.31 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1779	     65879 ns/op	 994.91 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1376	     87861 ns/op	1064.14 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1228	     82171 ns/op	1142.01 MB/s
+BenchmarkUtf32ToUtf8/korean	    1360	     87594 ns/op	1239.53 MB/s
+BenchmarkUtf32ToUtf8/hindi	     776	    153243 ns/op	 855.24 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     782	    151280 ns/op	 986.38 MB/s
+BenchmarkUtf32ToUtf8/arabic	     640	    184643 ns/op	 991.41 MB/s
+BenchmarkUtf32ToUtf8/russian	     486	    245742 ns/op	 943.75 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1850	     59912 ns/op	4375.48 MB/s
+BenchmarkUtf32ToUtf8/latin	    1476	     79690 ns/op	4363.92 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     121	    984328 ns/op	4261.08 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 9263374	        12.78 ns/op	1252.39 MB/s
+BenchmarkCountUtf8/ascii-64	 2547952	        46.97 ns/op	1362.66 MB/s
+BenchmarkCountUtf8/ascii-256	  689629	       167.1 ns/op	1532.27 MB/s
+BenchmarkCountUtf8/ascii-4096	   47940	      2495 ns/op	1641.88 MB/s
+BenchmarkCountUtf8/ascii-65536	    2977	     39865 ns/op	1643.96 MB/s
+BenchmarkCountUtf8/emoji	    1302	     82777 ns/op	 791.79 MB/s
+BenchmarkCountUtf8/hebrew	    1185	     97560 ns/op	 681.58 MB/s
+BenchmarkCountUtf8/korean	    1358	     87320 ns/op	 762.71 MB/s
+BenchmarkCountUtf8/japanese	    1183	    101153 ns/op	 670.35 MB/s
+BenchmarkCountUtf8/chinese	    1189	     99619 ns/op	 701.07 MB/s
+BenchmarkCountUtf8/arabic	     968	    121561 ns/op	 671.97 MB/s
+BenchmarkCountUtf8/latin	    2234	     52978 ns/op	1641.04 MB/s
+BenchmarkCountUtf8/hindi	     687	    166001 ns/op	 530.10 MB/s
+BenchmarkCountUtf8/russian	     481	    249649 ns/op	 419.67 MB/s
+BenchmarkCountUtf8/ascii-1048576	     164	    693647 ns/op	1511.68 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5639574	        21.02 ns/op	 761.15 MB/s
+BenchmarkBase64Encode/random-64	 1851920	        64.49 ns/op	 992.45 MB/s
+BenchmarkBase64Encode/random-256	  490186	       253.4 ns/op	1010.35 MB/s
+BenchmarkBase64Encode/random-4096	   31828	      3750 ns/op	1092.31 MB/s
+BenchmarkBase64Encode/random-65536	    1958	     59680 ns/op	1098.12 MB/s
+BenchmarkBase64Encode/random-1048576	     122	    970926 ns/op	1079.98 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5184206	        21.82 ns/op	 733.32 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1835080	        65.17 ns/op	 982.11 MB/s
+BenchmarkBase64EncodeUrl/random-256	  482834	       239.3 ns/op	1070.01 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   32118	      3732 ns/op	1097.51 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    1984	     59782 ns/op	1096.24 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     121	    974873 ns/op	1075.60 MB/s
+BenchmarkBase64Decode/random-16	 2814111	        41.95 ns/op	 572.09 MB/s
+BenchmarkBase64Decode/random-64	 1424688	        84.18 ns/op	1045.41 MB/s
+BenchmarkBase64Decode/random-256	  470294	       247.1 ns/op	1392.14 MB/s
+BenchmarkBase64Decode/random-4096	   33667	      3542 ns/op	1542.44 MB/s
+BenchmarkBase64Decode/random-65536	    2109	     55950 ns/op	1561.81 MB/s
+BenchmarkBase64Decode/random-1048576	     130	    909772 ns/op	1536.76 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4490422	        26.77 ns/op	 821.87 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1779732	        67.32 ns/op	1277.57 MB/s
+BenchmarkBase64DecodeUrl/random-256	  514548	       230.8 ns/op	1481.69 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   34162	      3572 ns/op	1529.23 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    1983	     56270 ns/op	1552.91 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     130	    911990 ns/op	1533.02 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2635398	        43.59 ns/op	 550.64 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1408959	        85.15 ns/op	1033.42 MB/s
+BenchmarkBase64DecodeStrict/random-256	  446752	       248.2 ns/op	1386.14 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33810	      3539 ns/op	1544.03 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2101	     56052 ns/op	1558.99 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    914013 ns/op	1529.63 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2800051	        42.58 ns/op	 610.64 MB/s
+BenchmarkBase64DecodeMime/random-64	 1000000	       111.3 ns/op	 826.77 MB/s
+BenchmarkBase64DecodeMime/random-256	  385909	       331.9 ns/op	1066.56 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25447	      4692 ns/op	1195.21 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1609	     73601 ns/op	1218.52 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      88	   1207917 ns/op	1187.91 MB/s
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 8055508	        15.69 ns/op	1019.92 MB/s
+BenchmarkValidateUtf8/ascii-64	 6709668	        19.45 ns/op	3290.66 MB/s
+BenchmarkValidateUtf8/ascii-256	 5939469	        20.28 ns/op	12624.24 MB/s
+BenchmarkValidateUtf8/ascii-4096	  947203	       114.5 ns/op	35763.51 MB/s
+BenchmarkValidateUtf8/ascii-65536	   58803	      2031 ns/op	32264.03 MB/s
+BenchmarkValidateUtf8/emoji	    2341	     50094 ns/op	1308.37 MB/s
+BenchmarkValidateUtf8/hebrew	    1768	     67570 ns/op	 984.09 MB/s
+BenchmarkValidateUtf8/korean	    2019	     59151 ns/op	1125.93 MB/s
+BenchmarkValidateUtf8/japanese	    1959	     61189 ns/op	1108.17 MB/s
+BenchmarkValidateUtf8/chinese	    2040	     59360 ns/op	1176.55 MB/s
+BenchmarkValidateUtf8/arabic	    1450	     82020 ns/op	 995.92 MB/s
+BenchmarkValidateUtf8/latin	   45099	      2670 ns/op	32564.33 MB/s
+BenchmarkValidateUtf8/hindi	    1006	    116029 ns/op	 758.40 MB/s
+BenchmarkValidateUtf8/russian	     670	    179492 ns/op	 583.70 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3348	     34074 ns/op	30773.55 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 7308334	        14.59 ns/op	1096.95 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7490984	        15.55 ns/op	4115.80 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6189559	        19.34 ns/op	13234.39 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       109.9 ns/op	37281.28 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59341	      2023 ns/op	32398.38 MB/s
+BenchmarkValidateUtf8Err/emoji	    2400	     51072 ns/op	1283.33 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1753	     67397 ns/op	 986.62 MB/s
+BenchmarkValidateUtf8Err/korean	    1994	     59284 ns/op	1123.40 MB/s
+BenchmarkValidateUtf8Err/japanese	    1933	     60913 ns/op	1113.19 MB/s
+BenchmarkValidateUtf8Err/chinese	    1987	     58123 ns/op	1201.60 MB/s
+BenchmarkValidateUtf8Err/arabic	    1466	     82060 ns/op	 995.43 MB/s
+BenchmarkValidateUtf8Err/latin	   44884	      2659 ns/op	32701.02 MB/s
+BenchmarkValidateUtf8Err/hindi	    1021	    115719 ns/op	 760.44 MB/s
+BenchmarkValidateUtf8Err/russian	     672	    177031 ns/op	 591.82 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    3403	     32502 ns/op	32262.26 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 2616376	        45.28 ns/op	 353.37 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  665240	       184.1 ns/op	 347.72 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  169099	       706.4 ns/op	 362.38 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	   10000	     11148 ns/op	 367.42 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     675	    177817 ns/op	 368.56 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1135	    103241 ns/op	 634.84 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     541	    221052 ns/op	 300.81 MB/s
+BenchmarkUtf8ToUtf16le/korean	     744	    160792 ns/op	 414.20 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     842	    140271 ns/op	 483.41 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     907	    147736 ns/op	 472.74 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     445	    267553 ns/op	 305.30 MB/s
+BenchmarkUtf8ToUtf16le/latin	     507	    237525 ns/op	 366.02 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     543	    219377 ns/op	 401.12 MB/s
+BenchmarkUtf8ToUtf16le/russian	     312	    382763 ns/op	 273.72 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      40	   2920006 ns/op	 359.10 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 5204223	        22.88 ns/op	 699.24 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1464843	        81.68 ns/op	 783.56 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  359502	       324.2 ns/op	 789.62 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   24038	      4984 ns/op	 821.82 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1470	     79813 ns/op	 821.12 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1408	     86155 ns/op	 760.74 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     650	    182259 ns/op	 364.84 MB/s
+BenchmarkUtf8ToUtf32/korean	    1077	    106867 ns/op	 623.20 MB/s
+BenchmarkUtf8ToUtf32/japanese	    1017	    115643 ns/op	 586.36 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1068	    111522 ns/op	 626.24 MB/s
+BenchmarkUtf8ToUtf32/arabic	     542	    216213 ns/op	 377.80 MB/s
+BenchmarkUtf8ToUtf32/latin	    1129	    105773 ns/op	 821.95 MB/s
+BenchmarkUtf8ToUtf32/hindi	     608	    196776 ns/op	 447.19 MB/s
+BenchmarkUtf8ToUtf32/russian	     361	    330203 ns/op	 317.29 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      85	   1338946 ns/op	 783.14 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 5149809	        23.00 ns/op	1391.22 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	 1470320	        81.50 ns/op	1570.55 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  359029	       321.9 ns/op	1590.57 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   23842	      5020 ns/op	1631.84 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1388	     85334 ns/op	 547.85 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1442	     81951 ns/op	 572.56 MB/s
+BenchmarkUtf16leToUtf8/korean	    1346	     86470 ns/op	 627.85 MB/s
+BenchmarkUtf16leToUtf8/hindi	     777	    154805 ns/op	 423.32 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1411	     84651 ns/op	 774.26 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     739	    159501 ns/op	 467.78 MB/s
+BenchmarkUtf16leToUtf8/arabic	     608	    195653 ns/op	 467.82 MB/s
+BenchmarkUtf16leToUtf8/russian	     468	    255201 ns/op	 454.39 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1479	     79735 ns/op	1643.85 MB/s
+BenchmarkUtf16leToUtf8/latin	    1120	    105661 ns/op	1645.66 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      91	   1300684 ns/op	1612.34 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 6386022	        18.47 ns/op	3465.75 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1905848	        62.64 ns/op	4087.16 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  461614	       252.1 ns/op	4061.87 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31856	      3834 ns/op	4273.02 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1783	     65660 ns/op	 998.24 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1368	     86193 ns/op	1084.72 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1483	     81101 ns/op	1157.08 MB/s
+BenchmarkUtf32ToUtf8/korean	    1358	     87347 ns/op	1243.05 MB/s
+BenchmarkUtf32ToUtf8/hindi	     776	    153008 ns/op	 856.56 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     776	    151619 ns/op	 984.17 MB/s
+BenchmarkUtf32ToUtf8/arabic	     642	    184293 ns/op	 993.29 MB/s
+BenchmarkUtf32ToUtf8/russian	     466	    275484 ns/op	 841.86 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1929	     59940 ns/op	4373.45 MB/s
+BenchmarkUtf32ToUtf8/latin	    1482	     79258 ns/op	4387.67 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     120	   1019387 ns/op	4114.53 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 8923609	        13.26 ns/op	1206.58 MB/s
+BenchmarkCountUtf8/ascii-64	 2671945	        43.22 ns/op	1480.87 MB/s
+BenchmarkCountUtf8/ascii-256	  710252	       166.4 ns/op	1538.39 MB/s
+BenchmarkCountUtf8/ascii-4096	   46616	      2530 ns/op	1618.77 MB/s
+BenchmarkCountUtf8/ascii-65536	    2970	     39668 ns/op	1652.11 MB/s
+BenchmarkCountUtf8/emoji	    1286	     81858 ns/op	 800.68 MB/s
+BenchmarkCountUtf8/hebrew	    1208	     96718 ns/op	 687.51 MB/s
+BenchmarkCountUtf8/korean	    1358	     86586 ns/op	 769.18 MB/s
+BenchmarkCountUtf8/japanese	    1202	    100102 ns/op	 677.39 MB/s
+BenchmarkCountUtf8/chinese	    1192	     97768 ns/op	 714.34 MB/s
+BenchmarkCountUtf8/arabic	     963	    119608 ns/op	 682.94 MB/s
+BenchmarkCountUtf8/latin	    2251	     52842 ns/op	1645.27 MB/s
+BenchmarkCountUtf8/hindi	     686	    164310 ns/op	 535.56 MB/s
+BenchmarkCountUtf8/russian	     472	    248905 ns/op	 420.92 MB/s
+BenchmarkCountUtf8/ascii-1048576	     186	    643860 ns/op	1628.58 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5671570	        21.04 ns/op	 760.42 MB/s
+BenchmarkBase64Encode/random-64	 1875056	        64.19 ns/op	 997.05 MB/s
+BenchmarkBase64Encode/random-256	  481719	       242.3 ns/op	1056.74 MB/s
+BenchmarkBase64Encode/random-4096	   31956	      3743 ns/op	1094.28 MB/s
+BenchmarkBase64Encode/random-65536	    1989	     59716 ns/op	1097.47 MB/s
+BenchmarkBase64Encode/random-1048576	     122	    976546 ns/op	1073.76 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5617628	        21.36 ns/op	 749.11 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1848148	        64.77 ns/op	 988.14 MB/s
+BenchmarkBase64EncodeUrl/random-256	  490125	       240.1 ns/op	1066.28 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   32013	      3745 ns/op	1093.82 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    1999	     59912 ns/op	1093.87 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     122	    972825 ns/op	1077.87 MB/s
+BenchmarkBase64Decode/random-16	 2871848	        41.73 ns/op	 575.19 MB/s
+BenchmarkBase64Decode/random-64	 1418613	        84.50 ns/op	1041.37 MB/s
+BenchmarkBase64Decode/random-256	  473695	       247.2 ns/op	1391.35 MB/s
+BenchmarkBase64Decode/random-4096	   33493	      3577 ns/op	1527.62 MB/s
+BenchmarkBase64Decode/random-65536	    1966	     56784 ns/op	1538.89 MB/s
+BenchmarkBase64Decode/random-1048576	     130	    915191 ns/op	1527.66 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4465166	        26.69 ns/op	 824.23 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1770474	        67.67 ns/op	1270.85 MB/s
+BenchmarkBase64DecodeUrl/random-256	  505084	       233.4 ns/op	1465.61 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   33738	      3622 ns/op	1508.12 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    1878	     57660 ns/op	1515.48 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     123	    955806 ns/op	1462.75 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2766285	        43.08 ns/op	 557.13 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1402671	        85.55 ns/op	1028.58 MB/s
+BenchmarkBase64DecodeStrict/random-256	  442988	       249.9 ns/op	1376.74 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33572	      3560 ns/op	1534.80 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2062	     56389 ns/op	1549.66 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    914858 ns/op	1528.22 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2804565	        43.09 ns/op	 603.36 MB/s
+BenchmarkBase64DecodeMime/random-64	 1000000	       110.5 ns/op	 832.47 MB/s
+BenchmarkBase64DecodeMime/random-256	  363938	       314.7 ns/op	1124.96 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25539	      4685 ns/op	1196.96 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1573	     74592 ns/op	1202.33 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      97	   1219385 ns/op	1176.74 MB/s
+# SKIP BenchmarkValidateAscii: Go's standard library has no equivalent
+# SKIP BenchmarkValidateAsciiErr: Go's standard library has no equivalent
+BenchmarkValidateUtf8/ascii-16	 7281130	        14.68 ns/op	1089.69 MB/s
+BenchmarkValidateUtf8/ascii-64	 7542176	        15.75 ns/op	4062.89 MB/s
+BenchmarkValidateUtf8/ascii-256	 5996114	        19.70 ns/op	12991.99 MB/s
+BenchmarkValidateUtf8/ascii-4096	 1000000	       110.1 ns/op	37196.69 MB/s
+BenchmarkValidateUtf8/ascii-65536	   59241	      2018 ns/op	32479.87 MB/s
+BenchmarkValidateUtf8/emoji	    2383	     49647 ns/op	1320.15 MB/s
+BenchmarkValidateUtf8/hebrew	    1773	     66742 ns/op	 996.30 MB/s
+BenchmarkValidateUtf8/korean	    1971	     58809 ns/op	1132.49 MB/s
+BenchmarkValidateUtf8/japanese	    1922	     60889 ns/op	1113.64 MB/s
+BenchmarkValidateUtf8/chinese	    2016	     58242 ns/op	1199.14 MB/s
+BenchmarkValidateUtf8/arabic	    1414	     82242 ns/op	 993.22 MB/s
+BenchmarkValidateUtf8/latin	   45037	      2664 ns/op	32634.03 MB/s
+BenchmarkValidateUtf8/hindi	    1032	    114910 ns/op	 765.79 MB/s
+BenchmarkValidateUtf8/russian	     675	    177086 ns/op	 591.63 MB/s
+BenchmarkValidateUtf8/ascii-1048576	    3420	     32955 ns/op	31818.85 MB/s
+BenchmarkValidateUtf8Err/ascii-16	 8438347	        14.45 ns/op	1106.89 MB/s
+BenchmarkValidateUtf8Err/ascii-64	 7689860	        15.43 ns/op	4148.48 MB/s
+BenchmarkValidateUtf8Err/ascii-256	 6263796	        19.17 ns/op	13350.98 MB/s
+BenchmarkValidateUtf8Err/ascii-4096	 1000000	       110.1 ns/op	37211.72 MB/s
+BenchmarkValidateUtf8Err/ascii-65536	   59346	      2016 ns/op	32505.55 MB/s
+BenchmarkValidateUtf8Err/emoji	    2398	     49683 ns/op	1319.21 MB/s
+BenchmarkValidateUtf8Err/hebrew	    1731	     67283 ns/op	 988.29 MB/s
+BenchmarkValidateUtf8Err/korean	    1974	     59047 ns/op	1127.91 MB/s
+BenchmarkValidateUtf8Err/japanese	    1963	     60942 ns/op	1112.67 MB/s
+BenchmarkValidateUtf8Err/chinese	    2040	     58052 ns/op	1203.05 MB/s
+BenchmarkValidateUtf8Err/arabic	    1346	     82670 ns/op	 988.08 MB/s
+BenchmarkValidateUtf8Err/latin	   44773	      2664 ns/op	32636.68 MB/s
+BenchmarkValidateUtf8Err/hindi	    1042	    114171 ns/op	 770.75 MB/s
+BenchmarkValidateUtf8Err/russian	     672	    177284 ns/op	 590.97 MB/s
+BenchmarkValidateUtf8Err/ascii-1048576	    3420	     33409 ns/op	31385.64 MB/s
+# SKIP BenchmarkValidateUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16leErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf16beErr: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidateUtf32Err: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf16le/ascii-16	 2649367	        45.55 ns/op	 351.23 MB/s
+BenchmarkUtf8ToUtf16le/ascii-64	  641728	       185.0 ns/op	 346.02 MB/s
+BenchmarkUtf8ToUtf16le/ascii-256	  169095	       707.9 ns/op	 361.65 MB/s
+BenchmarkUtf8ToUtf16le/ascii-4096	   10000	     11155 ns/op	 367.18 MB/s
+BenchmarkUtf8ToUtf16le/ascii-65536	     667	    178837 ns/op	 366.46 MB/s
+BenchmarkUtf8ToUtf16le/emoji	    1161	    103228 ns/op	 634.92 MB/s
+BenchmarkUtf8ToUtf16le/hebrew	     536	    221466 ns/op	 300.25 MB/s
+BenchmarkUtf8ToUtf16le/korean	     734	    160923 ns/op	 413.86 MB/s
+BenchmarkUtf8ToUtf16le/japanese	     860	    140444 ns/op	 482.81 MB/s
+BenchmarkUtf8ToUtf16le/chinese	     883	    136193 ns/op	 512.80 MB/s
+BenchmarkUtf8ToUtf16le/arabic	     442	    269323 ns/op	 303.30 MB/s
+BenchmarkUtf8ToUtf16le/latin	     505	    236840 ns/op	 367.08 MB/s
+BenchmarkUtf8ToUtf16le/hindi	     543	    221352 ns/op	 397.54 MB/s
+BenchmarkUtf8ToUtf16le/russian	     309	    405871 ns/op	 258.14 MB/s
+BenchmarkUtf8ToUtf16le/ascii-1048576	      40	   2934368 ns/op	 357.34 MB/s
+# SKIP BenchmarkValidUtf8ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToUtf16be: Go's standard library has no equivalent
+BenchmarkUtf8ToUtf32/ascii-16	 5200269	        22.93 ns/op	 697.88 MB/s
+BenchmarkUtf8ToUtf32/ascii-64	 1467301	        81.52 ns/op	 785.04 MB/s
+BenchmarkUtf8ToUtf32/ascii-256	  367389	       321.8 ns/op	 795.40 MB/s
+BenchmarkUtf8ToUtf32/ascii-4096	   24075	      4982 ns/op	 822.22 MB/s
+BenchmarkUtf8ToUtf32/ascii-65536	    1485	     79678 ns/op	 822.51 MB/s
+BenchmarkUtf8ToUtf32/emoji	    1416	     84911 ns/op	 771.89 MB/s
+BenchmarkUtf8ToUtf32/hebrew	     627	    183128 ns/op	 363.11 MB/s
+BenchmarkUtf8ToUtf32/korean	    1084	    108661 ns/op	 612.92 MB/s
+BenchmarkUtf8ToUtf32/japanese	     885	    122011 ns/op	 555.75 MB/s
+BenchmarkUtf8ToUtf32/chinese	    1044	    115100 ns/op	 606.78 MB/s
+BenchmarkUtf8ToUtf32/arabic	     549	    222378 ns/op	 367.32 MB/s
+BenchmarkUtf8ToUtf32/latin	    1112	    118280 ns/op	 735.03 MB/s
+BenchmarkUtf8ToUtf32/hindi	     606	    195282 ns/op	 450.62 MB/s
+BenchmarkUtf8ToUtf32/russian	     356	    332348 ns/op	 315.24 MB/s
+BenchmarkUtf8ToUtf32/ascii-1048576	      88	   1319018 ns/op	 794.97 MB/s
+# SKIP BenchmarkValidUtf8ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf8ToLatin1: Go's standard library has no equivalent
+BenchmarkUtf16leToUtf8/ascii-16	 5158587	        22.89 ns/op	1398.26 MB/s
+BenchmarkUtf16leToUtf8/ascii-64	 1471640	        81.34 ns/op	1573.64 MB/s
+BenchmarkUtf16leToUtf8/ascii-256	  368538	       325.7 ns/op	1572.14 MB/s
+BenchmarkUtf16leToUtf8/ascii-4096	   24036	      4983 ns/op	1644.06 MB/s
+BenchmarkUtf16leToUtf8/japanese	    1405	     84823 ns/op	 551.14 MB/s
+BenchmarkUtf16leToUtf8/chinese	    1471	     81311 ns/op	 577.07 MB/s
+BenchmarkUtf16leToUtf8/korean	    1384	     84856 ns/op	 639.79 MB/s
+BenchmarkUtf16leToUtf8/hindi	     781	    152906 ns/op	 428.58 MB/s
+BenchmarkUtf16leToUtf8/emoji	    1406	     84802 ns/op	 772.89 MB/s
+BenchmarkUtf16leToUtf8/hebrew	     735	    160058 ns/op	 466.15 MB/s
+BenchmarkUtf16leToUtf8/arabic	     601	    197165 ns/op	 464.23 MB/s
+BenchmarkUtf16leToUtf8/russian	     464	    255961 ns/op	 453.04 MB/s
+BenchmarkUtf16leToUtf8/ascii-65536	    1494	     79725 ns/op	1644.05 MB/s
+BenchmarkUtf16leToUtf8/latin	    1134	    105972 ns/op	1640.83 MB/s
+BenchmarkUtf16leToUtf8/ascii-1048576	      91	   1312474 ns/op	1597.86 MB/s
+# SKIP BenchmarkValidUtf16leToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16leToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16beToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf16beToLatin1: Go's standard library has no equivalent
+BenchmarkUtf32ToUtf8/ascii-16	 6313390	        18.70 ns/op	3422.80 MB/s
+BenchmarkUtf32ToUtf8/ascii-64	 1898328	        63.05 ns/op	4060.51 MB/s
+BenchmarkUtf32ToUtf8/ascii-256	  457918	       252.1 ns/op	4062.29 MB/s
+BenchmarkUtf32ToUtf8/ascii-4096	   31959	      3748 ns/op	4370.82 MB/s
+BenchmarkUtf32ToUtf8/emoji	    1831	     65799 ns/op	 996.13 MB/s
+BenchmarkUtf32ToUtf8/japanese	    1340	     85828 ns/op	1089.34 MB/s
+BenchmarkUtf32ToUtf8/chinese	    1477	     79927 ns/op	1174.07 MB/s
+BenchmarkUtf32ToUtf8/korean	    1351	     86919 ns/op	1249.16 MB/s
+BenchmarkUtf32ToUtf8/hindi	     778	    153042 ns/op	 856.37 MB/s
+BenchmarkUtf32ToUtf8/hebrew	     783	    151047 ns/op	 987.90 MB/s
+BenchmarkUtf32ToUtf8/arabic	     645	    182987 ns/op	1000.38 MB/s
+BenchmarkUtf32ToUtf8/russian	     486	    246013 ns/op	 942.71 MB/s
+BenchmarkUtf32ToUtf8/ascii-65536	    1996	     59848 ns/op	4380.17 MB/s
+BenchmarkUtf32ToUtf8/latin	    1506	     79585 ns/op	4369.67 MB/s
+BenchmarkUtf32ToUtf8/ascii-1048576	     120	    993410 ns/op	4222.13 MB/s
+# SKIP BenchmarkValidUtf32ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkValidUtf32ToLatin1: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkValidLatin1ToUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf8: Go's standard library has no equivalent
+# SKIP BenchmarkUtf16FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf16be: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromUtf32: Go's standard library has no equivalent
+# SKIP BenchmarkUtf8FromLatin1: Go's standard library has no equivalent
+BenchmarkCountUtf8/ascii-16	 9307195	        12.80 ns/op	1249.76 MB/s
+BenchmarkCountUtf8/ascii-64	 2798881	        42.34 ns/op	1511.75 MB/s
+BenchmarkCountUtf8/ascii-256	  690703	       167.4 ns/op	1529.66 MB/s
+BenchmarkCountUtf8/ascii-4096	   47406	      2503 ns/op	1636.16 MB/s
+BenchmarkCountUtf8/ascii-65536	    2946	     39789 ns/op	1647.11 MB/s
+BenchmarkCountUtf8/emoji	    1285	     82836 ns/op	 791.23 MB/s
+BenchmarkCountUtf8/hebrew	    1075	    100676 ns/op	 660.48 MB/s
+BenchmarkCountUtf8/korean	    1328	     89662 ns/op	 742.79 MB/s
+BenchmarkCountUtf8/japanese	    1183	    100887 ns/op	 672.12 MB/s
+BenchmarkCountUtf8/chinese	    1190	     99901 ns/op	 699.09 MB/s
+BenchmarkCountUtf8/arabic	     982	    122462 ns/op	 667.02 MB/s
+BenchmarkCountUtf8/latin	    2265	     52835 ns/op	1645.50 MB/s
+BenchmarkCountUtf8/hindi	     698	    164103 ns/op	 536.23 MB/s
+BenchmarkCountUtf8/russian	     472	    249660 ns/op	 419.65 MB/s
+BenchmarkCountUtf8/ascii-1048576	     184	    652392 ns/op	1607.28 MB/s
+# SKIP BenchmarkCountUtf16le: Go's standard library has no equivalent
+# SKIP BenchmarkCountUtf16be: Go's standard library has no equivalent
+BenchmarkBase64Encode/random-16	 5189186	        21.81 ns/op	 733.59 MB/s
+BenchmarkBase64Encode/random-64	 1845829	        64.63 ns/op	 990.26 MB/s
+BenchmarkBase64Encode/random-256	  469872	       239.5 ns/op	1068.74 MB/s
+BenchmarkBase64Encode/random-4096	   32150	      3738 ns/op	1095.81 MB/s
+BenchmarkBase64Encode/random-65536	    1800	     60096 ns/op	1090.52 MB/s
+BenchmarkBase64Encode/random-1048576	     100	   1056827 ns/op	 992.19 MB/s
+BenchmarkBase64EncodeUrl/random-16	 5579784	        21.37 ns/op	 748.65 MB/s
+BenchmarkBase64EncodeUrl/random-64	 1828785	        65.48 ns/op	 977.47 MB/s
+BenchmarkBase64EncodeUrl/random-256	  494588	       239.3 ns/op	1069.64 MB/s
+BenchmarkBase64EncodeUrl/random-4096	   31758	      3843 ns/op	1065.77 MB/s
+BenchmarkBase64EncodeUrl/random-65536	    1843	     59888 ns/op	1094.31 MB/s
+BenchmarkBase64EncodeUrl/random-1048576	     122	    972708 ns/op	1078.00 MB/s
+BenchmarkBase64Decode/random-16	 2873491	        41.57 ns/op	 577.32 MB/s
+BenchmarkBase64Decode/random-64	 1419886	        84.50 ns/op	1041.40 MB/s
+BenchmarkBase64Decode/random-256	  475502	       247.2 ns/op	1391.32 MB/s
+BenchmarkBase64Decode/random-4096	   33864	      3537 ns/op	1544.63 MB/s
+BenchmarkBase64Decode/random-65536	    2103	     56236 ns/op	1553.89 MB/s
+BenchmarkBase64Decode/random-1048576	     130	    913410 ns/op	1530.64 MB/s
+BenchmarkBase64DecodeUrl/random-16	 4492129	        26.57 ns/op	 828.08 MB/s
+BenchmarkBase64DecodeUrl/random-64	 1773613	        67.49 ns/op	1274.35 MB/s
+BenchmarkBase64DecodeUrl/random-256	  507444	       230.6 ns/op	1483.24 MB/s
+BenchmarkBase64DecodeUrl/random-4096	   34209	      3515 ns/op	1553.71 MB/s
+BenchmarkBase64DecodeUrl/random-65536	    2112	     56037 ns/op	1559.38 MB/s
+BenchmarkBase64DecodeUrl/random-1048576	     130	    914704 ns/op	1528.47 MB/s
+BenchmarkBase64DecodeStrict/random-16	 2791384	        43.09 ns/op	 557.00 MB/s
+BenchmarkBase64DecodeStrict/random-64	 1409353	        85.02 ns/op	1035.08 MB/s
+BenchmarkBase64DecodeStrict/random-256	  469503	       249.3 ns/op	1379.65 MB/s
+BenchmarkBase64DecodeStrict/random-4096	   33658	      3546 ns/op	1540.96 MB/s
+BenchmarkBase64DecodeStrict/random-65536	    2116	     56100 ns/op	1557.66 MB/s
+BenchmarkBase64DecodeStrict/random-1048576	     130	    910003 ns/op	1536.37 MB/s
+# SKIP BenchmarkBase64DecodePartial: Go's standard library has no equivalent
+BenchmarkBase64DecodeMime/random-16	 2802543	        42.75 ns/op	 608.26 MB/s
+BenchmarkBase64DecodeMime/random-64	 1000000	       109.9 ns/op	 836.82 MB/s
+BenchmarkBase64DecodeMime/random-256	  386016	       306.6 ns/op	1154.49 MB/s
+BenchmarkBase64DecodeMime/random-4096	   25795	      4648 ns/op	1206.45 MB/s
+BenchmarkBase64DecodeMime/random-65536	    1620	     73861 ns/op	1214.23 MB/s
+BenchmarkBase64DecodeMime/random-1048576	      98	   1207587 ns/op	1188.24 MB/s
