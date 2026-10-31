@@ -3,6 +3,17 @@
 
 markdown := "README.md AGENTS.md CHANGELOG.md bench/README.md docs/slop .github"
 
+# How `just bench-compare` builds this package's arm, and which simdutf kernel
+# its arm runs (empty: simdutf's runtime pick). Set them on the command line:
+# `just cpu=baseline dispatch=false kernel=fallback bench-compare`. dispatch
+# empty is the package's default: runtime dispatch for a generic x86-64 CPU
+# (baseline or an x86-64 level), none for native.
+optimize := "ReleaseFast"
+cpu := "native"
+dispatch := ""
+kernel := ""
+bench_zig := "zig build -p ../zig-out -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
+
 [private]
 default:
     @just --list
@@ -47,7 +58,7 @@ bench-corpus:
     grep -v '^#' bench/corpus/sources.tsv | while IFS=$'\t' read -r name url; do
         [ -f "bench/corpus-gen/lipsum/$name" ] || curl -sSfL -o "bench/corpus-gen/lipsum/$name" "$url"
     done
-    (cd bench && zig build -p ../zig-out)
+    (cd bench && {{ bench_zig }})
     zig-out/bin/bench-corpus
     cd bench/corpus-gen && sha256sum --quiet --check ../corpus/SHA256SUMS
 
@@ -57,14 +68,14 @@ bench-build:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p zig-out/bin
-    (cd bench && zig build -p ../zig-out)
+    (cd bench && {{ bench_zig }})
     c++ -O3 -std=c++20 -o zig-out/bin/bench-simdutf bench/simdutf/main.cpp \
         $(pkg-config --cflags --libs simdutf) -Wl,-rpath,"$(pkg-config --variable=libdir simdutf)"
     go build -C bench/go -o ../../zig-out/bin/bench-go .
     RUSTFLAGS="-C target-cpu=native" cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml
     cp bench/rust/target/release/bench-rust zig-out/bin/
 
-[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then interleaved rounds on one core and benchstat against simdutf. OPS picks operations (default all). The numbers are not claims")]
+[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then interleaved rounds on one core, benchstat against simdutf, and a summary per operation. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds. The numbers are not claims")]
 [group("bench")]
 bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
     #!/usr/bin/env bash
@@ -73,11 +84,14 @@ bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
     rm -rf "$out" && mkdir -p "$out"
     arms=(simdutf utf std rust go)
     ops=({{ OPS }})
+    if [ -n "{{ kernel }}" ]; then export SIMDUTF_FORCE_IMPLEMENTATION="{{ kernel }}"; fi
     # The outputs must match before the timings mean anything: every arm's
     # checksums against simdutf's, on the rows both have.
     for arm in "${arms[@]}"; do
-        zig-out/bin/bench-$arm check "${ops[@]}" > "$out/check-$arm.txt"
+        zig-out/bin/bench-$arm check "${ops[@]}" > "$out/check-$arm.txt" 2> "$out/stderr-$arm.txt" ||
+            { cat "$out/stderr-$arm.txt"; exit 1; }
     done
+    { echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}"; cat "$out/stderr-simdutf.txt"; } | tee "$out/config.txt"
     status=0
     for arm in "${arms[@]:1}"; do
         join -t $'\t' <(grep -v '^#' "$out/check-simdutf.txt" | sort) <(grep -v '^#' "$out/check-$arm.txt" | sort) |
@@ -87,20 +101,21 @@ bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
             cat "$out/check-diff-$arm.txt"
             status=1
         fi
-        printf '%-8s %3d rows match simdutf\n' "$arm" "$(grep -vc '^#' "$out/check-$arm.txt" || true)"
-        grep '^# SKIP' "$out/check-$arm.txt" | sed 's/^/         /' || true
+        printf '%-8s %4d rows match simdutf, %d operations skipped\n' "$arm" \
+            "$(grep -vc '^#' "$out/check-$arm.txt" || true)" "$(grep -c '^# SKIP' "$out/check-$arm.txt" || true)"
     done
+    grep -h '^# SKIP' "$out"/check-utf.txt || true
     [ "$status" = 0 ] || exit 1
     # Peak RSS of one pass over each operation's inputs: the inputs and
     # output buffers, which every arm holds alike, plus the arm's runtime.
     echo
     {
-        printf '%-20s' "peak RSS (MiB)"; printf '%9s' "${arms[@]}"; echo
-        for op in ${ops[@]:-validate-utf8 validate-utf8-err utf8-to-utf16le utf16le-to-utf8 base64-encode base64-decode}; do
-            printf '%-20s' "$op"
+        printf '%-26s' "peak RSS (MiB)"; printf '%9s' "${arms[@]}"; echo
+        for op in ${ops[@]:-$(grep -v '^#' bench/ops.tsv | cut -f1)}; do
+            printf '%-26s' "$op"
             for arm in "${arms[@]}"; do
-                if grep -q '^# SKIP' <(zig-out/bin/bench-$arm check "$op" 2> /dev/null); then printf '%9s' -; continue; fi
-                command time -f %M -o "$out/rss-run.txt" zig-out/bin/bench-$arm check "$op" > /dev/null 2>&1
+                command time -f %M -o "$out/rss-run.txt" zig-out/bin/bench-$arm check "$op" > "$out/rss-check.txt" 2> /dev/null
+                if grep -q '^# SKIP' "$out/rss-check.txt"; then printf '%9s' -; continue; fi
                 awk '{ printf "%9.1f", $1 / 1024 }' "$out/rss-run.txt"
             done
             echo
@@ -126,7 +141,21 @@ bench-compare ROUNDS="6" *OPS: bench-corpus bench-build
             "$out/raw-$arm.txt" > "$out/$arm.txt"
         [ -s "$out/$arm.txt" ] && files+=("$arm=$out/$arm.txt")
     done
-    benchstat "${files[@]}" | tee "$out/benchstat.txt"
+    benchstat "${files[@]}" > "$out/benchstat.txt"
+    echo "benchstat: $out/benchstat.txt"
+    echo
+    just bench-summary "$out" | tee "$out/summary.txt"
+
+[doc("Summarize a bench-compare run in DIR: per operation, utf's geomean throughput against each arm's")]
+[group("bench")]
+bench-summary DIR="zig-out/bench-compare":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    files=()
+    for arm in utf simdutf std rust go; do
+        [ -s "{{ DIR }}/$arm.txt" ] && files+=("{{ DIR }}/$arm.txt")
+    done
+    awk -f bench/summary.awk "${files[@]}"
 
 [doc("Build the simdutf oracle, zig-out/bin/utf-oracle, which tests and fuzzers drive through bench/oracle/Oracle.zig")]
 [group("bench")]

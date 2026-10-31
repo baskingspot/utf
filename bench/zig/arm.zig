@@ -7,17 +7,18 @@
 //!     bench-<impl> bench [OP...] [FLAG...]   rows in the Go benchmark format
 //!     bench-<impl> check [OP...]             one checksum line per row
 //!
-//! OP is validate-utf8, validate-utf8-err, utf8-to-utf16le, utf16le-to-utf8,
-//! base64-encode, or base64-decode; none means all. BENCHTIME_MS (default
-//! 100) is how long each row's timed loop runs. testingx times the rows:
-//! `b.loop()` sizes the loop as Go's `testing.B` does, and FLAG is any of
-//! its flags, such as `--cycles` for cycles and instructions per op, or
+//! OP is a name from bench/ops.tsv, which also gives each operation's row
+//! name, corpus directory, and output size; none means all. BENCHTIME_MS
+//! (default 100) is how long each row's timed loop runs. testingx times the
+//! rows: `b.loop()` sizes the loop as Go's `testing.B` does, and FLAG is any
+//! of its flags, such as `--cycles` for cycles and instructions per op, or
 //! `--benchtime=1s`, which beats BENCHTIME_MS. Its header lines start with
 //! a key and a colon; `just bench-compare` keeps only the rows.
 //!
-//! `bench-utf` looks for each function under the names docs/slop/plan.md
-//! gives them and skips the operations whose functions are not there yet,
-//! with a `# SKIP` line benchstat ignores.
+//! `bench-utf` looks for each function under the name docs/slop/plan.md
+//! gives it and skips an operation whose function is not there yet, with a
+//! `# SKIP` line benchstat ignores; `bench-std` skips the operations Zig's
+//! std has no function for.
 
 const std = @import("std");
 const mem = std.mem;
@@ -29,235 +30,306 @@ const impl = @import("build_options").impl;
 
 const corpus = "bench/corpus-gen";
 
-/// What one call returns, for the checksum: validity, or the bytes written.
-const Out = union(enum) { valid: bool, len: usize };
+/// What one call returns, for the checksum: validity, the bytes written,
+/// or a count.
+const Out = union(enum) { valid: bool, len: usize, count: usize };
 
-const Fn = fn ([]const u8, []u8) Out;
+const Fn = fn ([]align(16) const u8, []align(16) u8) Out;
 
-const Op = struct {
-    /// The command-line name.
+/// This arm's function for an operation in bench/ops.tsv, or null and why.
+const Entry = struct {
     arg: []const u8,
-    /// The benchmark name, before the slash and the input's name.
-    row: []const u8,
-    /// The corpus directory the inputs come from.
-    dir: []const u8,
-    /// The output buffer's size for an input of `n` bytes.
-    out_len: fn (usize) usize,
-    /// The function to time, or null when this arm lacks it.
     run: ?Fn,
-    /// Why `run` is null.
     missing: []const u8 = "",
 };
 
-fn none(_: usize) usize {
-    return 0;
-}
-fn twice(n: usize) usize {
-    return 2 * n + 2;
-}
-fn thrice(n: usize) usize {
-    return 3 * n + 3;
-}
-fn encoded(n: usize) usize {
-    return (n + 2) / 3 * 4;
-}
-fn decoded(n: usize) usize {
-    return n / 4 * 3 + 3;
+const entries: []const Entry = if (mem.eql(u8, impl, "std")) Std.entries else Utf.entries;
+
+/// The input as code units of the slice type `T`.
+fn cast(comptime T: type, bytes: anytype) T {
+    return mem.bytesAsSlice(@typeInfo(T).pointer.child, bytes);
 }
 
-const ops = [_]Op{
-    .{
-        .arg = "validate-utf8",
-        .row = "ValidateUtf8",
-        .dir = "utf8",
-        .out_len = none,
-        .run = Impl.validate_utf8,
-        .missing = Impl.missing_validate,
-    },
-    .{
-        .arg = "validate-utf8-err",
-        .row = "ValidateUtf8Err",
-        .dir = "utf8-err",
-        .out_len = none,
-        .run = Impl.validate_utf8_err,
-        .missing = Impl.missing_validate_err,
-    },
-    .{
-        .arg = "utf8-to-utf16le",
-        .row = "Utf8ToUtf16le",
-        .dir = "utf8",
-        .out_len = twice,
-        .run = Impl.utf8_to_utf16le,
-        .missing = Impl.missing_utf8_to_utf16le,
-    },
-    .{
-        .arg = "utf16le-to-utf8",
-        .row = "Utf16leToUtf8",
-        .dir = "utf16le",
-        .out_len = thrice,
-        .run = Impl.utf16le_to_utf8,
-        .missing = Impl.missing_utf16le_to_utf8,
-    },
-    .{
-        .arg = "base64-encode",
-        .row = "Base64Encode",
-        .dir = "binary",
-        .out_len = encoded,
-        .run = Impl.base64_encode,
-        .missing = Impl.missing_base64_encode,
-    },
-    .{
-        .arg = "base64-decode",
-        .row = "Base64Decode",
-        .dir = "base64",
-        .out_len = decoded,
-        .run = Impl.base64_decode,
-        .missing = Impl.missing_base64_decode,
-    },
-};
-const Impl = if (mem.eql(u8, impl, "std")) Std else Utf;
-
-fn units(bytes: []const u8) []const u16 {
-    return @alignCast(mem.bytesAsSlice(u16, bytes));
-}
-fn unitsMut(bytes: []u8) []u16 {
-    return @alignCast(mem.bytesAsSlice(u16, bytes));
-}
-
-/// Zig's standard library. `utf8ValidateSlice` has no error position, so
-/// both validation operations time it.
+/// Zig's standard library, where it has a function for the operation.
+/// `utf8ValidateSlice` has no error position, so both UTF-8 validation
+/// operations time it. The std decoders reject a missing pad and nonzero
+/// bits past the last byte, so `standard.Decoder` does the strict
+/// decode's work in `base64-decode` too. The length functions validate as
+/// they count, except `calcWtf8Len`.
 const Std = struct {
-    const missing_validate = "";
-    const missing_validate_err = "";
-    const missing_utf8_to_utf16le = "";
-    const missing_utf16le_to_utf8 = "";
-    const missing_base64_encode = "";
-    const missing_base64_decode = "";
+    const entries: []const Entry = &.{
+        .{ .arg = "validate-utf8", .run = validateUtf8 },
+        .{ .arg = "validate-utf8-err", .run = validateUtf8 },
+        .{ .arg = "utf8-to-utf16le", .run = utf8ToUtf16le },
+        .{ .arg = "utf16le-to-utf8", .run = utf16leToUtf8 },
+        .{ .arg = "utf16-from-utf8", .run = utf16FromUtf8 },
+        .{ .arg = "utf8-from-utf16le", .run = utf8FromUtf16le },
+        .{ .arg = "count-utf8", .run = countUtf8 },
+        .{ .arg = "count-utf16le", .run = countUtf16le },
+        .{ .arg = "base64-encode", .run = encoder(std.base64.standard) },
+        .{ .arg = "base64-encode-url", .run = encoder(std.base64.url_safe_no_pad) },
+        .{ .arg = "base64-decode", .run = decoder(std.base64.standard) },
+        .{ .arg = "base64-decode-url", .run = decoder(std.base64.url_safe_no_pad) },
+        .{ .arg = "base64-decode-strict", .run = decoder(std.base64.standard) },
+        .{ .arg = "base64-decode-mime", .run = base64DecodeMime },
+    };
 
-    const validate_utf8: ?Fn = validateUtf8;
-    const validate_utf8_err: ?Fn = validateUtf8;
-    const utf8_to_utf16le: ?Fn = utf8ToUtf16le;
-    const utf16le_to_utf8: ?Fn = utf16leToUtf8;
-    const base64_encode: ?Fn = base64Encode;
-    const base64_decode: ?Fn = base64Decode;
-
-    fn validateUtf8(in: []const u8, _: []u8) Out {
+    fn validateUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
         return .{ .valid = std.unicode.utf8ValidateSlice(in) };
     }
-    fn utf8ToUtf16le(in: []const u8, out: []u8) Out {
-        const n = std.unicode.utf8ToUtf16Le(unitsMut(out), in) catch return .{ .valid = false };
+    fn utf8ToUtf16le(in: []align(16) const u8, out: []align(16) u8) Out {
+        const n = std.unicode.utf8ToUtf16Le(cast([]u16, out), in) catch return .{ .valid = false };
         return .{ .len = 2 * n };
     }
-    fn utf16leToUtf8(in: []const u8, out: []u8) Out {
-        const n = std.unicode.utf16LeToUtf8(out, units(in)) catch return .{ .valid = false };
+    fn utf16leToUtf8(in: []align(16) const u8, out: []align(16) u8) Out {
+        const n = std.unicode.utf16LeToUtf8(out, cast([]const u16, in)) catch return .{ .valid = false };
         return .{ .len = n };
     }
-    fn base64Encode(in: []const u8, out: []u8) Out {
-        return .{ .len = std.base64.standard.Encoder.encode(out, in).len };
+    fn utf16FromUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
+        return .{ .count = std.unicode.calcUtf16LeLen(in) catch return .{ .valid = false } };
     }
-    fn base64Decode(in: []const u8, out: []u8) Out {
-        const decoder = std.base64.standard.Decoder;
-        const n = decoder.calcSizeForSlice(in) catch return .{ .valid = false };
-        decoder.decode(out[0..n], in) catch return .{ .valid = false };
-        return .{ .len = n };
+    fn utf8FromUtf16le(in: []align(16) const u8, _: []align(16) u8) Out {
+        return .{ .count = std.unicode.calcWtf8Len(cast([]const u16, in)) };
+    }
+    fn countUtf8(in: []align(16) const u8, _: []align(16) u8) Out {
+        return .{ .count = std.unicode.utf8CountCodepoints(in) catch return .{ .valid = false } };
+    }
+    fn countUtf16le(in: []align(16) const u8, _: []align(16) u8) Out {
+        return .{ .count = std.unicode.utf16CountCodepoints(cast([]const u16, in)) catch return .{ .valid = false } };
+    }
+    fn encoder(comptime codecs: std.base64.Codecs) Fn {
+        return struct {
+            fn f(in: []align(16) const u8, out: []align(16) u8) Out {
+                return .{ .len = codecs.Encoder.encode(out, in).len };
+            }
+        }.f;
+    }
+    fn decoder(comptime codecs: std.base64.Codecs) Fn {
+        return struct {
+            fn f(in: []align(16) const u8, out: []align(16) u8) Out {
+                const n = codecs.Decoder.calcSizeForSlice(in) catch return .{ .valid = false };
+                codecs.Decoder.decode(out[0..n], in) catch return .{ .valid = false };
+                return .{ .len = n };
+            }
+        }.f;
+    }
+    /// Skips the ASCII whitespace WHATWG's forgiving-base64 does, as
+    /// simdutf's decoder does.
+    const mime = std.base64.standard.decoderWithIgnore(" \t\n\x0c\r");
+    fn base64DecodeMime(in: []align(16) const u8, out: []align(16) u8) Out {
+        return .{ .len = mime.decode(out, in) catch return .{ .valid = false } };
     }
 };
 
 /// This package, under the names docs/slop/plan.md gives its API. A
 /// function that is not there yet is null, and its operation is skipped.
+/// One under another signature, or options without a field an operation
+/// sets, is a compile error here.
 const Utf = struct {
-    fn has(comptime ns: []const u8, comptime name: []const u8) bool {
-        if (!@hasDecl(utf, ns)) return false;
-        return @hasDecl(@field(utf, ns), name);
+    const EnumLiteral = @TypeOf(.enum_literal);
+
+    /// A base64 function's options, those an operation sets.
+    const Options = struct {
+        alphabet: ?EnumLiteral = null,
+        padding: ?bool = null,
+        last_chunk: ?EnumLiteral = null,
+    };
+
+    const Api = struct {
+        arg: []const u8,
+        ns: []const u8,
+        name: []const u8,
+        options: Options = .{},
+    };
+
+    const api = [_]Api{
+        .{ .arg = "validate-ascii", .ns = "validate", .name = "ascii" },
+        .{ .arg = "validate-ascii-err", .ns = "validate", .name = "asciiWithErrors" },
+        .{ .arg = "validate-utf8", .ns = "validate", .name = "utf8" },
+        .{ .arg = "validate-utf8-err", .ns = "validate", .name = "utf8WithErrors" },
+        .{ .arg = "validate-utf16le", .ns = "validate", .name = "utf16le" },
+        .{ .arg = "validate-utf16le-err", .ns = "validate", .name = "utf16leWithErrors" },
+        .{ .arg = "validate-utf16be", .ns = "validate", .name = "utf16be" },
+        .{ .arg = "validate-utf16be-err", .ns = "validate", .name = "utf16beWithErrors" },
+        .{ .arg = "validate-utf32", .ns = "validate", .name = "utf32" },
+        .{ .arg = "validate-utf32-err", .ns = "validate", .name = "utf32WithErrors" },
+    } ++ conversions() ++ [_]Api{
+        .{ .arg = "utf16-from-utf8", .ns = "length", .name = "utf16FromUtf8" },
+        .{ .arg = "utf16-from-utf32", .ns = "length", .name = "utf16FromUtf32" },
+        .{ .arg = "utf8-from-utf16le", .ns = "length", .name = "utf8FromUtf16le" },
+        .{ .arg = "utf8-from-utf16be", .ns = "length", .name = "utf8FromUtf16be" },
+        .{ .arg = "utf8-from-utf32", .ns = "length", .name = "utf8FromUtf32" },
+        .{ .arg = "utf8-from-latin1", .ns = "length", .name = "utf8FromLatin1" },
+        .{ .arg = "count-utf8", .ns = "length", .name = "countUtf8" },
+        .{ .arg = "count-utf16le", .ns = "length", .name = "countUtf16le" },
+        .{ .arg = "count-utf16be", .ns = "length", .name = "countUtf16be" },
+        .{ .arg = "base64-encode", .ns = "base64", .name = "encode" },
+        .{
+            .arg = "base64-encode-url",
+            .ns = "base64",
+            .name = "encode",
+            .options = .{ .alphabet = .url, .padding = false },
+        },
+        .{ .arg = "base64-decode", .ns = "base64", .name = "decode" },
+        .{
+            .arg = "base64-decode-url",
+            .ns = "base64",
+            .name = "decode",
+            .options = .{ .alphabet = .url },
+        },
+        .{
+            .arg = "base64-decode-strict",
+            .ns = "base64",
+            .name = "decode",
+            .options = .{ .last_chunk = .strict },
+        },
+        .{
+            .arg = "base64-decode-partial",
+            .ns = "base64",
+            .name = "decode",
+            .options = .{ .last_chunk = .stop_before_partial },
+        },
+        .{ .arg = "base64-decode-mime", .ns = "base64", .name = "decode" },
+    };
+
+    /// Every conversion, checked and valid: `utf8-to-utf16le` is
+    /// `convert.utf8ToUtf16le`, `valid-utf8-to-utf16le` is
+    /// `convert.validUtf8ToUtf16le`.
+    fn conversions() [40]Api {
+        // Each form's name in an operation, and in a function name.
+        const forms = [_][2][]const u8{
+            .{ "utf8", "Utf8" },   .{ "utf16le", "Utf16le" }, .{ "utf16be", "Utf16be" },
+            .{ "utf32", "Utf32" }, .{ "latin1", "Latin1" },
+        };
+        var list: [40]Api = undefined;
+        var n: usize = 0;
+        for (forms) |src| {
+            for (forms) |dst| {
+                if (mem.eql(u8, src[0], dst[0])) continue;
+                const arg = src[0] ++ "-to-" ++ dst[0];
+                list[n] = .{ .arg = arg, .ns = "convert", .name = src[0] ++ "To" ++ dst[1] };
+                list[n + 1] = .{ .arg = "valid-" ++ arg, .ns = "convert", .name = "valid" ++ src[1] ++ "To" ++ dst[1] };
+                n += 2;
+            }
+        }
+        return list;
     }
 
-    fn why(comptime ns: []const u8, comptime name: []const u8) []const u8 {
-        return if (has(ns, name)) "" else "utf." ++ ns ++ "." ++ name ++ " does not exist yet";
+    const entries: []const Entry = &table;
+    const table = blk: {
+        var list: [api.len]Entry = undefined;
+        for (&list, api) |*e, a| {
+            const exists = @hasDecl(utf, a.ns) and @hasDecl(@field(utf, a.ns), a.name);
+            e.* = if (exists)
+                .{ .arg = a.arg, .run = wrap(@field(@field(utf, a.ns), a.name), a.options) }
+            else
+                .{ .arg = a.arg, .run = null, .missing = "utf." ++ a.ns ++ "." ++ a.name ++ " does not exist yet" };
+        }
+        break :blk list;
+    };
+
+    /// The options type `T` with the fields `options` sets, and the rest at
+    /// their defaults.
+    fn optionsValue(comptime T: type, comptime options: Options) T {
+        var o: T = .{};
+        if (options.alphabet) |v| o.alphabet = v;
+        if (options.padding) |v| o.padding = v;
+        if (options.last_chunk) |v| o.last_chunk = v;
+        return o;
     }
 
-    /// The options type of a base64 function, its third parameter.
-    fn OptionsOf(comptime f: anytype) type {
-        return @typeInfo(@TypeOf(f)).@"fn".params[2].type.?;
+    /// `f` as a `Fn`, by its signature: `(src) bool`, `(src) Result`, or
+    /// `(src) usize` validates or counts; `(src, dst) Result` or
+    /// `(src, dst) usize` converts; `(dst, src, options)` is base64.
+    fn wrap(comptime f: anytype, comptime options: Options) Fn {
+        const params = @typeInfo(@TypeOf(f)).@"fn".params;
+        return struct {
+            fn run(in: []align(16) const u8, out: []align(16) u8) Out {
+                if (params.len == 3) {
+                    return written(u8, f(out, in, comptime optionsValue(params[2].type.?, options)));
+                }
+                const src = cast(params[0].type.?, in);
+                if (params.len == 2) {
+                    const Dst = params[1].type.?;
+                    return written(@typeInfo(Dst).pointer.child, f(src, cast(Dst, out)));
+                }
+                const r = f(src);
+                return switch (@TypeOf(r)) {
+                    bool => .{ .valid = r },
+                    utf.Result => .{ .valid = r.err == .none },
+                    usize => .{ .count = r },
+                    else => @compileError("unexpected return type"),
+                };
+            }
+
+            fn written(comptime Unit: type, r: anytype) Out {
+                return switch (@TypeOf(r)) {
+                    usize => .{ .len = r * @sizeOf(Unit) },
+                    utf.Result => if (r.err == .none) .{ .len = r.count * @sizeOf(Unit) } else .{ .valid = false },
+                    else => @compileError("unexpected return type"),
+                };
+            }
+        }.run;
     }
-
-    /// A default options value, when the options type has one.
-    fn defaultOptions(comptime f: anytype) ?OptionsOf(f) {
-        inline for (@typeInfo(OptionsOf(f)).@"struct".fields) |field| {
-            if (field.default_value_ptr == null) return null;
-        }
-        return .{};
-    }
-
-    fn withOptions(comptime name: []const u8) bool {
-        return has("base64", name) and defaultOptions(@field(utf.base64, name)) != null;
-    }
-
-    fn whyOptions(comptime name: []const u8) []const u8 {
-        if (!has("base64", name)) return why("base64", name);
-        if (!withOptions(name)) return "utf.base64." ++ name ++ "'s options have no default";
-        return "";
-    }
-
-    const missing_validate = why("validate", "utf8");
-    const missing_validate_err = why("validate", "utf8WithErrors");
-    const missing_utf8_to_utf16le = why("convert", "utf8ToUtf16le");
-    const missing_utf16le_to_utf8 = why("convert", "utf16leToUtf8");
-    const missing_base64_encode = whyOptions("encode");
-    const missing_base64_decode = whyOptions("decode");
-
-    const validate_utf8: ?Fn = if (has("validate", "utf8")) struct {
-        fn f(in: []const u8, _: []u8) Out {
-            return .{ .valid = utf.validate.utf8(in) };
-        }
-    }.f else null;
-
-    const validate_utf8_err: ?Fn = if (has("validate", "utf8WithErrors")) struct {
-        fn f(in: []const u8, _: []u8) Out {
-            return .{ .valid = utf.validate.utf8WithErrors(in).err == .none };
-        }
-    }.f else null;
-
-    const utf8_to_utf16le: ?Fn = if (has("convert", "utf8ToUtf16le")) struct {
-        fn f(in: []const u8, out: []u8) Out {
-            const r = utf.convert.utf8ToUtf16le(in, unitsMut(out));
-            if (r.err != .none) return .{ .valid = false };
-            return .{ .len = 2 * r.count };
-        }
-    }.f else null;
-
-    const utf16le_to_utf8: ?Fn = if (has("convert", "utf16leToUtf8")) struct {
-        fn f(in: []const u8, out: []u8) Out {
-            const r = utf.convert.utf16leToUtf8(units(in), out);
-            if (r.err != .none) return .{ .valid = false };
-            return .{ .len = r.count };
-        }
-    }.f else null;
-
-    const base64_encode: ?Fn = if (withOptions("encode")) struct {
-        fn f(in: []const u8, out: []u8) Out {
-            return .{ .len = utf.base64.encode(out, in, comptime defaultOptions(utf.base64.encode).?) };
-        }
-    }.f else null;
-
-    const base64_decode: ?Fn = if (withOptions("decode")) struct {
-        fn f(in: []const u8, out: []u8) Out {
-            const r = utf.base64.decode(out, in, comptime defaultOptions(utf.base64.decode).?);
-            if (r.err != .none) return .{ .valid = false };
-            return .{ .len = r.count };
-        }
-    }.f else null;
 };
+
+/// An operation from bench/ops.tsv.
+const Op = struct {
+    arg: []const u8,
+    row: []const u8,
+    dir: []const u8,
+    /// Output bytes per input byte, num / den.
+    num: usize,
+    den: usize,
+
+    fn outLen(op: Op, n: usize) usize {
+        return if (op.num == 0) 0 else n * op.num / op.den + 64;
+    }
+};
+
+fn readOps(io: Io, gpa: mem.Allocator) ![]Op {
+    const text = Io.Dir.cwd().readFileAlloc(io, "bench/ops.tsv", gpa, .unlimited) catch |err| {
+        std.debug.print("bench-{s}: open bench/ops.tsv: {t} (run from the repository root)\n", .{ impl, err });
+        return err;
+    };
+    var list: std.ArrayList(Op) = .empty;
+    var lines = mem.tokenizeScalar(u8, text, '\n');
+    while (lines.next()) |line| {
+        if (line[0] == '#') continue;
+        var fields = mem.splitScalar(u8, line, '\t');
+        var op: Op = .{ .arg = fields.next().?, .row = fields.next().?, .dir = fields.next().?, .num = 0, .den = 1 };
+        var out = mem.splitScalar(u8, fields.next().?, '/');
+        op.num = try std.fmt.parseInt(usize, out.next().?, 10);
+        if (out.next()) |den| op.den = try std.fmt.parseInt(usize, den, 10);
+        try list.append(gpa, op);
+    }
+    inline for (entries) |e| {
+        for (list.items) |op| {
+            if (mem.eql(u8, op.arg, e.arg)) break;
+        } else {
+            std.debug.print("bench-{s}: operation {s} is not in bench/ops.tsv\n", .{ impl, e.arg });
+            return error.UnknownOperation;
+        }
+    }
+    return list.items;
+}
 
 const Input = struct {
     name: []const u8,
     data: []align(16) const u8,
-    /// The output buffer, sized for this input and allocated before timing.
-    out: []align(16) u8,
+    /// The output buffer's size. Each row allocates it before it times
+    /// anything and frees it after, as the other arms do, so peak RSS holds
+    /// one input's output at a time.
+    out_len: usize,
+
+    fn alloc(in: Input) ![]align(16) u8 {
+        return std.heap.page_allocator.alignedAlloc(u8, .@"16", in.out_len);
+    }
 };
 
 /// Every file in `bench/corpus-gen/<op.dir>`, smallest first, then by name.
-fn load(comptime op: Op, io: Io, gpa: mem.Allocator) ![]Input {
-    const path = corpus ++ "/" ++ op.dir;
+fn load(op: Op, io: Io, gpa: mem.Allocator) ![]Input {
+    const path = try std.fmt.allocPrint(gpa, corpus ++ "/{s}", .{op.dir});
     var dir = Io.Dir.cwd().openDir(io, path, .{ .iterate = true }) catch |err| {
         std.debug.print("bench-{s}: open {s}: {t} (run `just bench-corpus`)\n", .{ impl, path, err });
         return err;
@@ -267,8 +339,7 @@ fn load(comptime op: Op, io: Io, gpa: mem.Allocator) ![]Input {
     var it = dir.iterate();
     while (try it.next(io)) |entry| {
         const data = try dir.readFileAllocOptions(io, entry.name, gpa, .unlimited, .@"16", null);
-        const out = try gpa.alignedAlloc(u8, .@"16", op.out_len(data.len));
-        try list.append(gpa, .{ .name = try gpa.dupe(u8, entry.name), .data = data, .out = out });
+        try list.append(gpa, .{ .name = try gpa.dupe(u8, entry.name), .data = data, .out_len = op.outLen(data.len) });
     }
     mem.sort(Input, list.items, {}, struct {
         fn lessThan(_: void, a: Input, b: Input) bool {
@@ -285,26 +356,30 @@ fn fnv1a(bytes: []const u8) u64 {
     return h;
 }
 
-/// Each operation's inputs, loaded before testingx runs anything.
-var inputs: [ops.len][]const Input = @splat(&.{});
-/// The input the running row times. `b.run` runs its function before it
-/// returns, so setting this first stands in for a closure.
+/// Each entry's inputs, loaded before testingx runs anything.
+var inputs: [entries.len][]const Input = @splat(&.{});
+/// The input the running row times, and its output buffer. `b.run` runs
+/// its function before it returns, so setting these first stands in for a
+/// closure.
 var current: Input = undefined;
+var current_out: []align(16) u8 = undefined;
 
-/// The benchmark for one operation: a row per input, as a sub-benchmark.
+/// The benchmark for one entry: a row per input, as a sub-benchmark.
 fn opBenchmark(comptime i: usize) testingx.Function {
-    const f = ops[i].run.?;
+    const f = entries[i].run.?;
     return struct {
         fn run(b: *testingx.B) !void {
             for (inputs[i]) |in| {
                 current = in;
+                current_out = try in.alloc();
+                defer std.heap.page_allocator.free(current_out);
                 _ = try b.run(in.name, row);
             }
         }
 
         fn row(b: *testingx.B) !void {
             const in = current.data;
-            const out = current.out;
+            const out = current_out;
             while (try b.loop()) {
                 // The input escapes every iteration, so no call is hoisted.
                 mem.doNotOptimizeAway(in.ptr);
@@ -324,6 +399,7 @@ pub fn main(init: std.process.Init) !u8 {
         return 2;
     }
     const check = mem.eql(u8, args[1], "check");
+    const ops = try readOps(io, gpa);
     // Operations, then testingx's flags, which start with a dash.
     var wanted: std.ArrayList([]const u8) = .empty;
     var flags: std.ArrayList([]const u8) = .empty;
@@ -333,9 +409,9 @@ pub fn main(init: std.process.Init) !u8 {
             try flags.append(gpa, arg);
             continue;
         }
-        var known = false;
-        inline for (ops) |op| known = known or mem.eql(u8, op.arg, arg);
-        if (!known) {
+        for (ops) |op| {
+            if (mem.eql(u8, op.arg, arg)) break;
+        } else {
             std.debug.print("bench-{s}: unknown operation {s}\n", .{ impl, arg });
             return 2;
         }
@@ -356,27 +432,37 @@ pub fn main(init: std.process.Init) !u8 {
     var suite: testingx.B = .init(gpa, io, try .parse(gpa, &flag_args, defaults));
     defer suite.deinit();
 
-    inline for (ops, 0..) |op, i| {
+    for (ops) |op| {
         const selected = wanted.items.len == 0 or for (wanted.items) |arg| {
             if (mem.eql(u8, op.arg, arg)) break true;
         } else false;
-        if (selected) {
-            if (op.run) |f| {
-                inputs[i] = try load(op, io, gpa);
-                if (check) {
-                    for (inputs[i]) |in| switch (f(in.data, in.out)) {
-                        .valid => |v| try w.print("{s}/{s}\tvalid={}\n", .{ op.row, in.name, v }),
-                        .len => |n| try w.print("{s}/{s}\tlen={d} fnv={x:0>16}\n", .{
-                            op.row, in.name, n, fnv1a(in.out[0..n]),
-                        }),
-                    };
+        if (!selected) continue;
+        const found = inline for (entries, 0..) |e, i| {
+            if (mem.eql(u8, e.arg, op.arg)) {
+                if (e.run) |f| {
+                    inputs[i] = try load(op, io, gpa);
+                    if (check) {
+                        for (inputs[i]) |in| {
+                            const out = try in.alloc();
+                            defer std.heap.page_allocator.free(out);
+                            switch (f(in.data, out)) {
+                                .valid => |v| try w.print("{s}/{s}\tvalid={}\n", .{ op.row, in.name, v }),
+                                .count => |n| try w.print("{s}/{s}\tcount={d}\n", .{ op.row, in.name, n }),
+                                .len => |n| try w.print("{s}/{s}\tlen={d} fnv={x:0>16}\n", .{
+                                    op.row, in.name, n, fnv1a(out[0..n]),
+                                }),
+                            }
+                        }
+                    } else {
+                        try suite.add(op.row, opBenchmark(i));
+                    }
                 } else {
-                    try suite.add(op.row, opBenchmark(i));
+                    try w.print("# SKIP Benchmark{s}: {s}\n", .{ op.row, e.missing });
                 }
-            } else {
-                try w.print("# SKIP Benchmark{s}: {s}\n", .{ op.row, op.missing });
+                break true;
             }
-        }
+        } else false;
+        if (!found) try w.print("# SKIP Benchmark{s}: Zig's std has no equivalent\n", .{op.row});
     }
     try w.flush();
     if (check) return 0;
