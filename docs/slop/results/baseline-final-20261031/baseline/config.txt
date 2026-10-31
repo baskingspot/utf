@@ -1,0 +1,4 @@
+utf: ReleaseFast, cpu baseline, dispatch default
+std: ReleaseFast, cpu baseline; rust: target-cpu=x86-64; go: GOAMD64=v1
+buffers: input 0 bytes past a page, output 2048; 50 ms a sample, 10 rounds
+bench-simdutf: simdutf 9.2.1, kernel icelake

@@ -373,3 +373,18 @@ wave-2 measurements left.
   reductions on AVX2; other rows under 1.0 move with layout and buffer
   offsets. Harness rows move up to ±50% between processes and ±15% with
   a function's address, so compare in one process or with a driver.
+
+After wave 3: the harness and the final baseline
+([baseline-final-20261031.md](results/baseline-final-20261031.md)).
+`just bench-compare` runs every arm as a server pinned to one core and times
+each row on every arm back to back, in a rotating order, with fresh processes
+each round; a row's ratio is the median of the per-round ratios, with a 95%
+interval, and the summary counts the rows it cannot call. Every arm places
+each buffer in a mapping of its own (input at a page, output 2 KiB past one,
+the slack written), and `cpu` builds std, Rust (without run-time detection
+at an x86-64 level), and Go for the same ISA. Run to run, utf ÷ simdutf per
+operation moved 25% (median) with the old harness and 1.5% with this one.
+On `d2d515e`: 1.18 of `icelake`, 1.55 of `haswell`, 1.39 of `westmere`, 1.13
+dispatching from baseline x86-64, 0.97 in ReleaseSafe; std 7.65-13.74×, Rust
+2.25-3.12×, Go 7.02-12.34×. Code layout is still uncontrolled (±15%), so
+compare rows under that gap with a driver.

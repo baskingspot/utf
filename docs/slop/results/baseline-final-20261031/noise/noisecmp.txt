@@ -1,0 +1,75 @@
+== old harness: 4 invocations (old-1, old-2, old-3, old-4)
+  utf/simdutf  row ratio spread over 143 rows: median  31.7%  p90  50.6%  max  68.0%
+      Base64Decode             geomean 0.905 1.198 1.204 1.471  spread 47.1%
+      Base64Encode             geomean 0.851 1.048 1.217 1.258  spread 35.9%
+      CountUtf8                geomean 1.322 1.495 1.720 1.690  spread 25.0%
+      Latin1ToUtf8             geomean 0.871 0.941 0.823 0.987  spread 18.0%
+      Utf16leToUtf8            geomean 1.249 1.064 1.280 1.189  spread 17.7%
+      Utf32ToLatin1            geomean 1.097 0.854 0.974 1.272  spread 40.4%
+      Utf8FromUtf16le          geomean 1.168 1.108 1.295 1.426  spread 25.9%
+      Utf8ToUtf16le            geomean 1.207 1.197 1.169 1.052  spread 13.1%
+      ValidUtf16leToUtf16be    geomean 1.266 0.920 1.094 1.178  spread 30.5%
+      ValidateUtf16leErr       geomean 1.047 1.052 0.965 1.022  spread  8.4%
+      ValidateUtf8             geomean 1.427 1.415 1.302 1.187  spread 17.7%
+      op geomean spread: median 25.0%  max 47.1%
+  utf/std      row ratio spread over  87 rows: median  28.5%  p90  46.2%  max  58.8%
+      op geomean spread: median 22.6%  max 30.8%
+  utf/rust     row ratio spread over 100 rows: median  23.9%  p90  46.6%  max  61.4%
+      op geomean spread: median 15.2%  max 41.2%
+  utf/go       row ratio spread over  72 rows: median  27.8%  p90  47.1%  max  61.7%
+      op geomean spread: median 19.6%  max 33.6%
+  utf      GB/s spread over 143 rows: median  22.6%  p90  32.0%  max  55.5%
+  simdutf  GB/s spread over 143 rows: median  24.1%  p90  31.8%  max  39.8%
+  std      GB/s spread over  87 rows: median  21.3%  p90  25.1%  max  27.4%
+  rust     GB/s spread over 100 rows: median  21.7%  p90  27.5%  max  34.8%
+  go       GB/s spread over  72 rows: median  18.6%  p90  24.4%  max  29.3%
+== new harness: 4 invocations (new-1, new-2, new-3, new-4)
+  utf/simdutf  row ratio spread over 143 rows: median   3.9%  p90  11.9%  max  19.1%
+      Base64Decode             geomean 1.154 1.172 1.182 1.177  spread  2.4%
+      Base64Encode             geomean 1.110 1.109 1.126 1.109  spread  1.5%
+      CountUtf8                geomean 1.570 1.520 1.541 1.563  spread  3.2%
+      Latin1ToUtf8             geomean 0.898 0.905 0.892 0.898  spread  1.4%
+      Utf16leToUtf8            geomean 1.359 1.373 1.368 1.341  spread  2.3%
+      Utf32ToLatin1            geomean 1.026 1.024 1.043 1.033  spread  1.8%
+      Utf8FromUtf16le          geomean 1.069 1.099 1.081 1.089  spread  2.8%
+      Utf8ToUtf16le            geomean 1.228 1.232 1.215 1.224  spread  1.4%
+      ValidUtf16leToUtf16be    geomean 0.955 0.968 0.955 0.954  spread  1.4%
+      ValidateUtf16leErr       geomean 1.210 1.222 1.218 1.204  spread  1.5%
+      ValidateUtf8             geomean 1.356 1.355 1.354 1.351  spread  0.4%
+      op geomean spread: median  1.5%  max  3.2%
+  utf/std      row ratio spread over  87 rows: median   4.3%  p90   9.6%  max  16.7%
+      op geomean spread: median  1.7%  max  5.3%
+  utf/rust     row ratio spread over 100 rows: median   6.8%  p90  13.6%  max  28.3%
+      op geomean spread: median  1.7%  max  4.9%
+  utf/go       row ratio spread over  72 rows: median   6.9%  p90  13.9%  max  28.2%
+      op geomean spread: median  2.4%  max  5.3%
+  utf      GB/s spread over 143 rows: median  17.0%  p90  27.6%  max  34.4%
+  simdutf  GB/s spread over 143 rows: median  16.9%  p90  25.9%  max  31.6%
+  std      GB/s spread over  87 rows: median  20.1%  p90  24.7%  max  28.5%
+  rust     GB/s spread over 100 rows: median  17.4%  p90  25.0%  max  36.8%
+  go       GB/s spread over  72 rows: median  18.0%  p90  25.3%  max  30.3%
+== new harness, unpaired estimator: 4 invocations (new-1, new-2, new-3, new-4)
+  utf/simdutf  row ratio spread over 143 rows: median  12.8%  p90  26.0%  max  37.3%
+      Base64Decode             geomean 1.111 1.170 1.229 1.194  spread 10.0%
+      Base64Encode             geomean 1.118 1.096 1.181 1.130  spread  7.6%
+      CountUtf8                geomean 1.562 1.527 1.563 1.549  spread  2.3%
+      Latin1ToUtf8             geomean 0.881 0.899 0.885 0.891  spread  2.0%
+      Utf16leToUtf8            geomean 1.355 1.374 1.410 1.320  spread  6.6%
+      Utf32ToLatin1            geomean 1.025 1.041 1.038 1.015  spread  2.5%
+      Utf8FromUtf16le          geomean 1.062 1.132 1.090 1.089  spread  6.4%
+      Utf8ToUtf16le            geomean 1.235 1.228 1.229 1.225  spread  0.9%
+      ValidUtf16leToUtf16be    geomean 0.947 0.950 0.922 0.963  spread  4.4%
+      ValidateUtf16leErr       geomean 1.195 1.197 1.198 1.179  spread  1.6%
+      ValidateUtf8             geomean 1.331 1.357 1.403 1.361  spread  5.3%
+      op geomean spread: median  4.4%  max 10.0%
+  utf/std      row ratio spread over  87 rows: median  11.7%  p90  24.5%  max  33.4%
+      op geomean spread: median  3.9%  max  5.0%
+  utf/rust     row ratio spread over 100 rows: median  16.4%  p90  28.7%  max  42.4%
+      op geomean spread: median  3.6%  max 10.0%
+  utf/go       row ratio spread over  72 rows: median  16.1%  p90  28.3%  max  42.3%
+      op geomean spread: median  4.5%  max  9.1%
+  utf      GB/s spread over 143 rows: median  17.0%  p90  27.6%  max  34.4%
+  simdutf  GB/s spread over 143 rows: median  16.9%  p90  25.9%  max  31.6%
+  std      GB/s spread over  87 rows: median  20.1%  p90  24.7%  max  28.5%
+  rust     GB/s spread over 100 rows: median  17.4%  p90  25.0%  max  36.8%
+  go       GB/s spread over  72 rows: median  18.0%  p90  25.3%  max  30.3%
