@@ -10,6 +10,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const testing = std.testing;
+const simd = @import("simd.zig");
 const result = @import("result.zig");
 const Result = result.Result;
 
@@ -64,7 +65,7 @@ pub const Isa = enum {
             .generic => true,
             .ssse3 => llvm and cpu.arch == .x86_64 and cpu.has(.x86, .ssse3),
             .avx2 => llvm and cpu.arch == .x86_64 and cpu.has(.x86, .avx2),
-            .neon => llvm and cpu.arch == .aarch64 and cpu.has(.aarch64, .neon),
+            .neon => llvm and cpu.arch.isAARCH64() and cpu.has(.aarch64, .neon),
         };
     }
 };
@@ -223,24 +224,11 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
     return struct {
         const lanes = if (isa == .avx2) 32 else 16;
         const V = @Vector(lanes, u8);
-        const Mask = @Int(.unsigned, lanes);
         const blocks = 64 / lanes;
         const chars = alphabet.chars();
 
         inline fn splat(x: u8) V {
             return @splat(x);
-        }
-
-        /// Looks `idx` up in `table`, within each 16-byte lane: an index of
-        /// 0x80 and above gives 0, and the rest must be below 16.
-        inline fn lookup(comptime table: [16]u8, idx: V) V {
-            const t: @Vector(16, u8) = table;
-            return switch (isa) {
-                .generic => unreachable,
-                .ssse3 => @"llvm.x86.ssse3.pshuf.b.128"(t, idx),
-                .avx2 => @"llvm.x86.avx2.pshuf.b"(std.simd.join(t, t), idx),
-                .neon => @"llvm.aarch64.neon.tbl1.v16i8"(t, idx),
-            };
         }
 
         /// How many bytes before its input `encode` reads.
@@ -249,7 +237,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// Encodes `src[skip..][0 .. lanes / 4 * 3]`.
         inline fn encode(src: *const [lanes]u8) [lanes]u8 {
             // Gather each group of three bytes a, b, c into the 32-bit lane
-            // b a c b, so that 16-bit lanes hold a:b and b:c big-endian. A
+            // b a c b (a b b c on big-endian targets), so that 16-bit lanes
+            // hold a:b and b:c. A
             // 32-byte vector starts 4 bytes early, so that each 16-byte lane
             // holds its 12 bytes: Muła and Lemire's trick to shuffle only
             // within lanes.
@@ -260,7 +249,10 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 var m: [lanes]i32 = undefined;
                 for (0..lanes / 4) |g| {
                     const base = g / 4 * 16 + g % 4 * 3 + (if (g < 4) skip else 0);
-                    m[g * 4 ..][0..4].* = .{ base + 1, base, base + 2, base + 1 };
+                    m[g * 4 ..][0..4].* = if (big)
+                        .{ base, base + 1, base + 1, base + 2 }
+                    else
+                        .{ base + 1, base, base + 2, base + 1 };
                 }
                 break :blk m;
             });
@@ -275,7 +267,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const t1 = mulhi(t0, rep(W, .{ 0x0040, 0x0400 }));
             const t2 = w & rep(W, .{ 0x03f0, 0x003f });
             const t3 = t2 *% rep(W, .{ 0x0010, 0x0100 });
-            const idx: V = @bitCast(t1 | t3);
+            // Each 16-bit lane holds two indices, the first in its low byte.
+            const idx: V = @bitCast(if (big) @byteSwap(t1 | t3) else t1 | t3);
             return idx +% offsets(idx);
         }
 
@@ -304,7 +297,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const signed: @Vector(lanes, i8) = @bitCast(idx);
             const reduced = @select(u8, signed < @as(@Vector(lanes, i8), @splat(26)), splat(13), idx -| splat(51));
             const table: [16]u8 = .{o_lower} ++ .{o_digit} ** 10 ++ .{ o_62, o_63, 'A', 0, 0 };
-            return lookup(table, reduced);
+            return simd.lookup16(table, reduced);
         }
 
         const Classified = struct { values: V, bad: @Vector(lanes, bool) };
@@ -328,11 +321,11 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             }
             const hi = in >> @splat(4);
             const lo = in & splat(0x0f);
-            const bad = lookup(tables.lo, lo) & lookup(tables.hi, hi) != splat(0);
+            const bad = simd.lookup16(tables.lo, lo) & simd.lookup16(tables.hi, hi) != splat(0);
             // The character whose offset differs from the rest of its high
             // nibble's takes a slot of its own, above 7.
             const slot = hi | (@select(u8, in == splat(tables.special), splat(8), splat(0)));
-            return .{ .values = in +% lookup(tables.roll, slot), .bad = bad };
+            return .{ .values = in +% simd.lookup16(tables.roll, slot), .bad = bad };
         }
 
         /// Which characters are ASCII whitespace.
@@ -346,7 +339,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // bytes from 0x80 look up 0.
             const x = 0x80;
             const table: [16]u8 = .{ ' ', x, x, x, x, x, x, x, x, '\t', '\n', x, '\x0c', '\r', x, x };
-            return lookup(table, in & splat(0x8f)) == in;
+            return simd.lookup16(table, in & splat(0x8f)) == in;
         }
 
         const Block = struct {
@@ -362,15 +355,16 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             /// Bit k is set when character k is outside the alphabet.
             inline fn badMask(b: Block) u64 {
                 var m: u64 = 0;
-                inline for (b.bad, 0..) |x, k| m |= @as(u64, @as(Mask, @bitCast(x))) << (k * lanes);
+                inline for (b.bad, 0..) |x, k| m |= @as(u64, simd.bitmask(x)) << (k * lanes);
                 return m;
             }
         };
 
         inline fn classifyBlock(src: *const [64]u8) Block {
             var b: Block = undefined;
+            const in: [blocks]V = @bitCast(simd.load(u8, src));
             inline for (0..blocks) |k| {
-                const c = classify(src[k * lanes ..][0..lanes].*);
+                const c = classify(in[k]);
                 b.values[k] = c.values;
                 b.bad[k] = c.bad;
             }
@@ -395,10 +389,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// Bit k is set when character k is ASCII whitespace.
         inline fn spaceMask(src: *const [64]u8) u64 {
             var m: u64 = 0;
-            inline for (0..blocks) |k| {
-                const in: V = src[k * lanes ..][0..lanes].*;
-                m |= @as(u64, @as(Mask, @bitCast(isSpace(in)))) << (k * lanes);
-            }
+            const in: [blocks]V = @bitCast(simd.load(u8, src));
+            inline for (0..blocks) |k| m |= @as(u64, simd.bitmask(isSpace(in[k]))) << (k * lanes);
             return m;
         }
 
@@ -447,10 +439,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const halves = [2]u64{ compress_table[lo], compress_table[hi] + 0x0808080808080808 };
                 const idx: @Vector(16, u8) = @bitCast(halves);
                 const v: @Vector(16, u8) = src[k * 16 ..][0..16].*;
-                const packed_: [16]u8 = switch (isa) {
-                    .neon => @"llvm.aarch64.neon.tbl1.v16i8"(v, idx),
-                    else => @"llvm.x86.ssse3.pshuf.b.128"(v, idx),
-                };
+                const packed_: [16]u8 = simd.lookup16(v, idx);
                 out[n..][0..8].* = packed_[0..8].*;
                 n += @popCount(lo);
                 out[n..][0..8].* = packed_[8..16].*;
@@ -474,17 +463,28 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 )),
                 .generic, .neon => blk: {
                     const x: D = @bitCast(values);
-                    break :blk ((x & rep(D, .{0x3f})) << @splat(18)) |
-                        ((x & rep(D, .{0x3f00})) << @splat(4)) |
-                        ((x >> @splat(10)) & rep(D, .{0xfc0})) |
-                        (x >> @splat(24));
+                    // The four values are the bytes of x, the first lowest on
+                    // little-endian targets and highest on big-endian ones.
+                    break :blk if (big)
+                        ((x >> @splat(6)) & rep(D, .{0xfc0000})) |
+                            ((x >> @splat(4)) & rep(D, .{0x3f000})) |
+                            ((x >> @splat(2)) & rep(D, .{0xfc0})) |
+                            (x & rep(D, .{0x3f}))
+                    else
+                        ((x & rep(D, .{0x3f})) << @splat(18)) |
+                            ((x & rep(D, .{0x3f00})) << @splat(4)) |
+                            ((x >> @splat(10)) & rep(D, .{0xfc0})) |
+                            (x >> @splat(24));
                 },
             };
-            // Each 32-bit lane holds its three bytes little-endian.
+            // Each 32-bit lane holds its three bytes in its low 24 bits.
             const bytes: V = @bitCast(w);
             return @shuffle(u8, bytes, undefined, blk: {
                 var m: [lanes]i32 = undefined;
-                for (0..lanes / 4) |g| m[g * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
+                for (0..lanes / 4) |g| m[g * 3 ..][0..3].* = if (big)
+                    .{ g * 4 + 1, g * 4 + 2, g * 4 + 3 }
+                else
+                    .{ g * 4 + 2, g * 4 + 1, g * 4 };
                 break :blk m;
             });
         }
@@ -535,23 +535,26 @@ fn decodeTables(comptime alphabet: Alphabet) struct { lo: [16]u8, hi: [16]u8, ro
     return .{ .lo = lo, .hi = hi, .roll = roll, .special = special };
 }
 
-/// For each 8-bit mask, the indices of its set bits in order, a byte each.
+/// For each 8-bit mask, the indices of its set bits in order, a byte each
+/// in memory order.
 const compress_table: [256]u64 = blk: {
     @setEvalBranchQuota(10000);
     var t: [256]u64 = undefined;
     for (0..256) |mask| {
-        var idx: u64 = 0;
-        var n: u6 = 0;
+        var idx: [8]u8 = @splat(0);
+        var n: usize = 0;
         for (0..8) |b| {
             if (mask >> b & 1 != 0) {
-                idx |= @as(u64, b) << (8 * @as(u6, n));
+                idx[n] = b;
                 n += 1;
             }
         }
-        t[mask] = idx;
+        t[mask] = @bitCast(idx);
     }
     break :blk t;
 };
+
+const big = builtin.cpu.arch.endian() == .big;
 
 /// A vector of `pattern` repeated.
 inline fn rep(comptime T: type, comptime pattern: anytype) T {
@@ -573,15 +576,12 @@ inline fn bothTrue(a: anytype, b: @TypeOf(a)) @TypeOf(a) {
     return @select(bool, a, b, a);
 }
 
-extern fn @"llvm.x86.ssse3.pshuf.b.128"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
-extern fn @"llvm.x86.avx2.pshuf.b"(@Vector(32, u8), @Vector(32, u8)) @Vector(32, u8);
 extern fn @"llvm.x86.ssse3.pmadd.ub.sw.128"(@Vector(16, u8), @Vector(16, u8)) @Vector(8, i16);
 extern fn @"llvm.x86.avx2.pmadd.ub.sw"(@Vector(32, u8), @Vector(32, u8)) @Vector(16, i16);
 extern fn @"llvm.x86.sse2.pmadd.wd"(@Vector(8, i16), @Vector(8, i16)) @Vector(4, i32);
 extern fn @"llvm.x86.avx2.pmadd.wd"(@Vector(16, i16), @Vector(16, i16)) @Vector(8, i32);
 extern fn @"llvm.x86.sse2.pmulhu.w"(@Vector(8, u16), @Vector(8, u16)) @Vector(8, u16);
 extern fn @"llvm.x86.avx2.pmulhu.w"(@Vector(16, u16), @Vector(16, u16)) @Vector(16, u16);
-extern fn @"llvm.aarch64.neon.tbl1.v16i8"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
 
 const test_isas = blk: {
     var isas: []const Isa = &.{};
