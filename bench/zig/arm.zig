@@ -389,7 +389,13 @@ fn opBenchmark(comptime i: usize) testingx.Function {
                 // and the call stays out of line, as a C call to simdutf
                 // is, so the loop does not keep the kernel's constants.
                 mem.doNotOptimizeAway(in.ptr);
-                mem.doNotOptimizeAway(@call(.never_inline, f, .{ in, out }));
+                // One word of the result, not the 16-byte union: reading
+                // the union back whole after the callee's narrow stores
+                // stalls store-to-load forwarding, about 6 ns a call.
+                mem.doNotOptimizeAway(switch (@call(.never_inline, f, .{ in, out })) {
+                    .valid => |v| @intFromBool(v),
+                    .count, .len => |n| n,
+                });
             }
             b.setBytes(@intCast(in.len));
         }
