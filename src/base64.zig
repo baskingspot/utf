@@ -101,6 +101,26 @@ pub fn encodeWith(comptime isa: Isa, comptime alphabet: Alphabet, dst: []u8, src
     const bytes = n / 4 * 3;
     var i: usize = 0;
     var o: usize = 0;
+    if (K.avx512 and src.len >= 64) {
+        // After the first block, each step encodes the 48 bytes at the top
+        // of the 64 ending with them, so that the loop runs while 48 are
+        // left and one partial block finishes.
+        simd.storeVolatile(dst, @as(K.V, K.encode(src[0..64], undefined)));
+        i = 48;
+        o = 64;
+        // The step is hidden from LLVM, which unrolled the loop four times
+        // with a remainder loop that costs more at 100 to 256 bytes.
+        while (src.len - i >= 48) : ({
+            i = asm (""
+                : [ret] "=r" (-> usize),
+                : [i] "0" (i + 48),
+            );
+            o += 64;
+        }) {
+            simd.storeVolatile(dst[o..], @as(K.V, K.encodeTop(src[i - 16 ..][0..64])));
+        }
+        return o + K.encodeLast(dst[o..], src, i, src.len, padding);
+    }
     if (src.len >= 64) {
         // The wide kernel reads from `K.skip` bytes before its input, so the
         // first 12 bytes go through the narrow one.
@@ -116,8 +136,10 @@ pub fn encodeWith(comptime isa: Isa, comptime alphabet: Alphabet, dst: []u8, src
             i += 48;
             o += 64;
         }) {
+            // Volatile, so that LLVM keeps each store whole: it split the
+            // AVX-512 one in two.
             inline for (0..64 / n) |k| {
-                dst[o + k * n ..][0..n].* = K.encode(src[i - K.skip + k * bytes ..][0..n], mul);
+                simd.storeVolatile(dst[o + k * n ..], @as(K.V, K.encode(src[i - K.skip + k * bytes ..][0..n], mul)));
             }
         }
     }
@@ -436,13 +458,15 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return translate(@shuffle(u8, in, undefined, spreadMask(!avx512, 0)), mul);
         }
 
-        /// Encodes the first 48 bytes of a block.
-        inline fn encodeBlock(in: V64) V64 {
-            var out: [blocks]V = undefined;
-            inline for (0..blocks) |k| {
-                out[k] = translate(@shuffle(u8, in, undefined, spreadMask(false, k * lanes / 4)), undefined);
-            }
-            return @bitCast(out);
+        /// Encodes the top 48 bytes of `src`.
+        inline fn encodeTop(src: *const [64]u8) [64]u8 {
+            const in = simd.loadVolatile(V, src);
+            const top = comptime blk: {
+                var m = spreadMask(false, 0);
+                for (&m) |*x| x.* += 16;
+                break :blk m;
+            };
+            return translate(@shuffle(u8, in, undefined, top), undefined);
         }
 
         /// Encodes `whole[start..end]`, at most 48 bytes, writing only
@@ -452,7 +476,21 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const n = end - start;
                 const len = charsFor(n, padding);
                 if (n == 0) return 0;
-                return storeLast(dst, encodeBlock(simd.loadTail(whole, start, end)), end - start, len);
+                // From a whole block before `end`, the one ending there:
+                // the spread shuffle moves it down and zeroes the bytes past
+                // the data, one `vpermb` where `loadTail` adds another.
+                const spread: V64 = comptime blk: {
+                    var v: [64]u8 = undefined;
+                    for (spreadMask(false, 0), &v) |x, *y| y.* = x;
+                    break :blk v;
+                };
+                const block, const off: u8 = if (end >= 64)
+                    .{ simd.load(u8, whole[end - 64 ..]), @intCast(64 - n) }
+                else
+                    .{ simd.loadPartial(u8, whole[start..end]), 0 };
+                const moved = simd.permute(block, spread +% @as(V64, @splat(off)));
+                const in = @select(u8, spread < @as(V64, @splat(@intCast(n))), moved, @as(V64, @splat(0)));
+                return storeLast(dst, translate(in, undefined), n, len);
             }
             const src = whole[start..end];
             // 12 bytes at a time with 16-byte vectors, then one or two
