@@ -247,6 +247,12 @@ pub fn decodeWith(
 }
 
 /// The low `n` bits set, for `n` up to 64.
+/// `encodedLen(n, .{ .padding = padding })`, whose options struct LLVM
+/// leaves in memory, on the critical path of short encodes.
+inline fn charsFor(n: usize, padding: bool) usize {
+    return if (padding) (n + 2) / 3 * 4 else (n * 4 + 2) / 3;
+}
+
 inline fn lowBits(n: usize) u64 {
     return if (n >= 64) std.math.maxInt(u64) else (@as(u64, 1) << @intCast(n)) - 1;
 }
@@ -293,8 +299,9 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// its `encodedLen` characters.
         inline fn encodeLast(dst: []u8, whole: []const u8, start: usize, end: usize, padding: bool) usize {
             if (avx512) {
-                const len = encodedLen(end - start, .{ .padding = padding });
-                if (end == start) return 0;
+                const n = end - start;
+                const len = charsFor(n, padding);
+                if (n == 0) return 0;
                 return storeLast(dst, encodeBlock(loadTail(whole, start, end)), end - start, len);
             }
             const src = whole[start..end];
@@ -309,7 +316,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 o += 16;
             }) dst[o..][0..16].* = N.encode(src[i..][0..16], mul);
             const r = src.len - i;
-            const len = encodedLen(r, .{ .padding = padding });
+            const len = charsFor(r, padding);
             // Up to two groups and a partial one, the scalar code inline is
             // faster.
             const options: EncodeOptions = .{ .alphabet = alphabet, .padding = padding };
@@ -539,8 +546,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return b;
         }
 
-        /// How many bytes past its 48 `packBlock` writes: none with AVX-512,
-        /// whose masked store writes exactly 48.
+        /// How many bytes past its 48 `packBlock` writes: each vector is
+        /// stored whole.
         const slack = lanes / 4;
 
         /// Turns 64 6-bit values into 48 bytes, and writes `slack` more.
@@ -777,11 +784,19 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         }
 
         /// Stores the first `len` bytes of `v`, a vector of 16, 32, or 64
-        /// bytes, without writing past them.
+        /// bytes, without writing past them. An AVX-512 masked store does
+        /// it in one instruction, but only when the bytes it masks off are
+        /// on the page it writes: on a page not yet written, every call
+        /// takes a microcode assist, which halved the speed of 4 KiB
+        /// decodes into a freshly mapped buffer.
         inline fn storePartial(dst: []u8, v: anytype, len: usize) void {
             const n = @typeInfo(@TypeOf(v)).vector.len;
             std.debug.assert(len <= n and dst.len >= len);
-            if (avx512 and n == 64) return @"llvm.masked.store.v64i8.p0"(v, dst.ptr, 1, @bitCast(lowBits(len)));
+            if (avx512 and n == 64 and len > 0) {
+                const last = @intFromPtr(dst.ptr) + len - 1;
+                if ((last ^ (@intFromPtr(dst.ptr) + 63)) < std.heap.page_size_min)
+                    return @"llvm.masked.store.v64i8.p0"(v, dst.ptr, 1, @bitCast(lowBits(len)));
+            }
             // Whole 16-byte pieces, then the last part of one in two
             // overlapping integer stores.
             const pieces: [n / 16]@Vector(16, u8) = @bitCast(v);
@@ -931,9 +946,8 @@ extern fn @"llvm.x86.avx512.pmaddw.d.512"(@Vector(32, i16), @Vector(32, i16)) @V
 extern fn @"llvm.x86.avx512.pmultishift.qb.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
 extern fn @"llvm.x86.avx512.permvar.qi.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
 extern fn @"llvm.x86.avx512.vpermi2var.qi.512"(@Vector(64, u8), @Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx512.mask.compress.v64i8"(@Vector(64, u8), @Vector(64, u8), @Vector(64, bool)) @Vector(64, u8);
-extern fn @"llvm.masked.load.v64i8.p0"(*const anyopaque, i32, @Vector(64, bool), @Vector(64, u8)) @Vector(64, u8);
 extern fn @"llvm.masked.store.v64i8.p0"(@Vector(64, u8), *anyopaque, i32, @Vector(64, bool)) void;
+extern fn @"llvm.x86.avx512.mask.compress.v64i8"(@Vector(64, u8), @Vector(64, u8), @Vector(64, bool)) @Vector(64, u8);
 
 const test_isas = blk: {
     var isas: []const Isa = &.{};
