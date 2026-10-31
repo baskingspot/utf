@@ -23,6 +23,7 @@ All notable changes to utf are recorded here. The format follows
 - `convert` on AVX2 and SSE: UTF-16 to UTF-8 is 1.4–2.0× faster on CJK, Korean, and Hindi text, and UTF-8 to UTF-16 on non-Latin text 1.4–2.1× on AVX2.
 - Functions returning a `Result` (the `validate` `WithErrors` forms, checked `convert` functions, `base64.decode`) are 1.2–2.4× faster on 16–64 byte inputs in generic x86-64 builds, and `validate.asciiWithErrors`, `utf8WithErrors`, and `utf32WithErrors` up to 2.4× in native builds: the result no longer goes through a stack copy.
 - `convert.utf16leToLatin1`, `utf16beToLatin1`, and their `valid` forms on AVX2 and SSE: the last 1–31 code units of inputs from 16 units on no longer go through scalar code: 2.1–2.4× faster at 16 units on AVX2 (1.3× for the `valid` forms).
+- `length.utf8FromUtf16le`, `utf8FromUtf16be`, and `utf8FromUtf32` are 1.1–1.2× faster on AVX2 and SSE.
 
 ### Fixed
 

@@ -28,7 +28,7 @@ fn countUtf8Kernel(src: []const u8) usize {
             return @as(usize, @popCount(simd.bitmask(notContinuation(v)) & live));
         }
     }.f, src);
-    const sum, const p = sumBlocks(u8, 1, struct {
+    const sum, const p = sumBlocks(u8, 1, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v));
         }
@@ -63,7 +63,7 @@ fn utf16FromUtf8Kernel(src: []const u8) usize {
                 @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0xF0))) & live);
         }
     }.f, src);
-    const sum, const p = sumBlocks(u8, 2, struct {
+    const sum, const p = sumBlocks(u8, 2, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v)) + ones(u8, v >= @as(@TypeOf(v), @splat(0xF0)));
         }
@@ -81,7 +81,7 @@ fn utf16FromUtf32Kernel(src: []const u32) usize {
             return @as(usize, @popCount(simd.bitmask(v > @as(@TypeOf(v), @splat(0xFFFF))) & live));
         }
     }.f, src);
-    const sum, const p = sumBlocks(u32, 1, struct {
+    const sum, const p = sumBlocks(u32, 1, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u32, v > @as(@TypeOf(v), @splat(0xFFFF)));
         }
@@ -152,14 +152,22 @@ fn utf8FromUtf32Kernel(src: []const u32) usize {
                 @popCount(simd.bitmask(v >= @as(V, @splat(0x10000))) & live);
         }
     }.f, src);
-    const sum, const p = sumBlocks(u32, 3, struct {
+    const sum, const p = sumBlocks(u32, 4, 4, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
-            return ones(u32, v >= @as(V, @splat(0x80))) + ones(u32, v >= @as(V, @splat(0x800))) +
-                ones(u32, v >= @as(V, @splat(0x10000)));
+            const S = @Vector(@typeInfo(V).vector.len, i32);
+            // Four, less one below each of U+0080, U+0800, and U+10000,
+            // each in one signed compare, where an unsigned one takes two
+            // without AVX-512, both on the two ports compares share; a
+            // value at or above 2^31, below all three as signed, counts
+            // four.
+            const c: S = @bitCast(v);
+            const below = mask(u32, c < @as(S, @splat(0x80))) +% mask(u32, c < @as(S, @splat(0x800))) +%
+                mask(u32, c < @as(S, @splat(0x10000)));
+            return below & ~@as(V, @bitCast(c >> @splat(31)));
         }
     }.f, src);
-    return p + sum + scalar.utf8FromUtf32(src[p..]);
+    return sum + scalar.utf8FromUtf32(src[p..]);
 }
 
 /// UTF-8 bytes for Latin-1: one per byte below 0x80, two above.
@@ -172,7 +180,7 @@ fn utf8FromLatin1Kernel(src: []const u8) usize {
             return @as(usize, @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0x80))) & live));
         }
     }.f, src);
-    const sum, const p = sumBlocks(u8, 1, struct {
+    const sum, const p = sumBlocks(u8, 1, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, v >= @as(@TypeOf(v), @splat(0x80)));
         }
@@ -206,7 +214,7 @@ fn countUtf16(comptime e: Endian, src: []const u16) usize {
             return @as(usize, @popCount(simd.bitmask(lows) & live));
         }
     }.f, src);
-    const lows, const p = sumBlocks(u16, 1, struct {
+    const lows, const p = sumBlocks(u16, 1, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
             return ones(u16, swap(e, v) & @as(V, @splat(0xFC00)) == @as(V, @splat(0xDC00)));
@@ -225,17 +233,26 @@ fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
                 @popCount(simd.bitmask(v & @as(V, @splat(0xF800)) == @as(V, @splat(0xD800))) & live);
         }
     }.f, src);
-    const sum, const p = sumBlocks(u16, 2, struct {
-        fn f(raw: anytype) @TypeOf(raw) {
-            const V = @TypeOf(raw);
-            const v = swap(e, raw);
-            // Above one byte, and above two unless a surrogate.
-            return ones(u16, v >= @as(V, @splat(0x80))) +
-                ones(u16, v >= @as(V, @splat(0x800))) -
-                ones(u16, v & @as(V, @splat(0xF800)) == @as(V, @splat(0xD800)));
+    const sum, const p = sumBlocks(u16, 3, 3, struct {
+        fn f(v: anytype) @TypeOf(v) {
+            const V = @TypeOf(v);
+            // Three, less one below U+0800, one more below U+0080, and
+            // one for a surrogate: each compare's all-ones lane added, with
+            // the three added once per run of blocks. Without AVX-512 an
+            // unsigned compare takes two operations, and turning it into
+            // a one a third (westmere 0.83-0.88 of simdutf). Each is a
+            // masked equality, so the other byte order swaps the
+            // constants, not the units.
+            const c = struct {
+                fn f(x: u16) V {
+                    return @splat(if (e == native) x else @byteSwap(x));
+                }
+            }.f;
+            const high = v & c(0xF800);
+            return mask(u16, v & c(0xFF80) == c(0)) +% mask(u16, high == c(0)) +% mask(u16, high == c(0xD800));
         }
     }.f, src);
-    return p + sum + scalar.utf8FromUtf16(e, src[p..]);
+    return sum + scalar.utf8FromUtf16(e, src[p..]);
 }
 
 /// Lanes that hold a byte other than a UTF-8 continuation byte.
@@ -247,6 +264,12 @@ inline fn notContinuation(v: anytype) @Vector(@typeInfo(@TypeOf(v)).vector.len, 
 inline fn ones(comptime T: type, b: anytype) @Vector(@typeInfo(@TypeOf(b)).vector.len, T) {
     const V = @Vector(@typeInfo(@TypeOf(b)).vector.len, T);
     return @select(T, b, @as(V, @splat(1)), @as(V, @splat(0)));
+}
+
+/// All ones in each lane `b` sets: added, it subtracts one.
+inline fn mask(comptime T: type, b: anytype) @Vector(@typeInfo(@TypeOf(b)).vector.len, T) {
+    const V = @Vector(@typeInfo(@TypeOf(b)).vector.len, T);
+    return @select(T, b, @as(V, @splat(~@as(T, 0))), @as(V, @splat(0)));
 }
 
 inline fn swap(comptime e: Endian, v: anytype) @TypeOf(v) {
@@ -280,18 +303,20 @@ inline fn popBlocks(comptime T: type, comptime f: anytype, src: []const T) usize
     return sum;
 }
 
-/// Sums `f`, at most `max` per lane, over `src`: in 64-byte vectors, or in
-/// 16-byte ones when `src` is shorter than 64 bytes. Returns the sum and the
+/// Sums `base + f`, at most `max` per lane, over `src`: in 64-byte vectors,
+/// or in 16-byte ones when `src` is shorter than 64 bytes. `f`'s lanes may
+/// wrap: `base` is added once per run of blocks, not once per block. Returns the sum and the
 /// number of code units it covers, all of `src` unless it is shorter than 16
 /// bytes.
 inline fn sumBlocks(
     comptime T: type,
     comptime max: comptime_int,
+    comptime base: comptime_int,
     comptime f: anytype,
     src: []const T,
 ) struct { usize, usize } {
-    if (src.len >= 64 / @sizeOf(T)) return sumVectors(T, 64 / @sizeOf(T), max, f, src);
-    if (src.len >= 16 / @sizeOf(T)) return sumVectors(T, 16 / @sizeOf(T), max, f, src);
+    if (src.len >= 64 / @sizeOf(T)) return sumVectors(T, 64 / @sizeOf(T), max, base, f, src);
+    if (src.len >= 16 / @sizeOf(T)) return sumVectors(T, 16 / @sizeOf(T), max, base, f, src);
     return .{ 0, 0 };
 }
 
@@ -302,10 +327,13 @@ inline fn sumVectors(
     comptime T: type,
     comptime n: usize,
     comptime max: comptime_int,
+    comptime base: comptime_int,
     comptime f: anytype,
     src: []const T,
 ) struct { usize, usize } {
     const V = @Vector(n, T);
+    // 16-bit lanes sum in 32 bits, which takes half the widening.
+    const S = @Vector(n, if (T == u16) u32 else u64);
     var sum: usize = 0;
     var p: usize = 0;
     // Aligned loads from the second vector on, as in `popBlocks`, once
@@ -315,23 +343,25 @@ inline fn sumVectors(
         p = alignHead(T, n * @sizeOf(T), src);
         if (p > 0) {
             const head = std.simd.iota(T, n) < @as(V, @splat(@intCast(p)));
-            const first = f(@as(V, src[0..n].*));
-            sum += @reduce(.Add, @as(@Vector(n, u64), @select(T, head, first, @as(V, @splat(0)))));
+            const first = @as(V, @splat(base)) +% f(@as(V, src[0..n].*));
+            sum += @reduce(.Add, @as(S, @select(T, head, first, @as(V, @splat(0)))));
         }
     }
     while (src.len - p >= n) {
-        const blocks = @min((src.len - p) / n, std.math.maxInt(T) / max);
+        // usize, where `@min` would narrow it and `base * blocks` with it.
+        const blocks: usize = @min((src.len - p) / n, std.math.maxInt(T) / max);
         var acc: V = @splat(0);
         for (0..blocks) |_| {
             acc +%= f(@as(V, src[p..][0..n].*));
             p += n;
         }
-        sum += @reduce(.Add, @as(@Vector(n, u64), acc));
+        if (base != 0) acc +%= @splat(@intCast(base * blocks));
+        sum += @reduce(.Add, @as(S, acc));
     }
     if (p < src.len) {
         const fresh = std.simd.iota(T, n) >= @as(V, @splat(@intCast(n - (src.len - p))));
-        const last = f(@as(V, src[src.len - n ..][0..n].*));
-        sum += @reduce(.Add, @as(@Vector(n, u64), @select(T, fresh, last, @as(V, @splat(0)))));
+        const last = @as(V, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
+        sum += @reduce(.Add, @as(S, @select(T, fresh, last, @as(V, @splat(0)))));
     }
     return .{ sum, src.len };
 }
@@ -398,6 +428,12 @@ fn overflowCases() !void {
     // U+0808 reads the same in either byte order.
     const units = [_]u16{0x0808} ** (32 * 100 + 3);
     try testing.expectEqual(3 * units.len, utf8FromUtf16le(&units));
+    // Past the 21845 blocks of 32 units one 16-bit accumulator holds at
+    // three a lane.
+    const many = try testing.allocator.alloc(u16, 32 * 21845 + 35);
+    defer testing.allocator.free(many);
+    @memset(many, 0x0808);
+    try testing.expectEqual(3 * many.len, utf8FromUtf16le(many));
     const cps = [_]u32{0x10000} ** (16 * 100 + 7);
     try testing.expectEqual(4 * cps.len, utf8FromUtf32(&cps));
     try testing.expectEqual(2 * cps.len, utf16FromUtf32(&cps));
