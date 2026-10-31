@@ -572,14 +572,15 @@ test "checked conversions name the first error and where it starts" {
     try testing.expectEqual(Result.fail(.overlong, 0), utf8ToLatin1("\xc1\xbf", &out8));
     try testing.expectEqual(Result.fail(.too_short, 0), utf8ToLatin1("\xc3", &out8));
     try testing.expectEqual(Result.fail(.too_long, 1), utf8ToLatin1("a\x80", &out8));
-    // UTF-16: an unpaired surrogate fails at its own index.
+    // UTF-16: an unpaired surrogate fails at its own index. The units are
+    // native values, so they are read in native byte order.
     const lone_high = [_]u16{ 'a', 0xD800, 'b' };
     const lone_low = [_]u16{ 'a', 'b', 0xDC00 };
     const trailing_high = [_]u16{ 'a', 0xD83D };
-    try testing.expectEqual(Result.fail(.surrogate, 1), utf16ToUtf8(.little, &lone_high, &out8));
-    try testing.expectEqual(Result.fail(.surrogate, 2), utf16ToUtf32(.little, &lone_low, &out32));
-    try testing.expectEqual(Result.fail(.surrogate, 1), utf16ToUtf16Swapped(.little, &trailing_high, &out16));
-    try testing.expectEqual(Result.fail(.too_large, 1), utf16ToLatin1(.little, &lone_high, &out8));
+    try testing.expectEqual(Result.fail(.surrogate, 1), utf16ToUtf8(native, &lone_high, &out8));
+    try testing.expectEqual(Result.fail(.surrogate, 2), utf16ToUtf32(native, &lone_low, &out32));
+    try testing.expectEqual(Result.fail(.surrogate, 1), utf16ToUtf16Swapped(native, &trailing_high, &out16));
+    try testing.expectEqual(Result.fail(.too_large, 1), utf16ToLatin1(native, &lone_high, &out8));
     // UTF-32.
     const bad32 = [_]u32{ 'a', 0x110000, 0xD800 };
     try testing.expectEqual(Result.fail(.too_large, 1), utf32ToUtf8(&bad32, &out8));
@@ -591,7 +592,7 @@ test "checked conversions stop at the first character that does not fit" {
     var out8: [3]u8 = undefined;
     var out16: [2]u16 = undefined;
     // "a€" needs four bytes; three hold only "a".
-    try testing.expectEqual(Result.fail(.output_buffer_too_small, 1), utf16ToUtf8(.little, &.{ 'a', 0x20AC }, &out8));
+    try testing.expectEqual(Result.fail(.output_buffer_too_small, 1), utf16ToUtf8(native, &.{ 'a', 0x20AC }, &out8));
     const emoji = "a\xf0\x9f\x8e\x89";
     try testing.expectEqual(Result.fail(.output_buffer_too_small, 1), utf8ToUtf16(.little, emoji, &out16));
     // A validation error at the same character wins.
