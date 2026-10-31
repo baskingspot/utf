@@ -7,16 +7,27 @@
 
 const std = @import("std");
 const Endian = std.builtin.Endian;
-const dispatch = @import("dispatch.zig");
 const scalar = @import("scalar_convert.zig");
+const simd = @import("simd.zig");
+const dispatch = @import("dispatch.zig");
 
 const native = @import("builtin").cpu.arch.endian();
+
+/// With AVX-512, a comparison gives a mask register, so a block's count is
+/// a popcount: one shuffle-port operation per 64 bytes, where widening the
+/// mask to a vector to add it up takes two.
+const k_masks = simd.isa == .avx512;
 
 /// Code points in UTF-8: the bytes that are not continuation bytes.
 pub fn countUtf8(src: []const u8) usize {
     return dispatch.call(@src(), countUtf8Kernel, .{src});
 }
 fn countUtf8Kernel(src: []const u8) usize {
+    if (k_masks and src.len >= 64) return popBlocks(u8, struct {
+        fn f(v: simd.Block(u8), live: u64) usize {
+            return @as(usize, @popCount(simd.bitmask(notContinuation(v)) & live));
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u8, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v));
@@ -46,6 +57,12 @@ pub fn utf16FromUtf8(src: []const u8) usize {
     return dispatch.call(@src(), utf16FromUtf8Kernel, .{src});
 }
 fn utf16FromUtf8Kernel(src: []const u8) usize {
+    if (k_masks and src.len >= 64) return popBlocks(u8, struct {
+        fn f(v: simd.Block(u8), live: u64) usize {
+            return @as(usize, @popCount(simd.bitmask(notContinuation(v)) & live)) +
+                @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0xF0))) & live);
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u8, 2, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, notContinuation(v)) + ones(u8, v >= @as(@TypeOf(v), @splat(0xF0)));
@@ -59,6 +76,11 @@ pub fn utf16FromUtf32(src: []const u32) usize {
     return dispatch.call(@src(), utf16FromUtf32Kernel, .{src});
 }
 fn utf16FromUtf32Kernel(src: []const u32) usize {
+    if (k_masks and src.len >= 16) return src.len + popBlocks(u32, struct {
+        fn f(v: simd.Block(u32), live: u16) usize {
+            return @as(usize, @popCount(simd.bitmask(v > @as(@TypeOf(v), @splat(0xFFFF))) & live));
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u32, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u32, v > @as(@TypeOf(v), @splat(0xFFFF)));
@@ -122,6 +144,14 @@ pub fn utf8FromUtf32(src: []const u32) usize {
     return dispatch.call(@src(), utf8FromUtf32Kernel, .{src});
 }
 fn utf8FromUtf32Kernel(src: []const u32) usize {
+    if (k_masks and src.len >= 16) return src.len + popBlocks(u32, struct {
+        fn f(v: simd.Block(u32), live: u16) usize {
+            const V = @TypeOf(v);
+            return @as(usize, @popCount(simd.bitmask(v >= @as(V, @splat(0x80))) & live)) +
+                @popCount(simd.bitmask(v >= @as(V, @splat(0x800))) & live) +
+                @popCount(simd.bitmask(v >= @as(V, @splat(0x10000))) & live);
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u32, 3, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
@@ -137,6 +167,11 @@ pub fn utf8FromLatin1(src: []const u8) usize {
     return dispatch.call(@src(), utf8FromLatin1Kernel, .{src});
 }
 fn utf8FromLatin1Kernel(src: []const u8) usize {
+    if (k_masks and src.len >= 64) return src.len + popBlocks(u8, struct {
+        fn f(v: simd.Block(u8), live: u64) usize {
+            return @as(usize, @popCount(simd.bitmask(v >= @as(@TypeOf(v), @splat(0x80))) & live));
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u8, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             return ones(u8, v >= @as(@TypeOf(v), @splat(0x80)));
@@ -164,6 +199,13 @@ pub fn latin1FromUtf32(src: []const u32) usize {
 }
 
 fn countUtf16(comptime e: Endian, src: []const u16) usize {
+    if (k_masks and src.len >= 32) return src.len - popBlocks(u16, struct {
+        fn f(v: simd.Block(u16), live: u32) usize {
+            const V = @TypeOf(v);
+            const lows = swap(e, v) & @as(V, @splat(0xFC00)) == @as(V, @splat(0xDC00));
+            return @as(usize, @popCount(simd.bitmask(lows) & live));
+        }
+    }.f, src);
     const lows, const p = sumBlocks(u16, 1, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
@@ -174,6 +216,15 @@ fn countUtf16(comptime e: Endian, src: []const u16) usize {
 }
 
 fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
+    if (k_masks and src.len >= 32) return src.len + popBlocks(u16, struct {
+        fn f(raw: simd.Block(u16), live: u32) usize {
+            const V = @TypeOf(raw);
+            const v = swap(e, raw);
+            return @as(usize, @popCount(simd.bitmask(v >= @as(V, @splat(0x80))) & live)) +
+                @popCount(simd.bitmask(v >= @as(V, @splat(0x800))) & live) -
+                @popCount(simd.bitmask(v & @as(V, @splat(0xF800)) == @as(V, @splat(0xD800))) & live);
+        }
+    }.f, src);
     const sum, const p = sumBlocks(u16, 2, struct {
         fn f(raw: anytype) @TypeOf(raw) {
             const V = @TypeOf(raw);
@@ -200,6 +251,33 @@ inline fn ones(comptime T: type, b: anytype) @Vector(@typeInfo(@TypeOf(b)).vecto
 
 inline fn swap(comptime e: Endian, v: anytype) @TypeOf(v) {
     return if (e == native) v else @byteSwap(v);
+}
+
+/// The units of `src` before the first `size`-byte boundary, 0 if it
+/// starts on one. The units must be naturally aligned, as slices of them are.
+inline fn alignHead(comptime T: type, comptime size: usize, src: []const T) usize {
+    const addr = @intFromPtr(src.ptr);
+    return (std.mem.alignForward(usize, addr, size) - addr) / @sizeOf(T);
+}
+
+/// Sums `f(block, live)` over the 64-byte blocks of `src`, which holds at
+/// least one: `live` has a bit for each lane of the block to count. The
+/// last partial block is the whole one that ends with `src`, with the lanes
+/// already counted left out of `live`.
+inline fn popBlocks(comptime T: type, comptime f: anytype, src: []const T) usize {
+    const lanes = simd.block_len / @sizeOf(T);
+    const M = @Int(.unsigned, lanes);
+    var sum: usize = 0;
+    var p: usize = 0;
+    // From the second block on, loads are aligned: a load that crosses a
+    // cache line costs two, which shows once the input is out of L1.
+    if (src.len >= 2 * lanes) {
+        p = alignHead(T, simd.block_len, src);
+        if (p > 0) sum += f(simd.load(T, src), ~(~@as(M, 0) << @intCast(p)));
+    }
+    while (src.len - p >= lanes) : (p += lanes) sum += f(simd.load(T, src[p..]), ~@as(M, 0));
+    if (p < src.len) sum += f(simd.load(T, src[src.len - lanes ..]), ~@as(M, 0) << @intCast(lanes - (src.len - p)));
+    return sum;
 }
 
 /// Sums `f`, at most `max` per lane, over `src`: in 64-byte vectors, or in
@@ -230,6 +308,17 @@ inline fn sumVectors(
     const V = @Vector(n, T);
     var sum: usize = 0;
     var p: usize = 0;
+    // Aligned loads from the second vector on, as in `popBlocks`, once
+    // the input is long enough to pay for the extra sum (from 16 vectors:
+    // at 256 bytes the head cost AVX2 20-35%).
+    if (src.len >= 16 * n) {
+        p = alignHead(T, n * @sizeOf(T), src);
+        if (p > 0) {
+            const head = std.simd.iota(T, n) < @as(V, @splat(@intCast(p)));
+            const first = f(@as(V, src[0..n].*));
+            sum += @reduce(.Add, @as(@Vector(n, u64), @select(T, head, first, @as(V, @splat(0)))));
+        }
+    }
     while (src.len - p >= n) {
         const blocks = @min((src.len - p) / n, std.math.maxInt(T) / max);
         var acc: V = @splat(0);
@@ -255,29 +344,33 @@ fn anyInputCases() !void {
     const testing = std.testing;
     var prng: std.Random.DefaultPrng = .init(testing.random_seed);
     const r = prng.random();
-    var buf8: [700]u8 = undefined;
-    var buf16: [350]u16 = undefined;
-    var buf32: [180]u32 = undefined;
+    var buf8: [1400]u8 = undefined;
+    var buf16: [700]u16 = undefined;
+    var buf32: [360]u32 = undefined;
     for (0..2000) |_| {
-        const n8 = r.uintLessThan(usize, buf8.len);
-        const n16 = r.uintLessThan(usize, buf16.len);
-        const n32 = r.uintLessThan(usize, buf32.len);
+        // A random start, so the blocks fall at every alignment.
+        const n8 = r.uintLessThan(usize, buf8.len - 64);
+        const n16 = r.uintLessThan(usize, buf16.len - 32);
+        const n32 = r.uintLessThan(usize, buf32.len - 16);
+        const at8 = r.uintLessThan(usize, 64);
+        const at16 = r.uintLessThan(usize, 32);
+        const at32 = r.uintLessThan(usize, 16);
         // Bytes and units of every class, surrogates and invalid values
         // included, most of the time ASCII so the blocks vary.
-        for (buf8[0..n8]) |*b| b.* = if (r.boolean()) r.uintLessThan(u8, 0x80) else r.int(u8);
-        for (buf16[0..n16]) |*u| u.* = switch (r.uintLessThan(u8, 4)) {
+        for (buf8[at8..][0..n8]) |*b| b.* = if (r.boolean()) r.uintLessThan(u8, 0x80) else r.int(u8);
+        for (buf16[at16..][0..n16]) |*u| u.* = switch (r.uintLessThan(u8, 4)) {
             0 => r.uintLessThan(u16, 0x80),
             1 => 0xD800 + r.uintLessThan(u16, 0x800),
             else => r.int(u16),
         };
-        for (buf32[0..n32]) |*u| u.* = switch (r.uintLessThan(u8, 4)) {
+        for (buf32[at32..][0..n32]) |*u| u.* = switch (r.uintLessThan(u8, 4)) {
             0 => r.uintLessThan(u32, 0x80),
             1 => r.uintLessThan(u32, 0x110000),
             else => r.int(u32) >> r.int(u5),
         };
-        const s8 = buf8[0..n8];
-        const s16 = buf16[0..n16];
-        const s32 = buf32[0..n32];
+        const s8 = buf8[at8..][0..n8];
+        const s16 = buf16[at16..][0..n16];
+        const s32 = buf32[at32..][0..n32];
         try testing.expectEqual(scalar.countUtf8(s8), countUtf8(s8));
         try testing.expectEqual(scalar.utf16FromUtf8(s8), utf16FromUtf8(s8));
         try testing.expectEqual(scalar.utf8FromLatin1(s8), utf8FromLatin1(s8));
