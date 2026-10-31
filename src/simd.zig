@@ -9,25 +9,70 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const testing = std.testing;
+const x86 = std.Target.x86;
 
 pub const Isa = enum { avx512, avx2, sse, neon, generic };
 
 /// The widest vector instruction set the target CPU has, from `-Dcpu`.
-pub const isa: Isa = switch (builtin.cpu.arch) {
-    .x86, .x86_64 => if (hasX86(.avx512bw))
-        .avx512
-    else if (hasX86(.avx2))
-        .avx2
-    else if (hasX86(.ssse3))
-        .sse
-    else
-        .generic,
-    .aarch64, .aarch64_be => if (std.Target.aarch64.featureSetHas(builtin.cpu.features, .neon))
-        .neon
-    else
-        .generic,
-    else => .generic,
+pub const isa: Isa = isaOf(builtin.cpu);
+
+/// The widest vector instruction set `cpu` has. build.zig uses it too, to
+/// pick the kernels `dispatch.zig` adds at runtime.
+pub fn isaOf(cpu: std.Target.Cpu) Isa {
+    return switch (cpu.arch) {
+        .x86, .x86_64 => if (x86.featureSetHas(cpu.features, .avx512bw))
+            .avx512
+        else if (x86.featureSetHas(cpu.features, .avx2))
+            .avx2
+        else if (x86.featureSetHas(cpu.features, .ssse3))
+            .sse
+        else
+            .generic,
+        .aarch64, .aarch64_be => if (std.Target.aarch64.featureSetHas(cpu.features, .neon))
+            .neon
+        else
+            .generic,
+        else => .generic,
+    };
+}
+
+// Runtime dispatch's tiers (`dispatch.zig`), here with `isaOf` so build.zig
+// can import them without the dispatch options.
+
+/// The kernels for one tier: compiled for `model` plus `add`, run where the
+/// CPU has every feature in `need`. `need` lists what LLVM may emit for that
+/// CPU: an x86-64 psABI level, plus the AVX-512 extensions the AVX-512
+/// kernels use.
+pub const Tier = struct {
+    isa: Isa,
+    model: *const std.Target.Cpu.Model,
+    add: []const x86.Feature = &.{},
+    need: []const x86.Feature,
 };
+
+const v2: []const x86.Feature = &.{ .cx16, .popcnt, .sahf, .sse3, .sse4_1, .sse4_2, .ssse3 };
+const v3 = v2 ++ &[_]x86.Feature{ .avx, .avx2, .bmi, .bmi2, .f16c, .fma, .lzcnt, .movbe, .xsave };
+const v4 = v3 ++ &[_]x86.Feature{ .avx512f, .avx512bw, .avx512cd, .avx512dq, .avx512vl };
+// GFNI too, which Ice Lake and later and Zen 4 have alongside VBMI2: LLVM
+// shifts bytes with it, worth 4-10% on UTF-8 validation from 1 KiB
+// (docs/slop/results/dispatch-20261031.md).
+const avx512_ext: []const x86.Feature = &.{ .avx512vbmi, .avx512vbmi2, .avx512bitalg, .avx512vpopcntdq, .gfni };
+
+/// Every tier, best first.
+pub const tiers = [_]Tier{
+    .{ .isa = .avx512, .model = &x86.cpu.x86_64_v4, .add = avx512_ext, .need = v4 ++ avx512_ext },
+    .{ .isa = .avx2, .model = &x86.cpu.x86_64_v3, .need = v3 },
+    .{ .isa = .sse, .model = &x86.cpu.x86_64_v2, .need = v2 },
+};
+
+/// The tiers better than `base`, the ISA a build gets at comptime: the ones
+/// build.zig compiles objects for and `dispatch.zig` picks among, best first.
+pub fn dispatchAbove(base: Isa) []const Tier {
+    for (tiers, 0..) |t, i| {
+        if (t.isa == base) return tiers[0..i];
+    }
+    return if (base == .generic) &tiers else &.{};
+}
 
 /// AVX-512 VBMI (`vpermb`, `vpermi2b`), for paths that need byte permutes.
 pub const has_vbmi = isa == .avx512 and hasX86(.avx512vbmi);
@@ -49,8 +94,8 @@ pub fn Block(comptime T: type) type {
     return @Vector(block_len / @sizeOf(T), T);
 }
 
-fn hasX86(comptime feature: std.Target.x86.Feature) bool {
-    return std.Target.x86.featureSetHas(builtin.cpu.features, feature);
+fn hasX86(comptime feature: x86.Feature) bool {
+    return x86.featureSetHas(builtin.cpu.features, feature);
 }
 
 // LLVM intrinsics resolve only under the LLVM backend; the self-hosted

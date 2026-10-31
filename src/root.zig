@@ -16,4 +16,5 @@ pub const validate = @import("validate.zig");
 test {
     std.testing.refAllDecls(@This());
     _ = @import("simd.zig");
+    _ = @import("dispatch.zig");
 }

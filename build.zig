@@ -1,8 +1,14 @@
 const std = @import("std");
+const simd = @import("src/simd.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const dispatch_option = b.option(
+        bool,
+        "dispatch",
+        "Pick the x86-64 SIMD kernels at runtime (default: for a generic x86-64 CPU, not a native or named one)",
+    );
 
     // The one exported module. Everything below is a developer step, so a
     // consumer's fetch graph stops at this module.
@@ -11,6 +17,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    addDispatch(b, mod, target, optimize, dispatch_option orelse dispatchByDefault(target));
 
     if (b.pkg_hash.len != 0) return;
 
@@ -54,4 +61,63 @@ pub fn build(b: *std.Build) void {
     const run_mod_tests = b.addRunArtifact(mod_tests);
     run_mod_tests.addArg(b.fmt("--seed=0x{x}", .{b.graph.random_seed}));
     b.step("test", "Run the unit tests").dependOn(&run_mod_tests.step);
+}
+
+const Role = enum { off, main, kernel };
+
+/// Whether a build for `target` picks its kernels at runtime by default: for
+/// a generic x86-64 CPU, the baseline or an x86-64 level, as builds for
+/// distribution name. A native or named CPU chooses at comptime.
+fn dispatchByDefault(target: std.Build.ResolvedTarget) bool {
+    const t = target.result;
+    if (t.cpu.arch != .x86_64 or target.query.isNativeCpu()) return false;
+    return t.cpu.model == std.Target.Cpu.Model.baseline(t.cpu.arch, t.os) or
+        std.mem.startsWith(u8, t.cpu.model.name, "x86_64");
+}
+
+/// Gives `mod` its `dispatch_options` and, when it dispatches, one object per
+/// tier above the target's own ISA, each this package compiled for that
+/// tier's CPU (src/dispatch.zig).
+fn addDispatch(
+    b: *std.Build,
+    mod: *std.Build.Module,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    enabled: bool,
+) void {
+    const x86_64 = target.result.cpu.arch == .x86_64;
+    const tiers = if (enabled and x86_64) simd.dispatchAbove(simd.isaOf(target.result.cpu)) else &.{};
+    // Unique to this build of the package, so two builds of it, such as two
+    // optimize modes, can link into one program.
+    const id = std.hash.Wyhash.hash(0, b.fmt("{s} {t}", .{ b.pkg_hash, optimize }));
+    const prefix = b.fmt("utf_{x:0>8}", .{@as(u32, @truncate(id))});
+    const options = b.addOptions();
+    options.addOption(Role, "role", if (tiers.len > 0) .main else .off);
+    options.addOption([]const u8, "prefix", prefix);
+    // This repository's own tests pin each call to the `-Dcpu` level.
+    options.addOption(bool, "pin", b.pkg_hash.len == 0);
+    mod.addImport("dispatch_options", options.createModule());
+    for (tiers) |t| {
+        var query = target.query;
+        query.cpu_model = .{ .explicit = t.model };
+        query.cpu_features_add = std.Target.x86.featureSet(t.add);
+        query.cpu_features_sub = .empty;
+        const kernel_options = b.addOptions();
+        kernel_options.addOption(Role, "role", .kernel);
+        kernel_options.addOption([]const u8, "prefix", prefix);
+        kernel_options.addOption(bool, "pin", false);
+        const obj = b.addObject(.{
+            .name = b.fmt("utf-{t}", .{t.isa}),
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/dispatch.zig"),
+                .target = b.resolveTargetQuery(query),
+                .optimize = optimize,
+                .pic = true,
+                .imports = &.{.{ .name = "dispatch_options", .module = kernel_options.createModule() }},
+            }),
+            // The kernels' byte shuffles are LLVM intrinsics.
+            .use_llvm = true,
+        });
+        mod.addObject(obj);
+    }
 }
