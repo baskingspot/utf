@@ -29,7 +29,9 @@ pub fn utf8(bytes: []const u8) bool {
 
 fn utf8Kernel(bytes: []const u8) bool {
     if (simd.isa == .generic) return utf8WithErrorsKernel(bytes).err == .none;
-    return utf8BadBlock(bytes) == none;
+    if (bytes.len < 64) return utf8BadShort(bytes) == none;
+    if (dispatch.exported) return utf8BadLong(bytes) == none;
+    return utf8BadRest(bytes) == none;
 }
 
 /// Validates UTF-8. On failure `count` is the index of the first byte of the
@@ -48,8 +50,26 @@ fn utf8WithErrorsKernel(bytes: []const u8) Result {
         if (simd.has_masked and high == 0) return .ok(bytes.len);
         if (!any(utf8Errors(cur, splat(0)))) return .ok(bytes.len);
         const start = @ctz(high);
-        return offset(scalar.validateUtf8(bytes[start..]), start);
+        if (!dispatch.exported) return offset(scalar.validateUtf8(bytes[start..]), start);
+        return dispatch.unpack(Result, scalarFrom(bytes, start));
     }
+    if (simd.isa == .generic or !dispatch.exported) return utf8WithErrorsRest(bytes);
+    return dispatch.unpack(Result, utf8WithErrorsLong(bytes));
+}
+
+/// The scalar validator's result for `bytes[start..]`, as a position in
+/// `bytes`, out of line for `dispatch.exported` kernels, like the long
+/// paths. In native builds a call here cost a 16-byte input with an error
+/// 2.6 ns (docs/slop/results/calls-20261031.md).
+noinline fn scalarFrom(bytes: []const u8, start: usize) dispatch.Packed(Result) {
+    return dispatch.pack(offset(scalar.validateUtf8(bytes[start..]), start));
+}
+
+noinline fn utf8WithErrorsLong(bytes: []const u8) dispatch.Packed(Result) {
+    return dispatch.pack(utf8WithErrorsRest(bytes));
+}
+
+inline fn utf8WithErrorsRest(bytes: []const u8) Result {
     const pos = utf8BadBlock(bytes);
     if (pos == none) return .ok(bytes.len);
     // Every byte before `pos` passed, so the character containing the byte
@@ -453,20 +473,35 @@ inline fn utf8Incomplete(v: Bytes) Bytes {
 /// last character before it may be cut short. On the generic path, the first
 /// block that is not ASCII.
 inline fn utf8BadBlock(bytes: []const u8) usize {
+    if (bytes.len < 64) return utf8BadShort(bytes);
+    return utf8BadRest(bytes);
+}
+
+/// `utf8BadBlock` for fewer than 64 bytes.
+inline fn utf8BadShort(bytes: []const u8) usize {
     const zero = splat(0);
-    if (bytes.len < 64) {
-        // The zero padding ends any sequence the input cuts short.
-        if (simd.has_masked) {
-            // The masked load costs less than the ASCII test on
-            // overlapping loads, which non-ASCII text pays on top.
-            const cur = simd.loadShort(u8, bytes);
-            if (!any(cur & splat(0x80))) return none;
-            return if (!any(utf8Errors(cur, zero))) none else 0;
-        }
-        if (isAsciiShort(bytes)) return none;
-        if (simd.isa == .generic) return 0;
-        return if (!any(utf8Errors(simd.loadShort(u8, bytes), zero))) none else 0;
+    // The zero padding ends any sequence the input cuts short.
+    if (simd.has_masked) {
+        // The masked load costs less than the ASCII test on overlapping
+        // loads, which non-ASCII text pays on top.
+        const cur = simd.loadShort(u8, bytes);
+        if (!any(cur & splat(0x80))) return none;
+        return if (!any(utf8Errors(cur, zero))) none else 0;
     }
+    if (isAsciiShort(bytes)) return none;
+    if (simd.isa == .generic) return 0;
+    return if (!any(utf8Errors(simd.loadShort(u8, bytes), zero))) none else 0;
+}
+
+/// `utf8BadBlock` for 64 bytes or more, out of line for `dispatch.exported`
+/// kernels: inline, its loop's registers were saved and restored on every
+/// call, short ones included (docs/slop/results/calls-20261031.md).
+noinline fn utf8BadLong(bytes: []const u8) usize {
+    return utf8BadRest(bytes);
+}
+
+inline fn utf8BadRest(bytes: []const u8) usize {
+    const zero = splat(0);
     // Leading ASCII blocks first, so ASCII text never loads the lookup
     // tables. Zero stands in for ASCII as context.
     var i = asciiPrefix(bytes, false);

@@ -32,6 +32,12 @@ const options = @import("dispatch_options");
 /// `off`: no dispatch, `simd.isa` only. `main`: the build consumers call,
 /// which dispatches. `kernel`: one tier's object, which exports.
 const role = std.meta.stringToEnum(enum { off, main, kernel }, @tagName(options.role)).?;
+/// Whether this build is a tier's object, whose kernels are each an entry
+/// of their own, called out of line. There a kernel puts its long path out
+/// of line too, so that the registers its loops save cost short calls
+/// nothing; inline, as elsewhere, the kernel is inlined into its callers,
+/// long path and all (docs/slop/results/calls-20261031.md).
+pub const exported = role == .kernel;
 /// The objects linked into a dispatching build.
 const linked = if (role == .main) above(simd.isa) else &[_]Tier{};
 
@@ -257,6 +263,16 @@ inline fn scalarFromWord(comptime T: type, w: usize) T {
         else => @compileError("dispatch: no word for " ++ @typeName(T)),
     };
 }
+
+/// For a kernel's own out-of-line parts, as for `call`: `pack` turns a
+/// result into what an entry returns, a scalar that comes back in
+/// registers, and `unpack` builds the result from it. A `Result` returned
+/// whole from a `noinline` function went through memory, where loading its
+/// `err` from the upper half of the 16-byte store that wrote it stalled,
+/// about 7 ns a call (docs/slop/results/calls-20261031.md).
+pub const Packed = Ret;
+pub const pack = toResult;
+pub const unpack = fromWords;
 
 inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
     const R = @TypeOf(r);

@@ -15,6 +15,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- `validate.utf8` and `utf8WithErrors` in generic x86-64 builds are 1.2–1.3× faster per call on inputs under 64 bytes.
 - `base64.decode` with AVX2 or SSSE3 is 1.1–1.2× faster when the input's last block holds up to 32 characters, as 16–64-byte payloads' do.
 - `validate.utf32WithErrors` is 1.5–2.2× faster on 33–64 values, and `validate.asciiWithErrors` with AVX-512 about 10% faster per call on exactly 64 bytes.
 - `base64.encode` with AVX-512 is 1.3× faster per call on 16-byte input, and `base64.decode` of unpadded input a multiple of 64 characters long skips an empty last block.
