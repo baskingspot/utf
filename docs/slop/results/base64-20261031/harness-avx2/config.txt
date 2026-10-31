@@ -1,0 +1,2 @@
+utf: ReleaseFast, cpu x86_64_v3, dispatch false
+bench-simdutf: simdutf 9.2.1, kernel haswell

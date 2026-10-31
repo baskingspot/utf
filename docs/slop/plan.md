@@ -173,10 +173,8 @@ Wave 1, in parallel:
   UTF-8 on emoji.
 - **Base64**: `src/base64.zig`, scalar reference included. Landed: AVX2,
   SSSE3, NEON, and generic kernels, the reference in `src/scalar_base64.zig`,
-  and the [measurements](results/base64-20261030.md). Left for wave 2: an
-  AVX-512 VBMI kernel (simdutf's `icelake` is 1.5–2.6× ours at 4–64 KiB),
-  short padded decode (std and Rust lead at 16 bytes), and whitespace (70%
-  of simdutf's AVX2 kernel).
+  and the [measurements](results/base64-20261030.md). Wave 2 took the
+  rest; see below.
 - **Harness**: `bench/` with a Zig driver and arms for simdutf (C++, from
   nixpkgs), Rust (`simdutf8`, `base64-simd`), Go (`unicode/utf8`,
   `encoding/base64`), and Zig's std; the corpus (simdutf's benchmark texts
@@ -201,6 +199,17 @@ bench-compare`, and a per-operation geomean summary. The baseline
   (0.50). Against `haswell`: UTF-16 to UTF-8 on CJK (0.50), UTF-32 to
   Latin-1 (0.45–0.52), 16-byte Latin-1 and UTF-16-to-Latin-1 (0.44–0.50),
   and MIME base64 (0.77).
+- **Base64**: `src/base64.zig` and `src/scalar_base64.zig`. Landed: the
+  AVX-512 VBMI kernel (`Isa.avx512vbmi`, `vpcompressb` whitespace with
+  VBMI2), the big-endian fix (lane bitcasts in encode and decode; NEON on
+  aarch64_be), `simd.zig` helpers where they fit, runtime dispatch, AVX-512
+  tails that neither read past the input nor mask stores onto another page,
+  CR LF removed in one shift, and the
+  [measurements](results/base64-20261031.md): harness geomeans 0.98 of
+  `icelake`, 1.13 of `haswell`, 1.04 of `westmere`. Left: AVX2 and SSSE3
+  whitespace from 4 KiB (LF 0.57–0.73 of `haswell`, CR LF 0.74–0.89), short
+  decode against Rust in the harness (16 B 0.44–0.54), and short encode
+  against `icelake` (0.80–0.91 at 16–256 B).
 - **Dispatch**: `src/dispatch.zig`, `src/simd.zig`, and `build.zig`.
   Landed: decision 1's runtime dispatch, and `simd.bitmask` for vectors of
   fewer than 8 lanes on the self-hosted backends, so `convert.zig`'s `mask4`
