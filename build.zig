@@ -86,6 +86,9 @@ fn addDispatch(
                 .target = b.resolveTargetQuery(query),
                 .optimize = optimize,
                 .pic = true,
+                // Every call into an object is a call more than the kernel
+                // inline; no frame setup on top of it.
+                .omit_frame_pointer = if (optimize == .Debug) null else true,
                 .imports = &.{.{ .name = "dispatch_options", .module = kernel_options.createModule() }},
             }),
             // The kernels' byte shuffles are LLVM intrinsics.

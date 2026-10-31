@@ -6,11 +6,13 @@
 //! for that tier's CPU model, and links the objects into the `utf` module.
 //! Each wired public function goes through `call`: in a tier's object, `call`
 //! exports the function under a name for that tier; in the main build, it
-//! calls the export for the best tier the CPU has, found once with `cpuid`,
-//! or runs the function in place when the target's own ISA is the best.
-//! Arguments and results cross as machine words under the C calling
-//! convention. A call costs a load, a compare, a jump, and a call into the
-//! object: 1.0-1.7 ns (docs/slop/results/dispatch-20261031.md).
+//! calls through a pointer of its own to the export for the best tier the
+//! CPU has, found with `cpuid` on its first call, or to the function in
+//! place when the target's own ISA is the best. Arguments and results cross
+//! as machine words under the C calling convention. A call costs a load and
+//! an indirect call into the object: a median 0.9 ns over the kernel in
+//! place, where simdutf's dispatch costs 2.6 ns
+//! (docs/slop/results/calls-20261031.md).
 //!
 //! build.zig turns this on for generic x86-64 targets (`-Dcpu=baseline`,
 //! `x86_64_v2`, `x86_64_v3`, or a cross target with no CPU given) and leaves
@@ -37,8 +39,9 @@ const linked = if (role == .main) above(simd.isa) else &[_]Tier{};
 /// itself up by moving its body into a private `f` and returning
 /// `dispatch.call(@src(), f, .{ args })`; `@src()` names the export, so each
 /// public function must call it directly. Arguments are slices, pointers,
-/// integers, enums, bools, and packed structs, which travel as words, and
-/// other types, which travel by pointer, up to six words in all; results
+/// integers, enums, bools, and structs of those that fit in a word, which
+/// travel as words, and other types, which travel by pointer, up to six
+/// words in all; results
 /// are void, a word, or a struct of up to two word fields, like `Result`.
 pub inline fn call(
     comptime src: std.builtin.SourceLocation,
@@ -58,49 +61,58 @@ pub inline fn call(
             return @call(.always_inline, f, args);
         },
         .main => {
-            const c = if (pin) @intFromEnum(pinned) + 1 else cached.load(.monotonic);
             var w: [6]usize = undefined;
             comptime var i = 0;
             inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
                 i += toWords(p.type.?, &args[k], w[i..]);
             }
-            // Every path yields the result as a scalar and the struct is
-            // built once, after they join: a struct from each path would
-            // join as a choice of stack slots, copied out whole (the stall
-            // above).
-            const r: Ret(Return(f)) = r: {
-                if (c == 0) break :r @call(.never_inline, Init(src, f).call, .{ w[0], w[1], w[2], w[3], w[4], w[5] });
-                inline for (linked) |t| {
-                    if (c == @intFromEnum(t.isa) + 1) {
-                        const name = comptime symbol(src, t.isa);
-                        const entry = @extern(*const EntryFn(Return(f)), .{ .name = name, .visibility = .hidden });
-                        break :r entry(w[0], w[1], w[2], w[3], w[4], w[5]);
-                    }
-                }
-                // Out of line, so what inlines into the caller is only the
-                // compares and the calls.
-                break :r @call(.never_inline, Entry(f).entry, .{ w[0], w[1], w[2], w[3], w[4], w[5] });
-            };
-            return fromWords(Return(f), r);
+            const S = Slot(src, f);
+            // A test that pins another tier sends the call back through
+            // `resolve`, which picks the pinned one.
+            if (pin and S.isa != pinned) S.entry = &S.resolve;
+            // One load and one indirect call, where a cached tier and a
+            // jump to its call cost a load, a compare, a table load, an
+            // indirect jump, and a direct call
+            // (docs/slop/results/calls-20261031.md). The result comes back
+            // as a scalar and the struct is built from it here: a struct
+            // returned whole joined as a choice of stack slots, copied out
+            // with one wide load that cannot forward (the stall above).
+            const entry = @atomicLoad(*const EntryFn(Return(f)), &S.entry, .monotonic);
+            return fromWords(Return(f), entry(w[0], w[1], w[2], w[3], w[4], w[5]));
         },
     }
 }
 
-/// The first dispatched call, out of line so the callers' copies of `call`
-/// keep only the hot path.
-/// It takes the words, as the entries do, so the caller keeps nothing on
-/// the stack for it.
-fn Init(comptime src: std.builtin.SourceLocation, comptime f: anytype) type {
+/// The entry `call` takes for `src`'s function: a pointer to the best tier's
+/// export, which starts as `resolve`. Its first call finds the tier and
+/// stores the pointer, as an ELF IFUNC would at load time; a racing first
+/// call stores the same pointer.
+fn Slot(comptime src: std.builtin.SourceLocation, comptime f: anytype) type {
     return struct {
-        fn call(w0: usize, w1: usize, w2: usize, w3: usize, w4: usize, w5: usize) callconv(.c) Ret(Return(f)) {
+        var entry: *const EntryFn(Return(f)) = &resolve;
+        /// The tier `entry` was resolved for, in pinned test builds.
+        var isa: Isa = if (pin) simd.isa else undefined;
+
+        fn resolve(w0: usize, w1: usize, w2: usize, w3: usize, w4: usize, w5: usize) callconv(.c) Ret(Return(f)) {
             @branchHint(.cold);
-            _ = init();
-            return toResult(dispatch.call(src, f, argsFromWords(f, .{ w0, w1, w2, w3, w4, w5 })));
+            const l = level();
+            const e = pick(l);
+            if (pin) isa = l;
+            @atomicStore(*const EntryFn(Return(f)), &entry, e, .monotonic);
+            return e(w0, w1, w2, w3, w4, w5);
+        }
+
+        fn pick(l: Isa) *const EntryFn(Return(f)) {
+            inline for (linked) |t| {
+                if (l == t.isa) return @extern(*const EntryFn(Return(f)), .{
+                    .name = symbol(src, t.isa),
+                    .visibility = .hidden,
+                });
+            }
+            return &Entry(f).entry;
         }
     };
 }
-
-const dispatch = @This();
 
 fn Return(comptime f: anytype) type {
     return @typeInfo(@TypeOf(f)).@"fn".return_type.?;
@@ -149,9 +161,24 @@ fn pass(comptime T: type) Pass {
         .pointer => |p| if (p.size == .slice) .slice else .word,
         .int => |n| if (n.bits <= @bitSizeOf(usize)) .word else .ref,
         .bool, .@"enum" => .word,
-        .@"struct" => |s| if (s.layout == .@"packed" and @bitSizeOf(T) <= @bitSizeOf(usize)) .word else .ref,
+        .@"struct" => if (fieldBits(T) <= @bitSizeOf(usize)) .word else .ref,
         else => .ref,
     };
+}
+
+/// The bits of a word that hold `T`, a struct, packed as it is or field by
+/// field, such as `base64.EncodeOptions`; more than a word where a field is
+/// not an integer, enum, or bool. In a word, such options cost no stack
+/// store and reload around the call.
+fn fieldBits(comptime T: type) usize {
+    const s = @typeInfo(T).@"struct";
+    if (s.layout == .@"packed") return @bitSizeOf(T);
+    var bits: usize = 0;
+    for (s.fields) |field| bits += switch (@typeInfo(field.type)) {
+        .int, .@"enum", .bool => @bitSizeOf(field.type),
+        else => @bitSizeOf(usize) + 1,
+    };
+    return bits;
 }
 
 fn wordCount(comptime T: type) usize {
@@ -180,6 +207,22 @@ inline fn argFromWords(comptime T: type, w: []const usize) T {
 
 inline fn toWord(x: anytype) usize {
     const T = @TypeOf(x);
+    const s = switch (@typeInfo(T)) {
+        .@"struct" => |s| if (s.layout == .@"packed") return scalarWord(x) else s,
+        else => return scalarWord(x),
+    };
+    // A struct of scalars, field by field from the low bits.
+    var w: usize = 0;
+    comptime var at = 0;
+    inline for (s.fields) |field| {
+        w |= scalarWord(@field(x, field.name)) << at;
+        at += @bitSizeOf(field.type);
+    }
+    return w;
+}
+
+inline fn scalarWord(x: anytype) usize {
+    const T = @TypeOf(x);
     return switch (@typeInfo(T)) {
         .pointer => @intFromPtr(x),
         .bool => @intFromBool(x),
@@ -191,6 +234,20 @@ inline fn toWord(x: anytype) usize {
 }
 
 inline fn fromWord(comptime T: type, w: usize) T {
+    const s = switch (@typeInfo(T)) {
+        .@"struct" => |s| if (s.layout == .@"packed") return scalarFromWord(T, w) else s,
+        else => return scalarFromWord(T, w),
+    };
+    var x: T = undefined;
+    comptime var at = 0;
+    inline for (s.fields) |field| {
+        @field(x, field.name) = scalarFromWord(field.type, w >> at & ((1 << @bitSizeOf(field.type)) - 1));
+        at += @bitSizeOf(field.type);
+    }
+    return x;
+}
+
+inline fn scalarFromWord(comptime T: type, w: usize) T {
     return switch (@typeInfo(T)) {
         .pointer => @ptrFromInt(w),
         .bool => w != 0,
