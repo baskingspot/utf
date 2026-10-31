@@ -196,7 +196,7 @@ pub fn decodeWith(
     if (w == 0 and t.len - i >= 64 and dst.len - o >= 48) {
         const c = K.classifyBlock(src[i..][0..64]);
         if (!c.anyBad()) {
-            K.storePartial(dst[o..], K.packAll(c.values), 48);
+            simd.storePartial(dst[o..], K.packAll(c.values), 48);
             i += 64;
             o += 48;
         }
@@ -206,8 +206,8 @@ pub fn decodeWith(
     if (t.len - i < 64) {
         // The last block, fewer than 64 characters, zero-padded.
         const n = t.len - i;
-        const live = lowBits(n);
-        const block = K.loadTail(src, i, t.len);
+        const live = simd.lowBits(u64, n);
+        const block = simd.loadTail(src, i, t.len);
         const c = K.classifyBlock(block);
         const bad = c.badMask() & live;
         if (bad == 0 and w == 0) {
@@ -230,7 +230,7 @@ pub fn decodeWith(
         if (dst.len - o >= 48 + K.slack) {
             K.packBlock(values, dst[o..][0 .. 48 + K.slack]);
         } else {
-            K.storePartial(dst[o..], K.packAll(values), 48);
+            simd.storePartial(dst[o..], K.packAll(values), 48);
         }
         o += 48;
     }
@@ -246,15 +246,10 @@ pub fn decodeWith(
     return scalar.decodeFrom(dst, src, t, start, o, options);
 }
 
-/// The low `n` bits set, for `n` up to 64.
 /// `encodedLen(n, .{ .padding = padding })`, whose options struct LLVM
 /// leaves in memory, on the critical path of short encodes.
 inline fn charsFor(n: usize, padding: bool) usize {
     return if (padding) (n + 2) / 3 * 4 else (n * 4 + 2) / 3;
-}
-
-inline fn lowBits(n: usize) u64 {
-    return if (n >= 64) std.math.maxInt(u64) else (@as(u64, 1) << @intCast(n)) - 1;
 }
 
 fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
@@ -282,7 +277,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         inline fn encode(src: *const [lanes]u8, mul: Mul) [lanes]u8 {
             // The load is volatile so that LLVM keeps it whole: it would
             // split the vector it does not use all of into three loads.
-            const in = @as(*align(1) const volatile V, @ptrCast(src)).*;
+            const in = simd.loadVolatile(V, src);
             return translate(@shuffle(u8, in, undefined, spreadMask(!avx512, 0)), mul);
         }
 
@@ -302,7 +297,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const n = end - start;
                 const len = charsFor(n, padding);
                 if (n == 0) return 0;
-                return storeLast(dst, encodeBlock(loadTail(whole, start, end)), end - start, len);
+                return storeLast(dst, encodeBlock(simd.loadTail(whole, start, end)), end - start, len);
             }
             const src = whole[start..end];
             // 12 bytes at a time with 16-byte vectors, then one or two
@@ -340,7 +335,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const lanes_ = @typeInfo(@TypeOf(out)).vector.len;
             const data: u8 = @intCast((n * 4 + 2) / 3);
             const pad = std.simd.iota(u8, lanes_) >= @as(@TypeOf(out), @splat(data));
-            storePartial(dst, @select(u8, pad, @as(@TypeOf(out), @splat('=')), out), len);
+            simd.storePartial(dst, @select(u8, pad, @as(@TypeOf(out), @splat('=')), out), len);
             return len;
         }
 
@@ -368,8 +363,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 // Each byte takes the 8 bits from its shift in its 64-bit
                 // lane, and `vpermb` looks up the low 6 of them.
                 const shifts = rep(V, .{ 10, 4, 22, 16, 42, 36, 54, 48 });
-                const idx = @"llvm.x86.avx512.pmultishift.qb.512"(shifts, spread);
-                return @"llvm.x86.avx512.permvar.qi.512"(chars.*, idx);
+                return simd.permute(chars.*, simd.multishift(shifts, spread));
             }
             // Pull the four 6-bit indices into the low bits of each byte:
             // a>>2 and the low 6 bits of c with shifts within 16-bit
@@ -450,7 +444,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                     for (chars, 0..) |c, v| t[c] = v;
                     break :blk t;
                 };
-                const v = @"llvm.x86.avx512.vpermi2var.qi.512"(table[0..64].*, in, table[64..].*);
+                const v = simd.permute2(@as(V64, table[0..64].*), in, table[64..].*);
                 return .{ .values = v, .bad = (v | in) >= splat(0x80), .classes = in };
             }
             if (isa == .generic) {
@@ -564,13 +558,9 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                         for (0..lanes / 4) |g| m[g / 4 * 16 + g % 4 * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
                         break :blk m;
                     }));
-                    inline for (halves, 0..) |h, j| {
-                        const p: *align(1) volatile @Vector(16, u8) = @ptrCast(out[k * 24 + j * 12 ..][0..16]);
-                        p.* = h;
-                    }
+                    inline for (halves, 0..) |h, j| simd.storeVolatile(out[k * 24 + j * 12 ..], h);
                 } else {
-                    const p: *align(1) volatile V = @ptrCast(out[k * lanes / 4 * 3 ..][0..lanes]);
-                    p.* = pack(values[k]);
+                    simd.storeVolatile(out[k * lanes / 4 * 3 ..], pack(values[k]));
                 }
             }
         }
@@ -609,7 +599,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const live = std.simd.iota(u8, 64) < @as(V64, @splat(@intCast(count)));
             const out = packAll(@bitCast(@select(u8, live, @as(V64, @bitCast(values)), @as(V64, @splat(0)))));
             if (last == .strict and tail != 0 and @as([64]u8, out)[len] != 0) return null;
-            storePartial(dst, out, len);
+            simd.storePartial(dst, out, len);
             return len;
         }
 
@@ -637,8 +627,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 return;
             };
             // Volatile, so that LLVM keeps each store whole.
-            @as(*align(1) volatile V64, @ptrCast(stage[p..][0..64])).* = v;
-            if (p > ring) @as(*align(1) volatile V64, @ptrCast(stage[p - ring ..][0..64])).* = v;
+            simd.storeVolatile(stage[p..], v);
+            if (p > ring) simd.storeVolatile(stage[p - ring ..], v);
         }
 
         /// The staged block at ring position `r`, a multiple of 64.
@@ -652,8 +642,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// takes a few vector instructions.
         inline fn compressVec(values: [blocks]V, space: u64) ?V64 {
             if (avx512 and simd.has_vbmi2) {
-                const keep: @Vector(64, bool) = @bitCast(~space);
-                return @"llvm.x86.avx512.mask.compress.v64i8"(values[0], @splat(0), keep);
+                return simd.compress(values[0], ~space);
             }
             // Line breaks put one or two whitespace characters in most
             // blocks: remove each by shifting what follows it down a lane,
@@ -772,69 +761,6 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return @bitCast(w);
         }
 
-        /// Loads `src[start..end]`, shorter than a block, zero-padded,
-        /// without reading outside `src`. With AVX-512 and at least a block
-        /// before `end`, that is the block ending there, moved down. A
-        /// masked load reads no more, but waits for any recent store to the
-        /// bytes it masks off, such as to an output placed right after the
-        /// input: that doubled the time of short calls.
-        inline fn loadTail(src: []const u8, start: usize, end: usize) V64 {
-            const n = end - start;
-            std.debug.assert(n < 64);
-            if (n == 0) return @splat(0);
-            if (avx512 and end >= 64) {
-                const block: V64 = @as(*align(1) const V64, @ptrCast(src[end - 64 ..][0..64])).*;
-                const iota = std.simd.iota(u8, 64);
-                const moved = @"llvm.x86.avx512.permvar.qi.512"(block, iota +% @as(V64, @splat(@intCast(64 - n))));
-                return @select(u8, iota < @as(V64, @splat(@intCast(n))), moved, @as(V64, @splat(0)));
-            }
-            return simd.loadPartial(u8, src[start..end]);
-        }
-
-        /// Stores the first `len` bytes of `v`, a vector of 16, 32, or 64
-        /// bytes, without writing past them. An AVX-512 masked store does
-        /// it in one instruction, but only when the bytes it masks off are
-        /// on the page it writes: on a page not yet written, every call
-        /// takes a microcode assist, which halved the speed of 4 KiB
-        /// decodes into a freshly mapped buffer.
-        inline fn storePartial(dst: []u8, v: anytype, len: usize) void {
-            const n = @typeInfo(@TypeOf(v)).vector.len;
-            std.debug.assert(len <= n and dst.len >= len);
-            if (avx512 and n == 64 and len > 0) {
-                const last = @intFromPtr(dst.ptr) + len - 1;
-                if ((last ^ (@intFromPtr(dst.ptr) + 63)) < std.heap.page_size_min)
-                    return @"llvm.masked.store.v64i8.p0"(v, dst.ptr, 1, @bitCast(lowBits(len)));
-            }
-            // Whole 16-byte pieces, then the last part of one in two
-            // overlapping integer stores.
-            const pieces: [n / 16]@Vector(16, u8) = @bitCast(v);
-            const full = len / 16;
-            inline for (0..n / 16) |k| {
-                if (k < full) dst[k * 16 ..][0..16].* = pieces[k];
-            }
-            if (full == n / 16) return;
-            // A switch here compiles to a gather of 16 single bytes.
-            var piece = pieces[0];
-            inline for (1..n / 16) |k| {
-                if (full == k) piece = pieces[k];
-            }
-            const x = std.mem.littleToNative(u128, @bitCast(piece));
-            const d = dst[full * 16 ..];
-            const r = len % 16;
-            if (r >= 8) {
-                std.mem.writeInt(u64, d[0..8], @truncate(x), .little);
-                std.mem.writeInt(u64, d[r - 8 ..][0..8], @truncate(x >> @intCast(8 * (r - 8))), .little);
-            } else if (r >= 4) {
-                std.mem.writeInt(u32, d[0..4], @truncate(x), .little);
-                std.mem.writeInt(u32, d[r - 4 ..][0..4], @truncate(x >> @intCast(8 * (r - 4))), .little);
-            } else if (r >= 2) {
-                std.mem.writeInt(u16, d[0..2], @truncate(x), .little);
-                std.mem.writeInt(u16, d[r - 2 ..][0..2], @truncate(x >> @intCast(8 * (r - 2))), .little);
-            } else if (r == 1) {
-                d[0] = @truncate(x);
-            }
-        }
-
         const tables = decodeTables(alphabet);
     };
 }
@@ -951,11 +877,6 @@ extern fn @"llvm.x86.sse2.pmulhu.w"(@Vector(8, u16), @Vector(8, u16)) @Vector(8,
 extern fn @"llvm.x86.avx2.pmulhu.w"(@Vector(16, u16), @Vector(16, u16)) @Vector(16, u16);
 extern fn @"llvm.x86.avx512.pmaddubs.w.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(32, i16);
 extern fn @"llvm.x86.avx512.pmaddw.d.512"(@Vector(32, i16), @Vector(32, i16)) @Vector(16, i32);
-extern fn @"llvm.x86.avx512.pmultishift.qb.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx512.permvar.qi.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx512.vpermi2var.qi.512"(@Vector(64, u8), @Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.masked.store.v64i8.p0"(@Vector(64, u8), *anyopaque, i32, @Vector(64, bool)) void;
-extern fn @"llvm.x86.avx512.mask.compress.v64i8"(@Vector(64, u8), @Vector(64, u8), @Vector(64, bool)) @Vector(64, u8);
 
 const test_isas = blk: {
     var isas: []const Isa = &.{};
