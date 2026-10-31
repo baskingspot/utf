@@ -15,6 +15,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- `validate.utf32WithErrors` is 1.5–2.2× faster on 33–64 values, and `validate.asciiWithErrors` with AVX-512 about 10% faster per call on exactly 64 bytes.
 - `base64.encode` with AVX-512 is 1.3× faster per call on 16-byte input, and `base64.decode` of unpadded input a multiple of 64 characters long skips an empty last block.
 - The `length` functions with AVX-512 are 1.1–1.4× faster on inputs of up to 64 bytes.
 - Generic x86-64 builds call each dispatched function through a pointer of its own: dispatch costs 0.9 ns a call, from 1.5 ns (simdutf's costs 2.6), and 16–64-byte inputs run 1.07× faster on geomean.

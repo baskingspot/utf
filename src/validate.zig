@@ -165,6 +165,26 @@ fn utf32WithErrorsKernel(units: []const u32) Result {
         const shift: u6 = @intCast(len - n32);
         return utf32Fail(utf32Above(a) | utf32Above(b) << shift, utf32Surrogates(a) | utf32Surrogates(b) << shift);
     }
+    if (len <= 4 * n32) {
+        // Up to four blocks, the first two and the last two, overlapping
+        // them: one test, then the position from their masks, where
+        // finding the block first loaded each block again and the failing
+        // one a third time (docs/slop/results/calls-20261031.md).
+        const s2: u6 = @intCast(len - 2 * n32);
+        const s3: u6 = @intCast(len - n32);
+        const v = [4]Units32{
+            simd.load(u32, units),
+            simd.load(u32, units[n32..]),
+            simd.load(u32, units[s2..]),
+            simd.load(u32, units[s3..]),
+        };
+        const key = @max(@max(utf32Key(v[0]), utf32Key(v[1])), @max(utf32Key(v[2]), utf32Key(v[3])));
+        if (!@reduce(.Or, key > @as(Units32, @splat(utf32_key_max)))) return .ok(len);
+        const above = utf32Above(v[0]) | utf32Above(v[1]) << n32 | utf32Above(v[2]) << s2 | utf32Above(v[3]) << s3;
+        const surr = utf32Surrogates(v[0]) | utf32Surrogates(v[1]) << n32 |
+            utf32Surrogates(v[2]) << s2 | utf32Surrogates(v[3]) << s3;
+        return utf32Fail(above, surr);
+    }
     const pos = utf32BadBlock(units);
     if (pos == none) return .ok(units.len);
     const v = simd.load(u32, units[pos..]);
@@ -210,7 +230,8 @@ inline fn isAsciiShort(s: []const u8) bool {
 }
 
 /// Bit i set where byte i of 16 to 64 bytes is above 0x7F, from two or
-/// four overlapping loads, so the position comes with the test.
+/// four overlapping loads or one whole block, so the position comes with
+/// the test.
 inline fn highMask(s: []const u8) u64 {
     const len = s.len;
     std.debug.assert(len >= 16);
@@ -224,6 +245,9 @@ inline fn highMask(s: []const u8) u64 {
         const hi: u64 = simd.bitmask(simd.load16(s[len - 16 ..]) >= k16);
         return lo | hi << @intCast(len - 16);
     }
+    // One block in one register: a tenth faster than two 32-byte halves
+    // (docs/slop/results/calls-20261031.md).
+    if (simd.width == 64 and len == 64) return simd.bitmask(simd.load(u8, s) >= @as(simd.Block(u8), @splat(0x80)));
     if (W == 32) {
         const lo: u64 = simd.bitmask(@as(*align(1) const V, @ptrCast(s[0..32])).* >= k);
         const hi: u64 = simd.bitmask(@as(*align(1) const V, @ptrCast(s[len - 32 ..][0..32])).* >= k);
