@@ -23,6 +23,9 @@ All notable changes to utf are recorded here. The format follows
 - `convert` on AVX2 and SSE: UTF-16 to UTF-8 is 1.4–2.0× faster on CJK, Korean, and Hindi text, and UTF-8 to UTF-16 on non-Latin text 1.4–2.1× on AVX2.
 - Functions returning a `Result` (the `validate` `WithErrors` forms, checked `convert` functions, `base64.decode`) are 1.2–2.4× faster on 16–64 byte inputs in generic x86-64 builds, and `validate.asciiWithErrors`, `utf8WithErrors`, and `utf32WithErrors` up to 2.4× in native builds: the result no longer goes through a stack copy.
 - `convert.utf16leToLatin1`, `utf16beToLatin1`, and their `valid` forms on AVX2 and SSE: the last 1–31 code units of inputs from 16 units on no longer go through scalar code: 2.1–2.4× faster at 16 units on AVX2 (1.3× for the `valid` forms).
+- `convert` on AVX2: UTF-16 to UTF-8 is 1.3× faster on Korean and Hindi text and 1.35–1.45× on Cyrillic and Hebrew, UTF-32 to UTF-8 1.1–1.3×, and Latin-1 to UTF-8 1.2×; on SSE, UTF-16 and UTF-32 to UTF-8 1.1× and Latin-1 to UTF-8 1.1×.
+- `convert.utf16leToUtf16be` and `utf16beToUtf16le` are 1.3× faster on AVX2 and SSE and 1.1× on AVX-512, and 0.7–0.9× as fast on emoji, where every block holds a surrogate pair.
+- `convert` on AVX-512: UTF-16 to UTF-8 on two-byte scripts and CJK 1.1–1.35× faster, UTF-32 to UTF-16 1.06–1.23×, UTF-32 and UTF-16 to Latin-1 from inputs not aligned to 16 bytes up to 1.5×, and the UTF-8 decoders and Latin-1 to UTF-8 on short ASCII inputs (up to 32 or 64 bytes) 1.1–1.6×.
 - `length.utf8FromUtf16le`, `utf8FromUtf16be`, and `utf8FromUtf32` are 1.1–1.2× faster on AVX2 and SSE.
 
 ### Fixed
