@@ -357,6 +357,14 @@ inline fn below(comptime limit: comptime_int, v: anytype) bool {
 /// NEON with the LLVM backend, which the intrinsics below need.
 const neon = simd.isa == .neon and builtin.zig_backend == .stage2_llvm;
 
+/// Little-endian NEON on an Apple core: an `apple_*` CPU model, which is
+/// also what Zig builds for when aarch64 macOS is the target without a CPU.
+/// UTF-8 decoding takes paths of its own there, since the choices measured
+/// on Neoverse N2 do not hold (on M4 Max `utf8DecodeBlock` decodes emoji
+/// 1.9x as fast as the windows N2 wants;
+/// docs/slop/results/neon-apple-20261101.md); other NEON cores keep N2's.
+const apple = neon and native == .little and std.mem.startsWith(u8, builtin.cpu.model.name, "apple_");
+
 extern fn @"llvm.aarch64.neon.umaxp.v16i8"(V16, V16) V16;
 extern fn @"llvm.aarch64.neon.addp.v8i16"(@Vector(8, u16), @Vector(8, u16)) @Vector(8, u16);
 
@@ -1163,6 +1171,174 @@ inline fn utf8DecodeThreeNeon(
     o.* += n;
 }
 
+extern fn @"llvm.aarch64.neon.tbl2.v16i8"(V16, V16, V16) V16;
+extern fn @"llvm.aarch64.neon.vsli.v8i16"(@Vector(8, u16), @Vector(8, u16), i32) @Vector(8, u16);
+
+/// The eight three-byte characters in the first 24 bytes of `src`, as
+/// 16-bit code points, on little-endian NEON. Byte j of the 24 is lane j
+/// of the table below 16 and lane j + 8 above, from loads at 0 and 8.
+inline fn utf8ThreeEight(src: []const u8) struct { @Vector(8, u16), @Vector(8, u16) } {
+    const U = @Vector(8, u16);
+    const at = struct {
+        fn f(comptime j: usize) u8 {
+            return if (j < 16) j else j + 8;
+        }
+    }.f;
+    // Lane i: the lead (1110aaaa) and the last byte (10cccccc).
+    const lead_last = comptime blk: {
+        var m: [16]u8 = undefined;
+        for (0..8) |i| {
+            m[2 * i] = at(3 * i);
+            m[2 * i + 1] = at(3 * i + 2);
+        }
+        break :blk m;
+    };
+    // Lane i: the middle byte (10bbbbbb).
+    const middle = comptime blk: {
+        var m: [16]u8 = undefined;
+        for (0..8) |i| {
+            m[2 * i] = at(3 * i + 1);
+            m[2 * i + 1] = at(3 * i + 1);
+        }
+        break :blk m;
+    };
+    const a = simd.loadVolatile(V16, src[0..16]);
+    const b = simd.loadVolatile(V16, src[8..24]);
+    const tbl2 = @"llvm.aarch64.neon.tbl2.v16i8";
+    const sli = @"llvm.aarch64.neon.vsli.v8i16";
+    const ll: U = @bitCast(tbl2(a, b, lead_last));
+    const mm: U = @bitCast(tbl2(a, b, middle));
+    // xxaaaabb bbbb: the lead above the middle byte's six bits; then
+    // aaaabbbb bbcccccc above the last byte's six, which the lane's swapped
+    // bytes hold low. What the shifts push past bit 15 is gone.
+    const hi = sli(mm, ll, 6);
+    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 }));
+    return .{ sli(last, hi, 6), ll };
+}
+
+/// Decodes the 64-byte block at `src`, of which `take` bytes end on a
+/// character and `leads` marks the bytes that start one, when it opens
+/// with up to eight ASCII bytes and then three-byte characters: to `take`,
+/// if they reach it and it is at least 32, in groups of eight characters;
+/// otherwise, if there are at least eight, in 12-byte windows up to `take`.
+/// Returns how far it got, 0 if `checked` and the bytes are not valid
+/// UTF-8 (having written nothing it counts), or null, having done nothing,
+/// if the block has neither shape. Chinese and Japanese, with a space or
+/// ASCII punctuation every so often, decode here, checked on their decoded
+/// values where the block's validation takes twice the operations; Korean,
+/// whose words are short, does not. The shape comes from `leads`: two
+/// leads in a row make the first ASCII (or invalid), and a lead every three
+/// bytes three-byte characters (or invalid ones). Reads up to 80 bytes of
+/// `src` and writes up to 80 units at `o`.
+inline fn utf8AsciiThree(
+    comptime T: type,
+    comptime e: Endian,
+    comptime checked: bool,
+    src: []const u8,
+    leads: u64,
+    take: usize,
+    dst: []T,
+    o: *usize,
+) ?usize {
+    const three: u64 = 0x9249_2492_4924_9249;
+    const a = @as(usize, @ctz(~leads)) -| 1;
+    if (a > 8 or take < 32) return null;
+    const whole: u64 = if (take == 64) ~@as(u64, 0) else (@as(u64, 1) << @intCast(take)) - 1;
+    const head_shape = (@as(u64, 1) << @intCast(a)) - 1;
+    const t = (take - a) / 3;
+    if (a + 3 * t == take and (leads ^ (head_shape | three << @intCast(a))) & whole == 0) {
+        const head = simd.loadVolatile(V16, src[0..16]);
+        const run = utf8ThreeRun(checked, src, a, t);
+        if (checked and anySet(run.bad | asciiBad(head, a))) return 0;
+        storeWide(T, e, dst, o.*, head);
+        inline for (run.cps, 0..) |cp, g| store(T, e, dst, o.* + a + 8 * g, cp);
+        o.* += a + t;
+        return take;
+    }
+    // Otherwise windows, when the run is at least eight characters long,
+    // with four three-byte characters tested first and checked on their
+    // values, and the other windows validated one by one: validating the
+    // block first cost CJK text 3%.
+    const t1 = (@as(usize, @ctz((leads >> @intCast(a)) ^ three)) -| 1) / 3;
+    if (t1 < 8) return null;
+    const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
+    const start = o.*;
+    var bad: @Vector(8, u16) = @splat(0);
+    var pos: usize = 0;
+    while (pos + 12 <= take) {
+        const in = simd.loadVolatile(V16, src[pos..]);
+        const m = ends >> @intCast(pos);
+        if (m & 0xFFF == 0x924) {
+            const cp, const ll = utf8FourThree(T, e, in, dst, o.*);
+            if (checked) bad |= utf8ThreeBad(cp, ll);
+            o.* += 4;
+            pos += 12;
+            continue;
+        }
+        if (checked and utf8Invalid(16, in)) {
+            o.* = start;
+            return 0;
+        }
+        pos += utf8Window(T, e, in, m, dst, o);
+    }
+    if (checked and anySet(bad)) {
+        o.* = start;
+        return 0;
+    }
+    return pos;
+}
+
+/// Stores the four three-byte characters in the first 12 bytes of `in` at
+/// `dst[o..]`, as `utf8ThreeEight` decodes eight, as UTF-16 in byte order
+/// `e` or as UTF-32.
+inline fn utf8FourThree(comptime T: type, comptime e: Endian, in: V16, dst: []T, o: usize) struct { @Vector(8, u16), @Vector(8, u16) } {
+    const U = @Vector(8, u16);
+    const sli = @"llvm.aarch64.neon.vsli.v8i16";
+    const ll: U = @bitCast(simd.lookup16(in, @as(V16, .{ 0, 2, 3, 5, 6, 8, 9, 11, 0, 2, 3, 5, 6, 8, 9, 11 })));
+    const mm: U = @bitCast(simd.lookup16(in, @as(V16, .{ 1, 1, 4, 4, 7, 7, 10, 10, 1, 1, 4, 4, 7, 7, 10, 10 })));
+    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 }));
+    const cp = sli(last, sli(mm, ll, 6), 6);
+    store(T, e, dst, o, @shuffle(u16, cp, undefined, [4]i32{ 0, 1, 2, 3 }));
+    return .{ cp, ll };
+}
+
+/// The 24 three-byte characters from `src[at..]`, of which the first `t`
+/// count, and where `checked`, the lanes of those that are not valid: a
+/// lead that is not 1110____, an overlong form, or a surrogate. Groups
+/// that would start past byte 64 read from it instead.
+inline fn utf8ThreeRun(comptime checked: bool, src: []const u8, at: usize, t: usize) struct { cps: [3]@Vector(8, u16), bad: @Vector(8, u16) } {
+    const U = @Vector(8, u16);
+    var cps: [3]U = undefined;
+    var bad: U = @splat(0);
+    inline for (&cps, 0..) |*cp, k| {
+        cp.*, const ll = utf8ThreeEight(src[@min(at + 24 * k, 64)..]);
+        if (checked) {
+            const in_run = std.simd.iota(u16, 8) + splat(U, 8 * k) < @as(U, @splat(@intCast(t)));
+            bad |= utf8ThreeBad(cp.*, ll) & @select(u16, in_run, splat(U, 0xFFFF), splat(U, 0));
+        }
+    }
+    return .{ .cps = cps, .bad = bad };
+}
+
+/// The lanes of three-byte characters, decoded to `cp` from leads in the
+/// low bytes of `ll`, that are not valid: a lead that is not 1110____, an
+/// overlong form, or a surrogate.
+inline fn utf8ThreeBad(cp: @Vector(8, u16), ll: @Vector(8, u16)) @Vector(8, u16) {
+    const U = @Vector(8, u16);
+    const ones = splat(U, 0xFFFF);
+    const zero = splat(U, 0);
+    return @select(u16, (ll & splat(U, 0xF0)) != splat(U, 0xE0), ones, zero) |
+        @select(u16, cp < splat(U, 0x800), ones, zero) |
+        @select(u16, (cp & splat(U, 0xF800)) == splat(U, 0xD800), ones, zero);
+}
+
+/// Bytes of `v`'s first `n` lanes with the top bit set, as 16-bit lanes
+/// that are nonzero where one is.
+inline fn asciiBad(v: V16, n: usize) @Vector(8, u16) {
+    const in_head = std.simd.iota(u8, 16) < @as(V16, @splat(@intCast(n)));
+    return @bitCast(@select(u8, in_head, v, splat(V16, 0)) & splat(V16, 0x80));
+}
+
 /// Decodes the 16 four-byte characters of `block`, one every four bytes,
 /// and stores them as UTF-16 in byte order `e` or as UTF-32: each 32-bit
 /// lane holds one character, its bytes reversed in place.
@@ -1186,6 +1362,68 @@ inline fn utf8DecodeFour(comptime T: type, comptime e: Endian, block: @Vector(64
     const pairs = (splat(U, 0xD800) | s >> splat(U, 10)) | (splat(U, 0xDC00) | (s & splat(U, 0x3FF))) << splat(U, 16);
     store(T, e, dst, o.*, @as(@Vector(32, u16), @bitCast(pairs)));
     o.* += 32;
+}
+
+/// The 64-byte blocks of `src`, on Apple cores, from the start until fewer
+/// than 64 bytes or units are left or a block that is not valid UTF-8: how
+/// far it got in each.
+inline fn utf8BlocksApple(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) struct { usize, usize } {
+    var p: usize = 0;
+    var o: usize = 0;
+    while (src.len - p >= 64 and dst.len - o >= 64) {
+        const block = simd.load(u8, src[p..]);
+        if (below(0x80, block)) {
+            widenAscii(T, e, src[p..], dst[o..]);
+            p += 64;
+            o += 64;
+            var k = @min(src.len - p, dst.len - o) / 64;
+            while (k > 0) : (k -= 1) {
+                if (!below(0x80, simd.load(u8, src[p..]))) break;
+                widenAscii(T, e, src[p..], dst[o..]);
+                p += 64;
+                o += 64;
+            }
+            continue;
+        }
+        const room = src.len - p >= 64 + 16 and dst.len - o >= 64 + 16;
+        // UTF-16 without the room below fails its test for certain:
+        // before the work for it, which cost 64-byte inputs 5%.
+        if (!room and T == u16 and dst.len - o < 64 + 8) break;
+        // The block's end first: a few scalar loads, which the next
+        // block's load then waits on, where a count from the
+        // block's lane mask would make it wait on the block's
+        // vector work (21 three-byte characters a block, 0.64x).
+        const take = utf8BlockEnd(src[p..]) orelse break;
+        const leads = leadMask(64, block);
+        // The last 64 to 79 bytes still decode as a block, where windows
+        // took longer, but not as runs, which read past it, and only
+        // with room for the eight units `utf8DecodeBlock` writes past
+        // its output: one unit per character for UTF-32, at most one per
+        // byte for UTF-16.
+        const whole: u64 = if (take == 64) ~@as(u64, 0) else (@as(u64, 1) << @intCast(take)) - 1;
+        if (!room and dst.len - o < (if (T == u32) @popCount(leads & whole) else take) + 8) break;
+        if (room) if (utf8AsciiThree(T, e, checked, src[p..], leads, take, dst, &o)) |n| {
+            if (n == 0) break;
+            p += n;
+            continue;
+        };
+        if (checked and utf8Invalid(64, block)) break;
+        if (leads == 0x1111_1111_1111_1111) {
+            utf8DecodeFour(T, e, block, dst, &o);
+            p += 64;
+            continue;
+        }
+        // Blocks with four-byte characters too: on these cores
+        // `utf8DecodeBlock` decodes emoji text 1.9x as fast as
+        // windows.
+        const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
+        if (anyTrue(u8, block >= splat(@Vector(64, u8), 0xF0)))
+            utf8DecodeBlock(T, e, true, block, ends, dst, &o)
+        else
+            utf8DecodeBlock(T, e, false, block, ends, dst, &o);
+        p += take;
+    }
+    return .{ p, o };
 }
 
 fn utf8ToUnitsLong(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
@@ -1225,6 +1463,9 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
     var o: usize = 0;
     var steps: Steps = .{};
     if (use_simd) while (true) {
+        if (apple) {
+            if (src.len >= 64 and dst.len >= 64) p, o = utf8BlocksApple(T, e, checked, src, dst);
+        } else
         // A block writes at most one code unit per byte, and a window's last
         // store reaches at most eight past its output, and loads 16 bytes
         // from as far as byte 51: an ASCII block needs neither.
@@ -3268,7 +3509,7 @@ const conversions = blk: {
     break :blk list;
 };
 
-const Mix = enum { ascii, latin1, two_byte, cjk, emoji, mixed, edges };
+const Mix = enum { ascii, latin1, two_byte, cjk, cjk_text, emoji, mixed, edges };
 
 const edges = [_]u32{ 0, 0x7F, 0x80, 0xFF, 0x100, 0x7FF, 0x800, 0xD7FF, 0xE000, 0xFFFF, 0x10000, 0x10FFFF };
 
@@ -3279,6 +3520,9 @@ fn randomCodePoint(r: std.Random, mix: Mix) u32 {
         .latin1 => if (r.boolean()) ascii else r.intRangeLessThan(u32, 0x80, 0x100),
         .two_byte => if (r.uintLessThan(u8, 8) == 0) ascii else r.intRangeLessThan(u32, 0x80, 0x800),
         .cjk => if (r.uintLessThan(u8, 8) == 0) ascii else r.intRangeLessThan(u32, 0x3000, 0xA000),
+        // Runs of three-byte characters dozens long, as Chinese and
+        // Japanese text has between its spaces and ASCII punctuation.
+        .cjk_text => if (r.uintLessThan(u8, 32) == 0) ascii else r.intRangeLessThan(u32, 0x3000, 0xA000),
         .emoji => if (r.uintLessThan(u8, 8) == 0) ascii else r.intRangeLessThan(u32, 0x1F300, 0x1FB00),
         .mixed => switch (r.uintLessThan(u8, 5)) {
             0 => ascii,
@@ -3486,7 +3730,7 @@ fn errorCases() !void {
     const utf32_patterns = [_][]const u32{
         &.{0xD800}, &.{0xDFFF}, &.{0x110000}, &.{0xFFFFFFFF}, &.{0x100}, &.{0xFF}, &.{0x10FFFF},
     };
-    for ([_]Mix{ .latin1, .cjk, .mixed }) |mix| {
+    for ([_]Mix{ .latin1, .cjk, .cjk_text, .mixed }) |mix| {
         for (&cps) |*cp| cp.* = randomCodePoint(r, mix);
         text.set(&cps);
         try expectErrorsMatch(.utf8, &text, &utf8_patterns);
