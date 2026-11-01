@@ -1,0 +1,61 @@
+== zig build test -Doptimize=ReleaseSafe -Dcpu=native --summary all
+testingx: Running 53 tests...
+testingx: 53 passed, 0 failed, 0 skipped (of 53 total) in 3246ms (seed: 0x66a95476)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v3 -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3244ms (seed: 0x30798e4c)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v2 -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3121ms (seed: 0x6b70db5a)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v3 --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 6322ms (seed: 0xd0af413)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=baseline --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 12460ms (seed: 0x81ddade5)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=baseline -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3405ms (seed: 0x243d1e4b)
+exit 0
+== zig build test -Doptimize=Debug -Dcpu=baseline --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 60770ms (seed: 0x498ef471)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dtarget=aarch64-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 34368ms (seed: 0x10b90fc5)
+exit 0
+== zig build test -Doptimize=Debug -Dtarget=aarch64-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 112531ms (seed: 0x734696a4)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dtarget=aarch64_be-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 35156ms (seed: 0xee05777e)
+exit 0
+== just oracle
+binary   base64.encode                               250000 compared, 0 mismatches
+binary   base64.encode unpadded                      250000 compared, 0 mismatches
+binary   base64.encode url                           250000 compared, 0 mismatches
+binary   base64.encode url unpadded                  250000 compared, 0 mismatches
+0 mismatches in all
+exit 0
+0 mismatches in all
+0 mismatches in all
+== just ci
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 18418ms (seed: 0xb999b388)
+testingx: Running 53 tests...
+testingx: 53 passed, 0 failed, 0 skipped (of 53 total) in 3209ms (seed: 0x9bdc9cab)
+error: recipe `lint` failed on line 39 with exit code 1
+exit 1
+finished
+== just ci, rerun after splitting the line ziglint's Z024 flagged (src/convert.zig, utf32ToLatin1Impl; no other change)
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 18343ms (seed: 0x706753ab)
+testingx: 53 passed, 0 failed, 0 skipped (of 53 total) in 3362ms (seed: 0x1c6743f2)
+exit 0

@@ -445,3 +445,28 @@ Wave 4:
   Left: native base64 decode at 16-256 B 0.92-0.94 of `origin/main`
   (unexplained, layout suspected), 16-byte AVX-512 encode (0.88 of
   `icelake`), and std's inline UTF-8 loop at baseline (0.72-0.85).
+
+Wave 5 ([short-20261101.md](results/short-20261101.md)):
+
+- **Short calls.** Every AVX-512 conversion that saved three or more
+  registers before its length test (18 on `39088d1`) now runs its short path
+  first and its long path through `longPath` in `convert.zig`: out of line
+  in the tier objects, its `Result` back through `dispatch.pack`, inline in
+  native builds (split there, 64-256 B lost 9-12%). Kernels that saved 0-2
+  stay whole (the call costs about 3 ticks). Dispatched 16-unit conversions
+  1.05x, 64-4096 level. `base64.decode` keeps its long path inline (out of
+  line cost 88-344 characters 7-12 ticks a call) and takes inputs under 64
+  characters with one `loadShort` (16 B 1.20x); the native regression since
+  `66fa49c` was codegen and is gone. AVX-512 Latin-1 to UTF-8's block loop
+  is inline (LLVM had kept the shared function out of line: two prologues
+  and a result through memory) and tests each block once: 256 B 1.08-1.28x.
+  Its constants before the loop were not the cost.
+- **The harness's Zig loop costs more than its C++ loop** on a real kernel:
+  the same dispatched `latin1ToUtf8` is 9.0 ns a call in the harness and
+  5.8 in the per-call loop at 16 B (simdutf 8.9 and 9.0). testingx's
+  `b.loop()` is an out-of-line call per iteration (seven saved registers, a
+  counter in memory, a `!bool` through the stack), part of it. Fix the loop
+  before reading 16-256 B rows against simdutf as the kernels'.
+- Identical code still moves up to 23% with the link; AVX2 and SSE short
+  calls are unmeasurable here (no tier override, and the host picks
+  AVX-512).

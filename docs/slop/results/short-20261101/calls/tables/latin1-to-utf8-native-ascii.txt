@@ -1,0 +1,11 @@
+case                                          E-n      F-n
+convert.latin1ToUtf8/16                     14.12    14.11
+convert.latin1ToUtf8/64                     17.52    16.74
+convert.latin1ToUtf8/128                    20.82    14.71
+convert.latin1ToUtf8/256                    22.46    18.64
+convert.latin1ToUtf8/1024                   42.54    32.80
+convert.validLatin1ToUtf8/16                14.12    14.12
+convert.validLatin1ToUtf8/64                17.44    17.28
+convert.validLatin1ToUtf8/128               19.97    14.13
+convert.validLatin1ToUtf8/256               22.46    16.31
+convert.validLatin1ToUtf8/1024              41.68    32.81

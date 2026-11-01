@@ -1,0 +1,4 @@
+case                                        old-d    cur-d     v1-d      D-d
+base64.decode/24                            35.30    25.98    24.97    26.97
+base64.decode/88                            39.25    48.75    43.77    36.65
+base64.decode/344                           48.05    58.88    51.98    47.00

@@ -15,6 +15,9 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- `convert` functions with AVX-512 in generic x86-64 builds are 1.05× faster on 16-unit inputs (UTF-32 to UTF-16 and UTF-8 1.25×, UTF-8 to UTF-16, UTF-32, and Latin-1 1.1–1.15×): their short path no longer saves registers for the long one.
+- `convert.latin1ToUtf8` and `validLatin1ToUtf8` with AVX-512 are 1.1–1.3× faster on 256 bytes.
+- `base64.decode` with AVX-512 is 1.2× faster on inputs under 64 characters.
 - `validate.utf8` and `utf8WithErrors` in generic x86-64 builds are 1.2–1.3× faster per call on inputs under 64 bytes.
 - `base64.decode` with AVX2 or SSSE3 is 1.1–1.2× faster when the input's last block holds up to 32 characters, as 16–64-byte payloads' do.
 - `validate.utf32WithErrors` is 1.5–2.2× faster on 33–64 values, and `validate.asciiWithErrors` with AVX-512 about 10% faster per call on exactly 64 bytes.

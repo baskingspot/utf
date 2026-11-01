@@ -1,0 +1,11 @@
+utf/arm, geomean          rows  utf GB/s    old-n    w66-n      C-n simdutf-icelake     ±   <1    ~   slowest vs old-n
+Utf32ToLatin1               13     41.31     0.97     0.98     0.99     1.07    4%    1   12   0.87 [0.83, 0.90] ascii-64
+ValidUtf32ToLatin1          13     43.32     0.98     0.98     1.00     1.11    5%    0   13   0.88 [0.76, 1.03] ascii-256
+Latin1ToUtf8                13     13.86     1.06     1.17     1.04     1.04    3%    0    6   1.00 [0.99, 1.01] ascii-65536
+ValidLatin1ToUtf8           13     13.95     1.07     1.18     1.05     1.05    2%    0    7   1.00 [0.98, 1.00] latin
+Base64Decode                 6     12.36     1.04     1.02     1.00     1.19    8%    1    4   0.98 [0.92, 0.99] random-65536
+Base64DecodeUrl              6     12.82     1.06     1.04     1.00     1.19    5%    0    4   1.00 [0.94, 1.02] random-1048576
+Base64DecodeStrict           6     11.89     1.02     1.02     1.00     1.19    4%    0    5   0.99 [0.98, 1.00] random-65536
+Base64DecodePartial          6     12.58     1.05     1.04     1.00     1.23    5%    1    4   0.99 [0.93, 1.00] random-4096
+Base64DecodeMime             6      7.74     1.03     1.00     1.00     1.10    8%    1    4   0.97 [0.92, 1.00] random-1048576
+all                         82     18.34     1.03     1.05     1.01     1.11          4   59

@@ -1,0 +1,5 @@
+latin1ToUtf8/16	23.44
+latin1ToUtf8/64	26.72
+latin1ToUtf8/128	28.53
+latin1ToUtf8/256	31.71
+latin1ToUtf8/1024	58.26

@@ -1,0 +1,11 @@
+case                                        old-d      C-d      D-d      E-d      F-d
+convert.latin1ToUtf8/16                     17.85    14.13    13.32    13.31    14.96
+convert.latin1ToUtf8/64                     23.34    17.55    17.53    17.65    18.32
+convert.latin1ToUtf8/128                    21.67    23.35    25.82    23.56    19.10
+convert.latin1ToUtf8/256                    24.16    25.82    28.27    25.95    21.67
+convert.latin1ToUtf8/1024                   39.34    40.84    42.90    40.44    36.57
+convert.validLatin1ToUtf8/16                15.82    12.47    12.46    12.50    13.31
+convert.validLatin1ToUtf8/64                21.78    16.12    16.14    16.14    16.65
+convert.validLatin1ToUtf8/128               20.00    21.66    24.98    21.67    18.36
+convert.validLatin1ToUtf8/256               21.65    24.16    27.46    24.17    21.41
+convert.validLatin1ToUtf8/1024              37.58    38.96    41.97    40.17    36.67

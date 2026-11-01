@@ -1,0 +1,7 @@
+utf/arm, geomean          rows  utf GB/s      A-d    w66-d simdutf-icelake     ±   <1    ~   slowest vs A-d
+Base64Decode                 6     11.92     0.98     1.05     1.14    3%    1    4   0.81 [0.80, 0.93] random-64
+Base64DecodeUrl              6     12.44     0.99     1.06     1.16    6%    0    5   0.85 [0.83, 1.04] random-64
+Base64DecodeStrict           6     11.49     0.98     1.02     1.13    4%    1    4   0.85 [0.82, 0.99] random-64
+Base64DecodePartial          6     12.04     1.00     1.06     1.19    6%    0    5   0.87 [0.72, 1.02] random-64
+Base64DecodeMime             6      7.68     1.02     1.06     1.10    5%    1    2   0.80 [0.79, 0.84] random-64
+all                         30     10.95     0.99     1.05     1.14          3   20
