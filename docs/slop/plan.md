@@ -185,7 +185,12 @@ Wave 1, in parallel:
   `bitmask`. Use `bitmask`, not `@bitCast`, for a lane mask: on aarch64_be
   a bool-vector `@bitCast` orders bits differently depending on how the
   vector was made. `lookup16` uses the instruction only under the LLVM
-  backend; Debug builds on x86_64 take a per-lane loop.
+  backend; Debug builds on x86_64 take a per-lane loop. Under Zig 0.17, do
+  not `@bitCast` a vector to an array of scalars of another lane type: it
+  becomes a loop that shifts the whole value once per element, which made
+  the UTF-8 to UTF-32 decoder 11–15× slower on emoji
+  ([bitcast-array-20261101.md](results/bitcast-array-20261101.md)). Cast to
+  a vector of the lane type and coerce that to the array.
 - **Transcoding**: `src/convert.zig`, `src/length.zig`, and the scalar
   transcoders in `src/scalar_convert.zig`. Landed: every conversion among
   UTF-8, UTF-16LE/BE, UTF-32, and Latin-1, checked and valid, the length
