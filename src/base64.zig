@@ -158,9 +158,76 @@ pub fn decodeWith(
     src: []const u8,
     last_chunk: LastChunk,
 ) Result {
-    const options: DecodeOptions = .{ .alphabet = alphabet, .last_chunk = last_chunk };
-    const K = Kernel(isa, alphabet);
     const t = scalar.trim(src);
+    // A block or more inline, registers saved and all: out of line in the
+    // tier objects, as `validate.utf8`'s long path is, the call cost 88
+    // and 344 characters 7-12 TSC ticks for 2 saved at 24
+    // (docs/slop/results/short-20261101.md).
+    if (t.len >= 64) return decodeBlocks(isa, alphabet, dst, src, t, last_chunk);
+    if (decodeShort(isa, alphabet, dst, src, t, last_chunk)) |len| return .ok(len);
+    return fromWords(decodeShortRest(isa, alphabet, dst, src, last_chunk));
+}
+
+/// Fewer than 64 characters, clean, by the last-chunk rules, and with
+/// room: the bytes written. Null for anything else, which
+/// `decodeShortRest` finishes out of line, off the common path.
+inline fn decodeShort(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    t: scalar.Trim,
+    last_chunk: LastChunk,
+) ?usize {
+    const K = Kernel(isa, alphabet);
+    const n = t.len;
+    if (n == 0 and t.padding == 0) return 0;
+    const live = simd.lowBits(u64, n);
+    // On AVX-512 one masked load, where `loadTail` built the block from
+    // integer loads: with `decodeShortRest` out of line, 24 characters
+    // went from 34.9 to 26.9 TSC ticks a call dispatched
+    // (docs/slop/results/short-20261101.md).
+    const block = if (K.avx512) simd.loadShort(u8, src[0..n]) else simd.loadTail(src, 0, n);
+    if (K.blocks > 1 and n <= 32) {
+        // Classify and pack only the first half of the block, one vector
+        // on AVX2 and two on SSE and NEON
+        // (docs/slop/results/calls-20261031.md).
+        const in: [K.blocks]K.V = @bitCast(block);
+        var values: [K.blocks / 2]K.V = undefined;
+        var bad: u64 = 0;
+        inline for (&values, 0..) |*v, k| {
+            const c = K.classify(in[k]);
+            v.* = c.values;
+            bad |= @as(u64, simd.bitmask(c.bad)) << (k * K.lanes);
+        }
+        if (bad & live != 0) return null;
+        return K.finish(values, n, dst, t, last_chunk);
+    }
+    const c = K.classifyBlock(block);
+    if (c.badMask() & live != 0) return null;
+    return K.finish(c.values, n, dst, t, last_chunk);
+}
+
+noinline fn decodeShortRest(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    last_chunk: LastChunk,
+) Words {
+    return toWords(decodeLast(isa, alphabet, dst, src, scalar.trim(src), 0, 0, last_chunk));
+}
+
+/// `decodeWith` from the first block, for at least one.
+inline fn decodeBlocks(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    t: scalar.Trim,
+    last_chunk: LastChunk,
+) Result {
+    const K = Kernel(isa, alphabet);
     var i: usize = 0;
     var o: usize = 0;
     // Where the current run of characters between whitespace starts, after
@@ -230,8 +297,24 @@ pub fn decodeWith(
         run = i;
     }
     if (t.len - i >= 64) return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
-    // The last block, fewer than 64 characters, zero-padded. None, as at
-    // a multiple of 64 without padding, is done.
+    return decodeLast(isa, alphabet, dst, src, t, i, o, last_chunk);
+}
+
+/// The last block, `src[i..t.len]`, fewer than 64 characters, into
+/// `dst[o..]`, zero-padded. None, as at a multiple of 64 without padding,
+/// is done.
+inline fn decodeLast(
+    comptime isa: Isa,
+    comptime alphabet: Alphabet,
+    dst: []u8,
+    src: []const u8,
+    t: scalar.Trim,
+    i: usize,
+    o: usize,
+    last_chunk: LastChunk,
+) Result {
+    const options: DecodeOptions = .{ .alphabet = alphabet, .last_chunk = last_chunk };
+    const K = Kernel(isa, alphabet);
     const n = t.len - i;
     if (n == 0 and t.padding == 0) return .ok(o);
     const live = simd.lowBits(u64, n);
