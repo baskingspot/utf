@@ -181,6 +181,44 @@ fn broadcast16(comptime n: usize, t: @Vector(16, u8)) @Vector(n, u8) {
     return @shuffle(u8, t, undefined, mask);
 }
 
+/// `v` as an array of vectors of type `P`, as `@bitCast` gives it, but cut
+/// out with shuffles. Zig 0.17 lowers a `@bitCast` to or from an array as a
+/// loop over the elements through one wide integer; LLVM unrolls a short one
+/// into moves through general registers and leaves a long one a loop. Not a
+/// rule for every cast: most unroll back into register moves, and where the
+/// shuffles let LLVM see the lanes, it can do worse, as in AVX-512's
+/// `vpermt2b` narrowing, which it rewrote as two `vpmovwb` and a blend
+/// (docs/slop/results/bitcast-sweep-20261101.md).
+pub inline fn split(comptime P: type, v: anytype) [@sizeOf(@TypeOf(v)) / @sizeOf(P)]P {
+    const m = @typeInfo(P).vector.len;
+    const E = @typeInfo(P).vector.child;
+    const k = @sizeOf(@TypeOf(v)) / @sizeOf(P);
+    const all: @Vector(k * m, E) = @bitCast(v);
+    var out: [k]P = undefined;
+    inline for (&out, 0..) |*o, j| {
+        o.* = @shuffle(E, all, undefined, std.simd.iota(i32, m) + @as(@Vector(m, i32), @splat(j * m)));
+    }
+    return out;
+}
+
+/// The vectors of `parts` end to end as a `T`, as `@bitCast` gives them,
+/// but joined with shuffles, which Zig 0.17 needs as `split` does.
+pub inline fn join(comptime T: type, parts: anytype) T {
+    if (@typeInfo(@TypeOf(parts)) == .vector) return @bitCast(parts);
+    const P = @typeInfo(@TypeOf(parts)).array.child;
+    const E = @typeInfo(P).vector.child;
+    const m = @typeInfo(P).vector.len;
+    if (parts.len == 1) return @bitCast(parts[0]);
+    const both = comptime blk: {
+        var r: [2 * m]i32 = undefined;
+        for (&r, 0..) |*x, i| x.* = if (i < m) i else ~@as(i32, i - m);
+        break :blk r;
+    };
+    var pairs: [parts.len / 2]@Vector(2 * m, E) = undefined;
+    inline for (&pairs, 0..) |*q, j| q.* = @shuffle(E, parts[2 * j], parts[2 * j + 1], both);
+    return join(T, pairs);
+}
+
 /// The vector `k` lanes earlier in the stream: lane i is `cur[i - k]`, and
 /// the first `k` lanes are the last `k` of `before`, the previous block.
 pub inline fn prev(comptime k: usize, cur: anytype, before: @TypeOf(cur)) @TypeOf(cur) {

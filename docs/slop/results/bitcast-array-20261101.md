@@ -44,7 +44,7 @@ tops = @as(@Vector(64, u16), @bitCast(@shuffle(u8, t, zero, interleave)));
 
 ## Other sites
 
-Grepping the ReleaseFast LLVM IR of the test build (every public function) for a variable `lshr` of an integer of 256 bits or more, on `x86_64_v2`, `x86_64_v3`, and `icelake_server`, finds one more after the fix: `compressMem` in src/base64.zig, `const src: [64]u8 = @bitCast(values)` from `[blocks]V`. Changing it the same way removed the loop from the IR but did not move `base64.decode` on MIME input (5 sequential runs: 553 against 554 ns at 4 KiB, 36 against 37 ns at 64 bytes), so it is left as is. `base64.decode` on MIME input is 10–30% slower on this branch than on `main` with Zig 0.16 in a single-pass scan of every operation; that has some other cause and is not looked at here.
+A ReleaseFast IR grep found one more loop, in `compressMem` in src/base64.zig. MIME input did not reach it, so changing it alone did not move the MIME rows; text with 3 or more whitespace characters in a 64-byte block does, 10× slower than with Zig 0.16. That, and the search for every other cast of this kind, is in [bitcast-sweep-20261101.md](bitcast-sweep-20261101.md).
 
 ## Correctness
 
