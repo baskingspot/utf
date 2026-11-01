@@ -10,8 +10,9 @@ const Endian = std.builtin.Endian;
 const scalar = @import("scalar_convert.zig");
 const simd = @import("simd.zig");
 const dispatch = @import("dispatch.zig");
+const builtin = @import("builtin");
 
-const native = @import("builtin").cpu.arch.endian();
+const native = builtin.cpu.arch.endian();
 
 /// With AVX-512, a comparison gives a mask register, so a block's count is
 /// a popcount: one shuffle-port operation per 64 bytes, where widening the
@@ -255,6 +256,12 @@ fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
     return sum + scalar.utf8FromUtf16(e, src[p..]);
 }
 
+/// The LLVM intrinsics below resolve only under the LLVM backend.
+const llvm = builtin.zig_backend == .stage2_llvm;
+
+extern fn @"llvm.aarch64.neon.uaddlv.i32.v16i8"(@Vector(16, u8)) u32;
+extern fn @"llvm.aarch64.neon.uaddlv.i32.v8i8"(@Vector(8, u8)) u32;
+
 /// Lanes that hold a byte other than a UTF-8 continuation byte.
 inline fn notContinuation(v: anytype) @Vector(@typeInfo(@TypeOf(v)).vector.len, bool) {
     const S = @Vector(@typeInfo(@TypeOf(v)).vector.len, i8);
@@ -312,7 +319,8 @@ inline fn popBlocks(comptime T: type, comptime f: anytype, src: []const T) usize
 }
 
 /// Sums `base + f`, at most `max` per lane, over `src`: in 64-byte vectors,
-/// or in 16-byte ones when `src` is shorter than 64 bytes. `f`'s lanes may
+/// or in 16-byte ones when `src` is shorter than 64 bytes, and on NEON
+/// without a loop up to two 64-byte vectors' worth. `f`'s lanes may
 /// wrap: `base` is added once per run of blocks, not once per block. Returns the sum and the
 /// number of code units it covers, all of `src` unless it is shorter than 16
 /// bytes.
@@ -323,14 +331,90 @@ inline fn sumBlocks(
     comptime f: anytype,
     src: []const T,
 ) struct { usize, usize } {
-    if (src.len >= 64 / @sizeOf(T)) return sumVectors(T, 64 / @sizeOf(T), max, base, f, src);
-    if (src.len >= 16 / @sizeOf(T)) return sumVectors(T, 16 / @sizeOf(T), max, base, f, src);
+    if (src.len >= 64 / @sizeOf(T)) {
+        if (fold and src.len <= 128 / @sizeOf(T))
+            return .{ sumChunks(T, 64 / @sizeOf(T), 2, max, base, f, src), src.len };
+        return sumVectors(T, 64 / @sizeOf(T), max, base, f, src);
+    }
+    if (src.len >= 16 / @sizeOf(T)) {
+        if (fold) return .{ sumChunks(T, 16 / @sizeOf(T), 4, max, base, f, src), src.len };
+        return sumVectors(T, 16 / @sizeOf(T), max, base, f, src);
+    }
     return .{ 0, 0 };
 }
 
+/// On NEON, sums keep their lanes in one accumulator to the end: the head
+/// and the last vector join the run they border, and the lanes are summed
+/// once, in lanes twice as wide (`uaddlv` and widening adds). Summed alone,
+/// LLVM turned each masked vector into a lane mask and a popcount, and
+/// 8-bit lanes summed in 64 bits took 60 instructions, which a 64-byte
+/// input paid in full. Inputs up to two vectors' worth take `sumChunks`.
+const fold = simd.isa == .neon;
+
+/// `sumBlocks` for `src` of `n` to `k * n` units, without a loop: the
+/// first `n` units, then up to `k - 1` vectors more, from each multiple of
+/// `n` short of the end or else the last `n` units, masked to the lanes no
+/// earlier vector counted. In `sumVectors` one block and a partial one
+/// cost five branches and a loop's setup; with all `k` vectors loaded
+/// every time and no branches, the 16-byte rows lost 12-38%.
+inline fn sumChunks(
+    comptime T: type,
+    comptime n: usize,
+    comptime k: usize,
+    comptime max: comptime_int,
+    comptime base: comptime_int,
+    comptime f: anytype,
+    src: []const T,
+) usize {
+    const V = @Vector(n, T);
+    const A = @typeInfo(@TypeOf(f(@as(V, @splat(0))))).vector.child;
+    const W = @Vector(n, A);
+    var acc: W = @as(W, @splat(base)) +% f(@as(V, src[0..n].*));
+    inline for (1..k) |i| {
+        if (src.len > i * n) {
+            const fresh = lastLanes(W, @min(src.len - i * n, n));
+            acc +%= (@as(W, @splat(base)) +% f(@as(V, src[@min(i * n, src.len - n)..][0..n].*))) & fresh;
+        }
+    }
+    return sumLanes(acc, k * max);
+}
+
+/// The sum of `acc`'s lanes, each at most `bound`: its halves added while
+/// the lanes hold the sums and the vector is wider than a register, then
+/// the lanes summed in lanes twice as wide.
+inline fn sumLanes(acc: anytype, comptime bound: comptime_int) usize {
+    const len = @typeInfo(@TypeOf(acc)).vector.len;
+    const A = @typeInfo(@TypeOf(acc)).vector.child;
+    if (len * @sizeOf(A) > 16 and 2 * bound <= std.math.maxInt(A)) {
+        const lo = @shuffle(A, acc, undefined, std.simd.iota(i32, len / 2));
+        const upper = std.simd.iota(i32, len / 2) + @as(@Vector(len / 2, i32), @splat(len / 2));
+        const hi = @shuffle(A, acc, undefined, upper);
+        // Wrapping, as the bound allows: the checked add reported overflow
+        // on lanes of 0-2 in aarch64 ReleaseSafe builds, a miscompiled
+        // check (the wrapping sums were right).
+        return sumLanes(lo +% hi, 2 * bound);
+    }
+    // One `uaddlv`, where LLVM may widen in pairs first and add after.
+    if (llvm and A == u8 and len == 16) return @"llvm.aarch64.neon.uaddlv.i32.v16i8"(acc);
+    if (llvm and A == u8 and len == 8) return @"llvm.aarch64.neon.uaddlv.i32.v8i8"(acc);
+    return @reduce(.Add, @as(@Vector(len, @Int(.unsigned, 2 * @bitSizeOf(A))), acc));
+}
+
+/// A `W` whose last `i` lanes are all ones and the rest zero, from a
+/// window of `tail_mask`: one or two loads, where comparing an index took
+/// three instructions per 16 bytes.
+inline fn lastLanes(comptime W: type, i: usize) W {
+    const A = @typeInfo(W).vector.child;
+    const bytes = @typeInfo(W).vector.len * @sizeOf(A);
+    return @bitCast(@as(*align(1) const [bytes]u8, tail_mask[64 - bytes + i * @sizeOf(A) ..][0..bytes]).*);
+}
+
+/// 64 zero bytes, then 64 of all ones.
+const tail_mask = [_]u8{0} ** 64 ++ [_]u8{0xFF} ** 64;
+
 /// `sumBlocks` in vectors of `n` units, for `src` at least that long,
-/// accumulating in lanes as wide as `T`. The last partial vector is a whole
-/// one that ends with `src`, with the lanes already counted masked off.
+/// accumulating in lanes as wide as `T`. The last partial vector is a whole one that ends with
+/// `src`, with the lanes already counted masked off.
 inline fn sumVectors(
     comptime T: type,
     comptime n: usize,
@@ -340,37 +424,49 @@ inline fn sumVectors(
     src: []const T,
 ) struct { usize, usize } {
     const V = @Vector(n, T);
+    const A = @typeInfo(@TypeOf(f(@as(V, @splat(0))))).vector.child;
+    const W = @Vector(n, A);
     // 16-bit lanes sum in 32 bits, which takes half the widening.
-    const S = @Vector(n, if (T == u16) u32 else u64);
+    const S = @Vector(n, if (fold) @Int(.unsigned, 2 * @bitSizeOf(A)) else if (A == u16) u32 else u64);
     var sum: usize = 0;
     var p: usize = 0;
+    var acc: W = @splat(0);
     // Aligned loads from the second vector on, as in `popBlocks`, once
     // the input is long enough to pay for the extra sum (from 16 vectors:
     // at 256 bytes the head cost AVX2 20-35%).
     if (src.len >= 16 * n) {
         p = alignHead(T, n * @sizeOf(T), src);
         if (p > 0) {
-            const head = std.simd.iota(T, n) < @as(V, @splat(@intCast(p)));
-            const first = @as(V, @splat(base)) +% f(@as(V, src[0..n].*));
-            sum += @reduce(.Add, @as(S, @select(T, head, first, @as(V, @splat(0)))));
+            const head = std.simd.iota(A, n) < @as(W, @splat(@intCast(p)));
+            const first = @select(A, head, @as(W, @splat(base)) +% f(@as(V, src[0..n].*)), @as(W, @splat(0)));
+            if (fold) acc = first else sum += @reduce(.Add, @as(S, first));
         }
     }
     while (src.len - p >= n) {
         // usize, where `@min` would narrow it and `base * blocks` with it.
-        const blocks: usize = @min((src.len - p) / n, std.math.maxInt(T) / max);
-        var acc: V = @splat(0);
+        // Folding leaves room for the head and the last vector.
+        const blocks: usize = @min((src.len - p) / n, std.math.maxInt(A) / max - if (fold) 2 else 0);
         for (0..blocks) |_| {
             acc +%= f(@as(V, src[p..][0..n].*));
             p += n;
         }
         if (base != 0) acc +%= @splat(@intCast(base * blocks));
-        sum += @reduce(.Add, @as(S, acc));
+        if (!fold or src.len - p >= n) {
+            sum += @reduce(.Add, @as(S, acc));
+            acc = @splat(0);
+        }
     }
     if (p < src.len) {
-        const fresh = std.simd.iota(T, n) >= @as(V, @splat(@intCast(n - (src.len - p))));
-        const last = @as(V, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
-        sum += @reduce(.Add, @as(S, @select(T, fresh, last, @as(V, @splat(0)))));
+        if (fold) {
+            const last = @as(W, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
+            acc +%= last & lastLanes(W, src.len - p);
+        } else {
+            const fresh = std.simd.iota(A, n) >= @as(W, @splat(@intCast(n - (src.len - p))));
+            const last = @as(W, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
+            sum += @reduce(.Add, @as(S, @select(A, fresh, last, @as(W, @splat(0)))));
+        }
     }
+    if (fold) sum += sumLanes(acc, std.math.maxInt(A));
     return .{ sum, src.len };
 }
 
@@ -436,6 +532,12 @@ fn overflowCases() !void {
     // U+0808 reads the same in either byte order.
     const units = [_]u16{0x0808} ** (32 * 100 + 3);
     try testing.expectEqual(3 * units.len, utf8FromUtf16le(&units));
+    try testing.expectEqual(3 * units.len, utf8FromUtf16be(&units));
+    // So does U+DCDC, a low surrogate.
+    const lows = [_]u16{0xDCDC} ** (32 * 300 + 5);
+    try testing.expectEqual(0, countUtf16le(&lows));
+    try testing.expectEqual(0, countUtf16be(&lows));
+    try testing.expectEqual(2 * lows.len, utf8FromUtf16be(&lows));
     // Past the 21845 blocks of 32 units one 16-bit accumulator holds at
     // three a lane.
     const many = try testing.allocator.alloc(u16, 32 * 21845 + 35);
