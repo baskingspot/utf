@@ -522,3 +522,14 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   with four-byte characters in 12-byte windows (windows everywhere cost
   two-byte text 15-20%). Left: 16-256 B rows (0.74-0.90), CJK UTF-8 to
   UTF-16/32 (0.92-0.97).
+- **Length** ([neon-length-20261101.md](results/neon-length-20261101.md)):
+  every length operation's short rows at or above simdutf's `arm64` but
+  `utf8FromLatin1` at 16 and 64 B (0.82, 0.97); 1.01-1.67 of `1476ab0`
+  by operation, x86 machine code unchanged. On NEON the sums keep one
+  accumulator to the end and widen once (8-bit lanes had been widened to
+  64 bits, 60 instructions, per call at 64 B), mask the last vector with
+  a window of a table, and take up to four 16-byte or two 64-byte vectors
+  without a loop. The UTF-16 kernels count in byte lanes from the units'
+  high bytes (`uzp2`, `tbl` of 32 entries); load them volatile where the
+  high byte is the load's only use, or LLVM makes `ld2`, slower on N2.
+  UTF-16BE had been 0.88 of LE: masked equalities, where LE got `cmhi`.
