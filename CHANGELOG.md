@@ -27,6 +27,8 @@ All notable changes to utf are recorded here. The format follows
 - `base64.decode` with AVX2 or SSSE3 is 1.1–1.2× faster when the input's last block holds up to 32 characters, as 16–64-byte payloads' do.
 - `validate.utf32WithErrors` is 1.5–2.2× faster on 33–64 values, and `validate.asciiWithErrors` with AVX-512 about 10% faster per call on exactly 64 bytes.
 - `base64.encode` with AVX-512 is 1.3× faster per call on 16-byte input, and `base64.decode` of unpadded input a multiple of 64 characters long skips an empty last block.
+- On Apple Silicon, `convert.utf8ToUtf32` is 1.35× faster on CJK text from 4 KiB, 1.5–1.75× on emoji from 64 bytes, and 1.05–2.75× on other non-ASCII text of 64–256 bytes, and UTF-8 to UTF-16 1.35× on CJK and 2.05–2.15× on emoji from 256 bytes; ASCII calls of 1–8 bytes take up to 1 ns longer.
+- On aarch64, `base64.decode` is 2.8× faster on 64 characters, 1.8× on 256, and 1.08–1.13× from 4 KiB (measured on Apple M4), when `dst` is `maxDecodedLen(src.len)` bytes.
 - The `length` functions with AVX-512 are 1.1–1.4× faster on inputs of up to 64 bytes.
 - Generic x86-64 builds call each dispatched function through a pointer of its own: dispatch costs 0.9 ns a call, from 1.5 ns (simdutf's costs 2.6), and 16–64-byte inputs run 1.07× faster on geomean.
 - `base64.decode` on line-wrapped input (MIME and PEM: lines of one length, a multiple of four and at least 64 characters, each followed by the same 1–4 whitespace characters) is 1.3× faster from 4 KiB with AVX-512, 1.9× with AVX2, and 1.5× with SSSE3; with AVX-512 also 15% faster on inputs under 64 characters.
