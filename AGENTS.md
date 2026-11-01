@@ -6,7 +6,7 @@ Working notes for AI coding agents in baskingspot/utf.
 
 SIMD UTF-8, UTF-16, and UTF-32 validation and transcoding, and base64, in Zig, with no C: what simdutf does, as a Zig package. It is incubating: unstable, with no promises about its API.
 
-The repository lives at `baskingspot/utf` on GitHub, where the workflows under `.github/` run, and is mirrored on Amp at https://ampcode.com/@rockorager/utf so project orbs can work on it in parallel. Orbs push branches to Amp; merged `main` goes to both.
+The repository lives at `baskingspot/utf` on GitHub, where the workflows under `.github/` run. The Amp project `rockorager/utf` points at it, so project orbs clone from GitHub and push their branches there.
 
 ## Environment
 
@@ -31,7 +31,7 @@ Docs split by reader. `README.md` and `CHANGELOG.md` are for a person deciding w
 
 ## Rules
 
-- Commit messages are one line, `area: summary`, and every commit is signed. Do not rewrite pushed history. A change made for a measurement adds a short body that names its `docs/slop/results/` file and gives the headline number.
+- Commit messages are one line, `area: summary`, and every commit is signed. Do not rewrite pushed history on `main`; branches may be rebased and force-pushed. A change made for a measurement adds a short body that names its `docs/slop/results/` file and gives the headline number.
 - Gate commands on their exit codes, and claim only what you ran.
 - `just fmt` formats Zig, Nix, Markdown, and the justfile; `just lint` checks them and lints the workflows with actionlint and zizmor.
 - This repo's GitHub settings come from `baskingspot/.github`: run `just settings --repo utf` in a checkout of that repo. Do not change them by hand.
