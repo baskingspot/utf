@@ -215,6 +215,14 @@ fn countUtf16(comptime e: Endian, src: []const u16) usize {
             return @as(usize, @popCount(simd.bitmask(lows) & live));
         }
     }.f, src);
+    if (bytes16) {
+        const lows, const p = sumBlocks(u16, 1, 0, struct {
+            fn f(v: anytype) Bytes(@TypeOf(v)) {
+                return ones(u8, unitBytes(e, v, .high) >> @splat(2) == @as(Bytes(@TypeOf(v)), @splat(0xDC >> 2)));
+            }
+        }.f, src);
+        return p - lows + scalar.countUtf16(e, src[p..]);
+    }
     const lows, const p = sumBlocks(u16, 1, 0, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
@@ -234,6 +242,28 @@ fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
                 @popCount(simd.bitmask(v & @as(V, @splat(0xF800)) == @as(V, @splat(0xD800))) & live);
         }
     }.f, src);
+    if (bytes16) {
+        const sum, const p = sumBlocks(u16, 3, 2, struct {
+            fn f(v: anytype) Bytes(@TypeOf(v)) {
+                const V = @TypeOf(v);
+                // Two, one more above U+007F, and one less where the top
+                // five bits are 00000 (below U+0800) or 11011 (a
+                // surrogate), which one `tbl` of a 32-entry table finds.
+                const below_800 = [_]u8{0xFF} ++ [_]u8{0} ** 26 ++ [_]u8{0xFF} ++ [_]u8{0} ** 4;
+                const high = unitBytes(e, v, .high);
+                const below = lookup32(below_800, high >> @splat(3));
+                // Above U+007F: one compare of the units, narrowed. In the
+                // other byte order LLVM tests the swapped constant with
+                // two instructions per register and inverts the result,
+                // so it tests the bytes: either high, or low from 0x80.
+                if (e == native) return ones(u8, v > @as(V, @splat(0x7F))) +% below;
+                const B = Bytes(V);
+                const low: @Vector(@typeInfo(V).vector.len, i8) = @bitCast(unitBytes(e, v, .low));
+                return (ones(u8, high != @as(B, @splat(0))) | ones(u8, low < @as(@TypeOf(low), @splat(0)))) +% below;
+            }
+        }.f, src);
+        return sum + scalar.utf8FromUtf16(e, src[p..]);
+    }
     const sum, const p = sumBlocks(u16, 3, 3, struct {
         fn f(v: anytype) @TypeOf(v) {
             const V = @TypeOf(v);
@@ -256,11 +286,58 @@ fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
     return sum + scalar.utf8FromUtf16(e, src[p..]);
 }
 
+/// On NEON the UTF-16 kernels count in byte lanes, one per unit, from
+/// each unit's high byte: a 64-byte block is four 16-byte registers of
+/// work, not eight. `uzp1`/`uzp2` take the high bytes in either byte
+/// order, so UTF-16BE costs about what UTF-16LE does; in 16-bit lanes the
+/// big-endian kernel tested masked equalities where the little-endian one
+/// had an unsigned compare, one instruction more per register (0.88 of
+/// the little-endian one on Neoverse N2).
+const bytes16 = fold and llvm;
+
 /// The LLVM intrinsics below resolve only under the LLVM backend.
 const llvm = builtin.zig_backend == .stage2_llvm;
 
+fn Bytes(comptime V: type) type {
+    return @Vector(@typeInfo(V).vector.len, u8);
+}
+
+/// The high or low byte of each UTF-16 unit in `e` byte order, as loaded.
+inline fn unitBytes(comptime e: Endian, v: anytype, comptime which: enum { high, low }) Bytes(@TypeOf(v)) {
+    const n = @typeInfo(@TypeOf(v)).vector.len;
+    // Memory order, whatever the target's: the first byte of a
+    // little-endian unit is its low byte.
+    const b: @Vector(2 * n, u8) = @bitCast(v);
+    const pick = comptime blk: {
+        var m: [n]i32 = undefined;
+        for (&m, 0..) |*x, i| x.* = @intCast(2 * i + @intFromBool((e == .little) == (which == .high)));
+        break :blk m;
+    };
+    return @shuffle(u8, b, undefined, pick);
+}
+
 extern fn @"llvm.aarch64.neon.uaddlv.i32.v16i8"(@Vector(16, u8)) u32;
 extern fn @"llvm.aarch64.neon.uaddlv.i32.v8i8"(@Vector(8, u8)) u32;
+extern fn @"llvm.aarch64.neon.tbl2.v16i8"(@Vector(16, u8), @Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
+
+/// `table[i]` for each lane `i` of `idx`, all below 32: one `tbl` of two
+/// registers per 16 lanes.
+inline fn lookup32(comptime table: [32]u8, idx: anytype) @TypeOf(idx) {
+    const n = @typeInfo(@TypeOf(idx)).vector.len;
+    const lo: @Vector(16, u8) = table[0..16].*;
+    const hi: @Vector(16, u8) = table[16..32].*;
+    if (n < 16) {
+        const repeat: [16]i32 = std.simd.iota(i32, 16) % @as(@Vector(16, i32), @splat(n));
+        const wide = @"llvm.aarch64.neon.tbl2.v16i8"(lo, hi, @shuffle(u8, idx, undefined, repeat));
+        return @shuffle(u8, wide, undefined, std.simd.iota(i32, n));
+    }
+    const in: [n]u8 = idx;
+    var out: [n]u8 = undefined;
+    inline for (0..n / 16) |c| {
+        out[c * 16 ..][0..16].* = @"llvm.aarch64.neon.tbl2.v16i8"(lo, hi, in[c * 16 ..][0..16].*);
+    }
+    return out;
+}
 
 /// Lanes that hold a byte other than a UTF-8 continuation byte.
 inline fn notContinuation(v: anytype) @Vector(@typeInfo(@TypeOf(v)).vector.len, bool) {
@@ -369,11 +446,11 @@ inline fn sumChunks(
     const V = @Vector(n, T);
     const A = @typeInfo(@TypeOf(f(@as(V, @splat(0))))).vector.child;
     const W = @Vector(n, A);
-    var acc: W = @as(W, @splat(base)) +% f(@as(V, src[0..n].*));
+    var acc: W = @as(W, @splat(base)) +% f(loadUnits(V, A, src));
     inline for (1..k) |i| {
         if (src.len > i * n) {
             const fresh = lastLanes(W, @min(src.len - i * n, n));
-            acc +%= (@as(W, @splat(base)) +% f(@as(V, src[@min(i * n, src.len - n)..][0..n].*))) & fresh;
+            acc +%= (@as(W, @splat(base)) +% f(loadUnits(V, A, src[@min(i * n, src.len - n)..]))) & fresh;
         }
     }
     return sumLanes(acc, k * max);
@@ -400,6 +477,18 @@ inline fn sumLanes(acc: anytype, comptime bound: comptime_int) usize {
     return @reduce(.Add, @as(@Vector(len, @Int(.unsigned, 2 * @bitSizeOf(A))), acc));
 }
 
+/// The first units of `s`, as many as `V` has lanes, for an `f` whose
+/// lanes are `A`. A load whose only use takes every other byte, as
+/// `countUtf16le`'s on NEON does, LLVM turns into `ld2`, which on Neoverse
+/// N2 cost more than two loads and a `uzp2` (0.69 of `countUtf16be` on
+/// long input): a volatile load stays whole.
+inline fn loadUnits(comptime V: type, comptime A: type, s: anytype) V {
+    const T = @typeInfo(V).vector.child;
+    const n = @typeInfo(V).vector.len;
+    if (A != T) return @as(*align(@alignOf(T)) const volatile V, @ptrCast(s[0..n])).*;
+    return s[0..n].*;
+}
+
 /// A `W` whose last `i` lanes are all ones and the rest zero, from a
 /// window of `tail_mask`: one or two loads, where comparing an index took
 /// three instructions per 16 bytes.
@@ -413,7 +502,8 @@ inline fn lastLanes(comptime W: type, i: usize) W {
 const tail_mask = [_]u8{0} ** 64 ++ [_]u8{0xFF} ** 64;
 
 /// `sumBlocks` in vectors of `n` units, for `src` at least that long,
-/// accumulating in lanes as wide as `T`. The last partial vector is a whole one that ends with
+/// accumulating in `f`'s lanes: as wide as `T`, or bytes for the NEON
+/// UTF-16 kernels. The last partial vector is a whole one that ends with
 /// `src`, with the lanes already counted masked off.
 inline fn sumVectors(
     comptime T: type,
@@ -438,7 +528,7 @@ inline fn sumVectors(
         p = alignHead(T, n * @sizeOf(T), src);
         if (p > 0) {
             const head = std.simd.iota(A, n) < @as(W, @splat(@intCast(p)));
-            const first = @select(A, head, @as(W, @splat(base)) +% f(@as(V, src[0..n].*)), @as(W, @splat(0)));
+            const first = @select(A, head, @as(W, @splat(base)) +% f(loadUnits(V, A, src)), @as(W, @splat(0)));
             if (fold) acc = first else sum += @reduce(.Add, @as(S, first));
         }
     }
@@ -447,7 +537,7 @@ inline fn sumVectors(
         // Folding leaves room for the head and the last vector.
         const blocks: usize = @min((src.len - p) / n, std.math.maxInt(A) / max - if (fold) 2 else 0);
         for (0..blocks) |_| {
-            acc +%= f(@as(V, src[p..][0..n].*));
+            acc +%= f(loadUnits(V, A, src[p..]));
             p += n;
         }
         if (base != 0) acc +%= @splat(@intCast(base * blocks));
@@ -458,7 +548,7 @@ inline fn sumVectors(
     }
     if (p < src.len) {
         if (fold) {
-            const last = @as(W, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
+            const last = @as(W, @splat(base)) +% f(loadUnits(V, A, src[src.len - n ..]));
             acc +%= last & lastLanes(W, src.len - p);
         } else {
             const fresh = std.simd.iota(A, n) >= @as(W, @splat(@intCast(n - (src.len - p))));
