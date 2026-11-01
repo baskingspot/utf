@@ -27,6 +27,8 @@ All notable changes to utf are recorded here. The format follows
 - `convert.utf16leToUtf16be` and `utf16beToUtf16le` are 1.3× faster on AVX2 and SSE and 1.1× on AVX-512, and 0.7–0.9× as fast on emoji, where every block holds a surrogate pair.
 - `convert` on AVX-512: UTF-16 to UTF-8 on two-byte scripts and CJK 1.1–1.35× faster, UTF-32 to UTF-16 1.06–1.23×, UTF-32 and UTF-16 to Latin-1 from inputs not aligned to 16 bytes up to 1.5×, and the UTF-8 decoders and Latin-1 to UTF-8 on short ASCII inputs (up to 32 or 64 bytes) 1.1–1.6×.
 - `length.utf8FromUtf16le`, `utf8FromUtf16be`, and `utf8FromUtf32` are 1.1–1.2× faster on AVX2 and SSE.
+- `convert` on AVX-512: `validUtf16leToUtf16be` and `validUtf16beToUtf16le` are 1.3× faster at 256 bytes and 1.7× at 4 KiB, the checked byte swaps 1.2–1.5× on text without surrogate pairs, `utf8ToLatin1` and `validUtf8ToLatin1` 1.1–1.4× on Latin-1 text, and `latin1ToUtf8` and `validLatin1ToUtf8` 1.2× on Latin-1 text from 4 KiB and on inputs up to 64 bytes.
+- `convert` on AVX2: UTF-8 to UTF-16, UTF-32, and Latin-1, and UTF-16 to UTF-32, are 1.2–1.6× faster on ASCII runs of a few KiB; on SSE, UTF-8 to Latin-1 1.3–1.5× on them, and Latin-1 to UTF-16 1.1× (1.4× at 4 KiB).
 
 ### Fixed
 

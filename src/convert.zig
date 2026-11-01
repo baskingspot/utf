@@ -352,6 +352,9 @@ inline fn below(comptime limit: comptime_int, v: anytype) bool {
 
 const v512 = fast_shuffle and simd.has_vbmi and simd.has_vbmi2 and simd.has_bmi2;
 
+/// A funnel shift of 16-bit lanes: `vpshldw` with VBMI2.
+extern fn @"llvm.fshl.v32i16"(@Vector(32, u16), @Vector(32, u16), @Vector(32, u16)) @Vector(32, u16);
+
 /// The first step of a long AVX-512 loop over `s`: the units before its
 /// first 64-byte boundary, or a whole block when it starts on one or the
 /// loop is short. The first block is done whole and the next starts on the
@@ -380,6 +383,20 @@ inline fn storeWidened(comptime T: type, comptime e: Endian, dst: []T, o: usize,
             simd.storePartial(dst[o + k * lanes ..], w, n - k * lanes);
         }
     }
+}
+
+/// Widens the 64 bytes at `s` to `T` at `d` (UTF-16 in byte order `e`).
+inline fn widenAscii(comptime T: type, comptime e: Endian, s: []const u8, d: []T) void {
+    inline for (0..4) |k| store(T, e, d, 16 * k, widenLoad(s[16 * k ..]));
+}
+
+/// Loads 16 bytes to widen. On AVX2 a plain load, which folds into
+/// `vpmovzx`: widened from a register, each upper half takes a
+/// `vextracti128` too, on the same port. Elsewhere volatile, which keeps it
+/// one load and two `punpck` where LLVM would fold it into two or four
+/// `pmovzx` loads (SSE Latin-1 to UTF-16 1.1x).
+inline fn widenLoad(s: []const u8) V16 {
+    return if (simd.isa == .avx2) s[0..16].* else simd.loadVolatile(V16, s);
 }
 
 /// Combines a checked scalar tail at input `p` and output `o` with the
@@ -738,7 +755,9 @@ fn pairsOf(comptime half: usize) [64]i32 {
 /// too short. Null if no lead is in the last four bytes, which only
 /// ill-formed input allows.
 inline fn utf8BlockEnd(src: []const u8) ?usize {
-    const last = std.mem.readInt(u32, src[60..64], .little);
+    // Volatile: else LLVM takes it from the block's register with two
+    // shuffles, which cost UTF-8 to UTF-16 on non-Latin text 25-35%.
+    const last = std.mem.littleToNative(u32, @as(*align(1) const volatile u32, @ptrCast(src[60..64])).*);
     // The top bit of each byte that is not a continuation.
     const x = last ^ 0x80808080;
     const leads = (x | x << 1) & 0x80808080;
@@ -785,10 +804,12 @@ fn utf8ToUnitsAvx512(
         const room = dst.len - o;
         var block: V = undefined;
         var take: usize = rem;
-        if (rem > 64) {
+        if (rem >= 64) {
             block = simd.load(u8, src[p..]);
             if (below(0x80, block) and room >= 64) {
-                storeWidened(T, e, dst, o, block, 64);
+                // Whole stores: `storeWidened` tests each register's page
+                // for a masked store, which cost UTF-32 at 256 bytes 20%.
+                store(T, e, dst, o, block);
                 p += 64;
                 o += 64;
                 continue;
@@ -1023,9 +1044,18 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
         while (src.len - p >= 64 and dst.len - o >= 64) {
             const block = simd.load(u8, src[p..]);
             if (below(0x80, block)) {
-                store(T, e, dst, o, block);
+                widenAscii(T, e, src[p..], dst[o..]);
                 p += 64;
                 o += 64;
+                // A run of ASCII in a loop of its own, with one bound: as
+                // a branch of this loop it took three jumps a block.
+                var k = @min(src.len - p, dst.len - o) / 64;
+                while (k > 0) : (k -= 1) {
+                    if (!below(0x80, simd.load(u8, src[p..]))) break;
+                    widenAscii(T, e, src[p..], dst[o..]);
+                    p += 64;
+                    o += 64;
+                }
                 continue;
             }
             if (!fast_shuffle) {
@@ -1102,87 +1132,95 @@ inline fn compress16(v: V16, keep: u16, dst: []u8, o: usize) usize {
 }
 
 fn utf8ToLatin1Avx512(comptime checked: bool, src: []const u8, dst: []u8) struct { usize, usize } {
-    const V = V64;
-    // Every step takes 64 bytes, so the next load never waits on this
-    // block's work. A two-byte character decodes at its continuation byte,
-    // from the byte before it, which for byte 0 is the last of the block
-    // before: a load at `p - 1`, not a carry through the loop.
-    // Up to 64 ASCII bytes, before the loop loads its constants: set up
-    // first, they cost every short call 2-4 ns.
-    if (src.len <= 64 and src.len <= dst.len) {
-        const v = simd.loadShort(u8, src);
-        if (below(0x80, v)) {
-            simd.storePartial(dst, v, src.len);
-            return .{ src.len, src.len };
-        }
-    }
+    // Whole blocks, then at most one partial block, each its own copy of
+    // the step, so the loop tests no lengths but its own.
     var p: usize = 0;
     var o: usize = 0;
-    while (p < src.len) {
-        const rem = src.len - p;
-        // An ASCII block, unless it follows a lead byte, which the checked
-        // form must report.
-        if (rem >= 64 and dst.len - o >= 64) {
-            const v = simd.load(u8, src[p..]);
-            if (below(0x80, v) and !(checked and p > 0 and src[p - 1] >= 0xC0)) {
-                store(u8, native, dst, o, v);
-                p += 64;
-                o += 64;
-                // A long run of ASCII, two blocks a step.
-                while (src.len - p >= 128 and dst.len - o >= 128) {
-                    const a = simd.load(u8, src[p..]);
-                    const b = simd.load(u8, src[p + 64 ..]);
-                    if (!below(0x80, a | b)) break;
-                    store(u8, native, dst, o, a);
-                    store(u8, native, dst, o + 64, b);
-                    p += 128;
-                    o += 128;
-                }
-                continue;
-            }
-        }
-        const n = @min(rem, 64);
-        const v: V = if (rem >= 64) simd.load(u8, src[p..]) else simd.loadShort(u8, src[p..][0..n]);
-        const before: V = if (p == 0)
-            simd.prev(1, v, splat(V, 0))
-        else if (rem >= 64)
-            simd.load(u8, src[p - 1 ..])
-        else
-            simd.loadShort(u8, src[p - 1 ..][0..n]);
-        const live = simd.lowBits(u64, n);
-        const lead = simd.bitmask(v >= splat(V, 0xC0));
-        const cont = simd.bitmask(v & splat(V, 0xC0) == splat(V, 0x80));
-        if (checked) {
-            // Only C2 and C3 lead characters that fit Latin-1, each
-            // followed by exactly one continuation; a lead in the last byte
-            // of the input is cut short.
-            const latin = simd.bitmask(v & splat(V, 0xFE) == splat(V, 0xC2));
-            const after = simd.bitmask(before & splat(V, 0xFE) == splat(V, 0xC2));
-            const end = if (n == rem) @as(u64, 1) << @intCast(n - 1) else 0;
-            if (((lead & ~latin) | (cont ^ after) | (lead & end)) & live != 0) break;
-        }
-        const decoded = @select(
-            u8,
-            @as(@Vector(64, bool), @bitCast(cont)),
-            before << splat(V, 6) | (v & splat(V, 0x3F)),
-            v,
-        );
-        const keep = ~lead & live;
-        const count: usize = @popCount(keep);
-        if (count > dst.len - o) break;
-        // A whole store where the buffer has room: the bytes past `count`
-        // are rewritten by the next block or left past the result.
-        if (dst.len - o >= 64)
-            store(u8, native, dst, o, simd.compress(decoded, keep))
-        else
-            simd.storePartial(dst[o..], simd.compress(decoded, keep), count);
-        p += n;
-        o += count;
-    }
+    const done = while (src.len - p >= 64) {
+        if (!utf8ToLatin1Step(checked, true, src, dst, &p, &o)) break false;
+    } else p == src.len or utf8ToLatin1Step(checked, false, src, dst, &p, &o);
     // A block that stopped after a lead byte left its character to the
     // scalar code, which also finds any error from there.
-    if (p > 0 and src[p - 1] >= 0xC0) p -= 1;
+    if (!done and p > 0 and src[p - 1] >= 0xC0) p -= 1;
     return .{ p, o };
+}
+
+/// One step of UTF-8 to Latin-1 at `src[p.*..]`: a block of 64 bytes when
+/// `full`, else the rest of the input, in one load, masked. Advances `p`
+/// and `o` and returns true, or returns false where the scalar code must
+/// take over. A two-byte character decodes at its continuation byte, from
+/// the byte before it, which for byte 0 is the last of the block before: a
+/// load at `p - 1`, not a carry through the loop.
+inline fn utf8ToLatin1Step(
+    comptime checked: bool,
+    comptime full: bool,
+    src: []const u8,
+    dst: []u8,
+    p: *usize,
+    o: *usize,
+) bool {
+    const V = V64;
+    const rem = src.len - p.*;
+    const n = if (full) 64 else rem;
+    const v: V = if (full) simd.load(u8, src[p.*..]) else simd.loadShort(u8, src[p.*..]);
+    // ASCII, unless it follows a lead byte, which the checked form must
+    // report.
+    if (below(0x80, v) and !(checked and p.* > 0 and src[p.* - 1] >= 0xC0)) {
+        if (dst.len - o.* >= 64) {
+            store(u8, native, dst, o.*, v);
+        } else if (n <= dst.len - o.*) {
+            simd.storePartial(dst[o.*..], v, n);
+        } else return false;
+        p.* += n;
+        o.* += n;
+        // A long run of ASCII, two blocks a step.
+        if (full) while (src.len - p.* >= 128 and dst.len - o.* >= 128) {
+            const a = simd.load(u8, src[p.*..]);
+            const b = simd.load(u8, src[p.* + 64 ..]);
+            if (!below(0x80, a | b)) break;
+            store(u8, native, dst, o.*, a);
+            store(u8, native, dst, o.* + 64, b);
+            p.* += 128;
+            o.* += 128;
+        };
+        return true;
+    }
+    const before: V = if (p.* == 0)
+        simd.prev(1, v, splat(V, 0))
+    else if (full)
+        simd.load(u8, src[p.* - 1 ..])
+    else
+        simd.loadShort(u8, src[p.* - 1 ..][0..n]);
+    const live = if (full) ~@as(u64, 0) else simd.lowBits(u64, n);
+    // The bytes to keep: all but the leads, which are 0xC0 and up.
+    const keep = simd.bitmask(v < splat(V, 0xC0)) & live;
+    if (checked) {
+        // Only C2 and C3 lead characters that fit Latin-1, each followed
+        // by exactly one continuation; a lead in the last byte of the
+        // input is cut short.
+        const lead = ~keep & live;
+        const cont = simd.bitmask(v & splat(V, 0xC0) == splat(V, 0x80));
+        const latin = simd.bitmask(v & splat(V, 0xFE) == splat(V, 0xC2));
+        const after = simd.bitmask(before & splat(V, 0xFE) == splat(V, 0xC2));
+        const end = if (n == rem) @as(u64, 1) << @intCast(n - 1) else 0;
+        if (((lead & ~latin) | (cont ^ after) | (lead & end)) & live != 0) return false;
+    }
+    // A continuation byte after C2 is the character; after C3 it is 0x40
+    // more, which sets its bit 6. Valid input has no other lead, and
+    // nothing but a continuation after one.
+    const c3: @Vector(64, bool) = @bitCast(simd.bitmask(before == splat(V, 0xC3)));
+    const decoded = @select(u8, c3, v ^ splat(V, 0x40), v);
+    const count: usize = @popCount(keep);
+    if (count > dst.len - o.*) return false;
+    // A whole store where the buffer has room: the bytes past `count` are
+    // rewritten by the next block or left past the result.
+    if (dst.len - o.* >= 64)
+        store(u8, native, dst, o.*, simd.compress(decoded, keep))
+    else
+        simd.storePartial(dst[o.*..], simd.compress(decoded, keep), count);
+    p.* += n;
+    o.* += count;
+    return true;
 }
 
 fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
@@ -1207,6 +1245,16 @@ fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
                     store(u8, native, dst, o, block);
                     p += 64;
                     o += 64;
+                    // A run of ASCII in a loop of its own, with one bound,
+                    // as in `utf8ToUnits`.
+                    var k = @min(src.len - p, dst.len - o) / 64;
+                    while (k > 0) : (k -= 1) {
+                        const b = simd.load(u8, src[p..]);
+                        if (!below(0x80, b)) break;
+                        store(u8, native, dst, o, b);
+                        p += 64;
+                        o += 64;
+                    }
                     continue;
                 }
             }
@@ -1651,29 +1699,45 @@ inline fn latin1Encode512(x: @Vector(32, u8), n: usize) struct { V64, usize } {
     return .{ simd.compress(b, keep), @popCount(keep) };
 }
 
-/// UTF-8 for 64 Latin-1 bytes, as two packed halves and their lengths.
-/// The lead and continuation bytes are computed in byte lanes and
-/// interleaved by a two-source byte permute, not widened to 16-bit lanes,
-/// which takes fewer shuffle-port operations.
-inline fn latin1Encode512Block(v: V64) [2]struct { V64, usize } {
-    const V = V64;
-    const high = simd.bitmask(v >= splat(V, 0x80));
-    const lead = @select(u8, @as(@Vector(64, bool), @bitCast(high)), v >> splat(V, 6) | splat(V, 0xC0), v);
-    const cont = (v & splat(V, 0x3F)) | splat(V, 0x80);
-    var out: [2]struct { V, usize } = undefined;
-    inline for (0..2) |h| {
-        const pairs = @shuffle(u8, lead, cont, blk: {
-            var m: [64]i32 = undefined;
-            for (&m, 0..) |*x, j| x.* = if (j % 2 == 0) 32 * h + j / 2 else ~@as(i32, 32 * h + j / 2);
-            break :blk m;
-        });
-        // The upper half's bits by `pext`, which LLVM leaves in a general
-        // register, where a shift becomes `kshiftrq` on the shuffle port.
-        const half_high = if (h == 0) high else simd.pext(high, 0xFFFFFFFF00000000);
-        const keep = simd.pdep(half_high, 0xAAAAAAAAAAAAAAAA) | 0x5555555555555555;
-        out[h] = .{ simd.compress(pairs, keep), @popCount(keep) };
-    }
-    return out;
+/// UTF-8 for 64 Latin-1 bytes `v`, whose high bits are `high`, as two
+/// packed halves and their lengths, in simdutf's layout: one `vpermb` puts
+/// bytes `i` and `32 + i` in 16-bit lane `i`, and each half's lane becomes
+/// 0xC2 then the byte, 0x40 added to both where it is at least 0xC0; a
+/// byte below 0x80 drops the 0xC2 before it. Two `vpermt2b` interleaving
+/// lead and continuation bytes made the loop 0.81 of `icelake` on Latin-1
+/// text, this one 1.01.
+inline fn latin1Encode512Block(v: V64, high: u64) [2]struct { V64, usize } {
+    const W = @Vector(32, u16);
+    const idx = comptime blk: {
+        var m: [64]u8 = undefined;
+        for (0..32) |i| {
+            m[2 * i] = i;
+            m[2 * i + 1] = 32 + i;
+        }
+        break :blk m;
+    };
+    const w: W = @bitCast(simd.permute(v, idx));
+    const big = simd.bitmask(v >= splat(V64, 0xC0));
+    // `vpshldw`, where a shift and an or take two operations.
+    const x0 = @"llvm.fshl.v32i16"(w, splat(W, 0xC2C2), splat(W, 8));
+    const big0: @Vector(32, bool) = @bitCast(@as(u32, @truncate(big)));
+    const big1: @Vector(32, bool) = @bitCast(@as(u32, @truncate(big >> 32)));
+    const y0 = @select(u16, big0, x0 +% splat(W, 0xC001), x0);
+    const t = @select(u16, big1, splat(W, 0x40C3), splat(W, 0x00C2));
+    const y1 = (w & splat(W, 0xFF00)) ^ t;
+    // The halves' masks and lengths in general registers: the upper half's
+    // bits by `pext`, where LLVM would shift the mask register with
+    // `kshiftrq`, on the shuffle port, and its count as the whole count
+    // less the lower half's.
+    const lo: u32 = @truncate(high);
+    const hi = simd.pext(high, 0xFFFFFFFF00000000);
+    const n0: usize = @popCount(lo);
+    const n: usize = @popCount(high);
+    const odd = 0xAAAAAAAAAAAAAAAA;
+    return .{
+        .{ simd.compress(@as(V64, @bitCast(y0)), simd.pdep(lo, 0x5555555555555555) | odd), 32 + n0 },
+        .{ simd.compress(@as(V64, @bitCast(y1)), simd.pdep(hi, 0x5555555555555555) | odd), 32 + n - n0 },
+    };
 }
 
 /// Stores packed UTF-8 at `dst[o.*..]` and advances `o`; false, storing
@@ -2096,11 +2160,21 @@ fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16
     var steps: Steps = .{};
     if (use_simd) while (true) {
         while (src.len - p >= 16 and dst.len - o >= 16) {
-            // Text without surrogates, 32 units a step.
-            while (src.len - p >= 32 and dst.len - o >= 32) {
+            // Text without surrogates, 32 units a step, with one bound,
+            // widened from 8-unit loads, which fold into `vpmovzxwd`.
+            var k = @min(src.len - p, dst.len - o) / 32;
+            while (k > 0) : (k -= 1) {
                 const w = load16(e, 32, src, p);
                 if (@reduce(.Or, w & splat(@Vector(32, u16), 0xF800) == splat(@Vector(32, u16), 0xD800))) break;
-                store(u32, native, dst, o, w);
+                // Swapped units widen from the register they were swapped
+                // in, where swapping each load would add a shuffle.
+                if (e == native) {
+                    inline for (0..4) |q| {
+                        store(u32, native, dst, o + 8 * q, @as(@Vector(8, u16), src[p + 8 * q ..][0..8].*));
+                    }
+                } else {
+                    store(u32, native, dst, o, w);
+                }
                 p += 32;
                 o += 32;
             }
@@ -2312,15 +2386,16 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
                 p = src.len;
             }
         }
-        if (v512) while (p < src.len) {
-            const n = @min(src.len - p, 32);
-            if (n > dst.len - p) break;
-            var v = simd.loadShort(u16, src[p..][0..n]);
+        // The last 1-31 units in one masked step, returning directly.
+        if (v512 and p < src.len and src.len - p < 32 and src.len <= dst.len) {
+            const n = src.len - p;
+            var v = simd.loadShort(u16, src[p..]);
             if (e != native) v = @byteSwap(v);
-            if (checked and !below(0x100, v)) break;
-            simd.storePartial(dst[p..], @as(V64, @bitCast([2]@Vector(32, u8){ @truncate(v), @splat(0) })), n);
-            p += n;
-        };
+            if (!checked or below(0x100, v)) {
+                simd.storePartial(dst[p..], @as(V64, @bitCast([2]@Vector(32, u8){ @truncate(v), @splat(0) })), n);
+                return .ok(src.len);
+            }
+        }
     }
     if (checked) return tail(scalar.utf16ToLatin1(e, src[p..], dst[p..]), p, p);
     return .ok(p + scalar.validUtf16ToLatin1(e, src[p..], dst[p..]));
@@ -2365,6 +2440,18 @@ fn utf16SwapImpl(comptime e: Endian, comptime checked: bool, src: []const u16, d
     // is a low one, which also covers the first unit of the next block.
     if (use_simd and !(checked and src.len > 0 and swap16(e, src[0]) & 0xFC00 == 0xDC00)) {
         const n = simd.block_len / 2;
+        // Less than a block in one masked load and store. The lanes past
+        // the input load as zeros, which pair with nothing.
+        if (simd.has_masked and fast_shuffle and src.len < n and dst.len >= src.len) {
+            const raw = simd.loadShort(u16, src);
+            const swapped = @byteSwap(raw);
+            const v = if (e == native) raw else swapped;
+            if (!checked or !unpaired(v, std.simd.shiftElementsLeft(v, 1, 0))) {
+                if (src.len > 0) simd.storePartial(dst, swapped, src.len);
+                return .ok(src.len);
+            }
+        }
+        if (!checked and src.len >= 4 and dst.len >= src.len) return .ok(swapValid(e, src, dst));
         if (swapBlocks(n, e, checked, src, dst, &p)) return .ok(src.len);
         // Less than a block left: 8 units at a time, then 4.
         if (src.len - p < n and swapBlocks(8, e, checked, src, dst, &p)) return .ok(src.len);
@@ -2375,6 +2462,56 @@ fn utf16SwapImpl(comptime e: Endian, comptime checked: bool, src: []const u16, d
     if (checked and p > 0 and swap16(e, src[p - 1]) & 0xFC00 == 0xD800) p -= 1;
     if (checked) return tail(scalar.utf16ToUtf16Swapped(e, src[p..], dst[p..]), p, p);
     return .ok(p + scalar.validUtf16ToUtf16Swapped(src[p..], dst[p..]));
+}
+
+/// Swaps `src`, at least 4 units, into `dst`, at least as long: four
+/// blocks a step, then the last one to four with no loop, the last of them
+/// ending at the end and rewriting some units with the same values. A
+/// loop of one block a step is five instructions, which take one cycle
+/// where they lie in one 64-byte line of code and two where they straddle
+/// two, as the address of the caller's copy decides (4 KiB 0.58 of
+/// `icelake` in one build, level in another).
+fn swapValid(comptime e: Endian, src: []const u16, dst: []u16) usize {
+    const n = simd.block_len / 2;
+    const to: Endian = if (e == .little) .big else .little;
+    const len = src.len;
+    // Less than a block, at least 4 units: the first and last 16, 8, or 4.
+    if (len < n) {
+        inline for (.{ 16, 8, 4 }) |m| {
+            if (len >= m) {
+                const a = load16(e, m, src, 0);
+                const b = load16(e, m, src, len - m);
+                store(u16, to, dst, 0, a);
+                store(u16, to, dst, len - m, b);
+                return len;
+            }
+        }
+        unreachable;
+    }
+    var p: usize = 0;
+    if (len > 4 * n) {
+        store(u16, to, dst, 0, load16(e, n, src, 0));
+        p = firstStep(u16, dst, len, n);
+        while (len - p > 4 * n) {
+            inline for (0..4) |k| store(u16, to, dst, p + k * n, load16(e, n, src, p + k * n));
+            p += 4 * n;
+        }
+    }
+    const rem = len - p;
+    inline for (1..4) |k| {
+        if (rem > k * n) store(u16, to, dst, p + (k - 1) * n, load16(e, n, src, p + (k - 1) * n));
+    }
+    store(u16, to, dst, len - n, load16(e, n, src, len - n));
+    return len;
+}
+
+/// Whether some unit of `v` is a high surrogate where the unit after it,
+/// in `next`, is not a low one, or the reverse.
+inline fn unpaired(v: anytype, next: @TypeOf(v)) bool {
+    const U = @TypeOf(v);
+    const high = v & splat(U, 0xFC00) == splat(U, 0xD800);
+    const low_next = next & splat(U, 0xFC00) == splat(U, 0xDC00);
+    return @reduce(.Or, high != low_next);
 }
 
 /// Swaps `m`-unit blocks from `p.*` on, advancing it, and returns whether
@@ -2390,13 +2527,6 @@ inline fn swapBlocks(
 ) bool {
     const U = @Vector(m, u16);
     const to: Endian = if (e == .little) .big else .little;
-    const unpaired = struct {
-        fn f(v: U, next: U) bool {
-            const high = v & splat(U, 0xFC00) == splat(U, 0xD800);
-            const low_next = next & splat(U, 0xFC00) == splat(U, 0xDC00);
-            return @reduce(.Or, high != low_next);
-        }
-    }.f;
     // One bound for both: a unit past each block when checked.
     const lim = @min(if (checked) src.len -| 1 else src.len, dst.len);
     var step = if (m == simd.block_len / 2) firstStep(u16, dst, src.len, m) else m;
@@ -2405,11 +2535,25 @@ inline fn swapBlocks(
         // Pairs checked only where the block or the unit after it holds a
         // surrogate, where the check takes a second load and four
         // operations a vector.
-        if (checked and (@reduce(.Or, v & splat(U, 0xF800) == splat(U, 0xD800)) or
-            swap16(e, src[p.* + m]) & 0xFC00 == 0xDC00) and
-            unpaired(v, load16(e, m, src, p.* + 1))) return false;
+        const surrogates = checked and (@reduce(.Or, v & splat(U, 0xF800) == splat(U, 0xD800)) or
+            swap16(e, src[p.* + m]) & 0xFC00 == 0xDC00);
+        if (surrogates and unpaired(v, load16(e, m, src, p.* + 1))) return false;
         store(u16, to, dst, p.*, v);
         p.* += step;
+        // After a block without surrogates, two blocks a step while neither
+        // holds one: one test for both, where a block a step took ten
+        // instructions (4 KiB 1.41x). Not after one with: in text of
+        // surrogate pairs every try fails (emoji 0.63x).
+        if (checked and m == simd.block_len / 2 and !surrogates) while (lim - p.* >= 2 * m) {
+            const a = load16(e, m, src, p.*);
+            const b = load16(e, m, src, p.* + m);
+            const s = splat(U, 0xD800);
+            if (@reduce(.Or, (a & splat(U, 0xF800) == s) | (b & splat(U, 0xF800) == s)) or
+                swap16(e, src[p.* + 2 * m]) & 0xFC00 == 0xDC00) break;
+            store(u16, to, dst, p.*, a);
+            store(u16, to, dst, p.* + m, b);
+            p.* += 2 * m;
+        };
     }
     if (p.* == src.len) return true;
     // The rest as the block that ends with the input, rewriting some units
@@ -2425,21 +2569,47 @@ inline fn swapBlocks(
 
 // Latin-1 to UTF-8, UTF-16, and UTF-32.
 
+/// Up to 64 bytes, in one load and two steps of 32, before the loop loads
+/// its constants: set up first, they cost every short call 2-4 ns (16 bytes
+/// 1.25x, 64 bytes of Latin-1 1.19x the loop's 32-byte steps).
+inline fn latin1ToUtf8Short(src: []const u8, dst: []u8) struct { usize, usize } {
+    var o: usize = 0;
+    if (src.len == 0) return .{ 0, 0 };
+    const a: [64]u8 = simd.loadShort(u8, src);
+    const n = @min(src.len, 32);
+    if (!put512(dst, &o, latin1Encode512(a[0..32].*, n))) return .{ 0, 0 };
+    if (src.len > n and !put512(dst, &o, latin1Encode512(a[32..64].*, src.len - n))) return .{ n, o };
+    return .{ src.len, o };
+}
+
 fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
     var p: usize = 0;
-    var o: usize = 0;
-    // Up to 32 bytes in one step, before the loop loads its constants:
-    // set up first, they cost every short call 2-4 ns.
-    if (src.len <= 32) {
-        const a: [64]u8 = simd.loadShort(u8, src);
-        if (src.len > 0 and put512(dst, &o, latin1Encode512(a[0..32].*, src.len))) p = src.len;
-        return .{ p, o };
+    // ASCII blocks first, in loops of their own: before the main loop,
+    // which loads a dozen constants first (256 bytes 1.2x). Two blocks a
+    // step, then one.
+    while (src.len - p >= 128 and dst.len - p >= 128) {
+        const a = simd.load(u8, src[p..]);
+        const b = simd.load(u8, src[p + 64 ..]);
+        if (!below(0x80, a | b)) break;
+        store(u8, native, dst, p, a);
+        store(u8, native, dst, p + 64, b);
+        p += 128;
     }
+    while (src.len - p >= 64 and dst.len - p >= 64) {
+        const v = simd.load(u8, src[p..]);
+        if (!below(0x80, v)) break;
+        store(u8, native, dst, p, v);
+        p += 64;
+    }
+    var o: usize = p;
     while (p < src.len) {
         const rem = src.len - p;
         if (rem >= 64) {
             const v = simd.load(u8, src[p..]);
-            if (below(0x80, v) and dst.len - o >= 64) {
+            // The high bits by `vpmovb2m` and tested in a general register,
+            // where `vptestmb` would take the shuffle port.
+            var high = simd.bitmask(v >= splat(V64, 0x80));
+            if (high == 0 and dst.len - o >= 64) {
                 store(u8, native, dst, o, v);
                 p += 64;
                 o += 64;
@@ -2462,19 +2632,19 @@ fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
             // fit without checking the room again: the loop is short enough
             // that its branches and bookkeeping showed.
             if (dst.len - o < 128) break;
-            var w = v;
+            // Each step loads and tests its own block, the first again, so
+            // its high bits stay in a mask register.
             var k = @min((src.len - p) / 64, (dst.len - o) / 128);
-            while (true) {
-                inline for (latin1Encode512Block(w)) |half| {
+            while (k > 0) : (k -= 1) {
+                const w = simd.load(u8, src[p..]);
+                high = simd.bitmask(w >= splat(V64, 0x80));
+                if (high == 0) break;
+                inline for (latin1Encode512Block(w, high)) |half| {
                     const bytes, const n = half;
                     store(u8, native, dst, o, bytes);
                     o += n;
                 }
                 p += 64;
-                k -= 1;
-                if (k == 0) break;
-                w = simd.load(u8, src[p..]);
-                if (below(0x80, w)) break;
             }
             continue;
         }
@@ -2497,7 +2667,7 @@ fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
         }
     }.f;
     if (v512) {
-        const p, const o = latin1ToUtf8Avx512(src, dst);
+        const p, const o = if (src.len <= 64) latin1ToUtf8Short(src, dst) else latin1ToUtf8Avx512(src, dst);
         return tail(run(src[p..], dst[o..]), p, o);
     }
     var p: usize = 0;
@@ -2562,17 +2732,25 @@ fn latin1ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, s
         const lim = @min(src.len, dst.len);
         var step = firstStep(T, dst, src.len, 64);
         while (lim - p >= 64) : (step = 64) {
-            store(T, e, dst, p, simd.load(u8, src[p..]));
+            // UTF-32 keeps one 64-byte load: 16-byte loads cost SSE 15% at
+            // 4 KiB.
+            if (v512 or T == u32)
+                store(T, e, dst, p, simd.load(u8, src[p..]))
+            else
+                widenAscii(T, e, src[p..], dst[p..]);
             p += step;
         }
         while (lim - p >= 16) {
-            store(T, e, dst, p, @as(V16, src[p..][0..16].*));
+            store(T, e, dst, p, if (T == u32) @as(V16, src[p..][0..16].*) else widenLoad(src[p..]));
             p += 16;
         }
         if (v512 and p < src.len and src.len - p <= dst.len - p) {
             storeWidened(T, e, dst, p, simd.loadShort(u8, src[p..][0 .. src.len - p]), src.len - p);
             p = src.len;
         }
+        // Done: the checked form's result built here, not after an empty
+        // scalar pass (16 bytes 0.7 ns slower than the valid form).
+        if (p == src.len) return .ok(p);
     }
     if (T == u16) {
         if (checked) return tail(scalar.latin1ToUtf16(e, src[p..], dst[p..]), p, p);
@@ -2942,5 +3120,68 @@ fn errorCases() !void {
             b.* = bp[0..p.len];
         }
         try expectErrorsMatch(.utf16be, &text, &be);
+    }
+}
+
+test "inputs past a million units match the scalar reference" {
+    try dispatch.forEachLevel(largeCases, .{});
+}
+
+/// Long runs leave one loop for millions of iterations, so counters and
+/// offsets that overflow or drift late show only here: valid text of every
+/// mix that converts, and one error near the end.
+fn largeCases() !void {
+    @setEvalBranchQuota(10_000);
+    const n = 32 * 21845 + 35;
+    const a = testing.allocator;
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const r = prng.random();
+    const cps = try a.alloc(u32, n);
+    defer a.free(cps);
+    const bufs = .{
+        try a.alloc(u8, 4 * n), try a.alloc(u16, 2 * n), try a.alloc(u16, 2 * n),
+        try a.alloc(u32, n),    try a.alloc(u8, n),
+    };
+    defer inline for (bufs) |b| a.free(b);
+    for ([_]Mix{ .ascii, .latin1, .mixed }) |mix| {
+        for (cps) |*cp| cp.* = randomCodePoint(r, mix);
+        const n8 = scalar.validUtf32ToUtf8(cps, bufs[0]);
+        const n16 = scalar.validUtf32ToUtf16(.little, cps, bufs[1]);
+        _ = scalar.validUtf32ToUtf16(.big, cps, bufs[2]);
+        @memcpy(bufs[3], cps);
+        const latin1 = scalar.utf32ToLatin1(cps, bufs[4]).err == .none;
+        const texts = .{ bufs[0][0..n8], bufs[1][0..n16], bufs[2][0..n16], bufs[3], bufs[4] };
+        inline for (conversions) |pair| {
+            const from, const to = pair;
+            const src = texts[@intFromEnum(from)];
+            if ((from != .latin1 and to != .latin1) or latin1) {
+                const T = to.Unit();
+                const size = needed(from, to, src);
+                const want = try a.alloc(T, size);
+                defer a.free(want);
+                const got = try a.alloc(T, size);
+                defer a.free(got);
+                inline for (.{ true, false }) |checked| {
+                    const w = refConvert(from, to, checked, src, want);
+                    try testing.expectEqual(w, simdConvert(from, to, checked, src, got));
+                    try testing.expectEqualSlices(T, want[0..w.count], got[0..w.count]);
+                }
+                // An error near the end, for the formats that have one.
+                if (from != .latin1) {
+                    const at = src.len - 1 - r.uintLessThan(usize, 100);
+                    const old = src[at];
+                    src[at] = switch (from) {
+                        .utf8 => 0xFF,
+                        .utf16le => 0xDC00,
+                        .utf16be => 0x00DC,
+                        .utf32 => 0x110000,
+                        .latin1 => unreachable,
+                    };
+                    defer src[at] = old;
+                    const w = refConvert(from, to, true, src, want);
+                    try testing.expectEqual(w, simdConvert(from, to, true, src, got));
+                }
+            }
+        }
     }
 }
