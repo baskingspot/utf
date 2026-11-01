@@ -2701,79 +2701,86 @@ inline fn latin1ToUtf8Whole(src: []const u8, dst: []u8) ?usize {
     return k + m;
 }
 
-fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
+/// Inline: shared by the checked and valid forms, LLVM kept it out of line,
+/// so that a call saved registers twice and returned through memory (256
+/// bytes of Latin-1 1.13x inline).
+inline fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
     var p: usize = 0;
     // ASCII blocks first, in loops of their own: before the main loop,
     // which loads a dozen constants first (256 bytes 1.2x). Two blocks a
-    // step, then one.
-    while (src.len - p >= 128 and dst.len - p >= 128) {
-        const a = simd.load(u8, src[p..]);
-        const b = simd.load(u8, src[p + 64 ..]);
-        if (!below(0x80, a | b)) break;
-        store(u8, native, dst, p, a);
-        store(u8, native, dst, p + 64, b);
-        p += 128;
-    }
-    while (src.len - p >= 64 and dst.len - p >= 64) {
-        const v = simd.load(u8, src[p..]);
-        if (!below(0x80, v)) break;
-        store(u8, native, dst, p, v);
-        p += 64;
+    // step, then one. Only after an ASCII first block: Latin-1 text tested
+    // its first block in both loops before the main loop tested it again.
+    if (src.len >= 64 and dst.len >= 64 and below(0x80, simd.load(u8, src))) {
+        while (src.len - p >= 128 and dst.len - p >= 128) {
+            const a = simd.load(u8, src[p..]);
+            const b = simd.load(u8, src[p + 64 ..]);
+            if (!below(0x80, a | b)) break;
+            store(u8, native, dst, p, a);
+            store(u8, native, dst, p + 64, b);
+            p += 128;
+        }
+        while (src.len - p >= 64 and dst.len - p >= 64) {
+            const v = simd.load(u8, src[p..]);
+            if (!below(0x80, v)) break;
+            store(u8, native, dst, p, v);
+            p += 64;
+        }
     }
     var o: usize = p;
-    while (p < src.len) {
+    outer: while (p < src.len) {
         const rem = src.len - p;
-        if (rem >= 64) {
-            const v = simd.load(u8, src[p..]);
-            // The high bits by `vpmovb2m` and tested in a general register,
-            // where `vptestmb` would take the shuffle port.
-            var high = simd.bitmask(v >= splat(V64, 0x80));
-            if (high == 0 and dst.len - o >= 64) {
-                store(u8, native, dst, o, v);
-                p += 64;
-                o += 64;
-                // A long run of ASCII, two blocks a step.
-                while (src.len - p >= 128 and dst.len - o >= 128) {
-                    const a = simd.load(u8, src[p..]);
-                    const b = simd.load(u8, src[p + 64 ..]);
-                    if (!below(0x80, a | b)) break;
-                    store(u8, native, dst, o, a);
-                    store(u8, native, dst, o + 64, b);
-                    p += 128;
-                    o += 128;
-                }
-                continue;
-            }
-            // Each half to two-byte UTF-8, without branching on whether a
-            // half is ASCII: in Latin-1 text that branch mispredicts. Whole
-            // stores, which the next half rewrites past its bytes. Then the
-            // blocks after it while they are not ASCII, as many as surely
-            // fit without checking the room again: the loop is short enough
-            // that its branches and bookkeeping showed.
-            if (dst.len - o < 128) break;
-            // Each step loads and tests its own block, the first again, so
-            // its high bits stay in a mask register.
-            var k = @min((src.len - p) / 64, (dst.len - o) / 128);
-            while (k > 0) : (k -= 1) {
-                const w = simd.load(u8, src[p..]);
-                high = simd.bitmask(w >= splat(V64, 0x80));
-                if (high == 0) break;
-                inline for (latin1Encode512Block(w, high)) |half| {
-                    const bytes, const n = half;
-                    store(u8, native, dst, o, bytes);
-                    o += n;
-                }
-                p += 64;
+        if (rem < 64) {
+            const n = @min(rem, 32);
+            const v: @Vector(32, u8) = if (rem >= 32) src[p..][0..32].* else blk: {
+                const a: [64]u8 = simd.loadShort(u8, src[p..][0..n]);
+                break :blk a[0..32].*;
+            };
+            if (!put512(dst, &o, latin1Encode512(v, n))) break;
+            p += n;
+            continue;
+        }
+        var v = simd.load(u8, src[p..]);
+        // The high bits by `vpmovb2m` and tested in a general register,
+        // where `vptestmb` would take the shuffle port.
+        var high = simd.bitmask(v >= splat(V64, 0x80));
+        if (high == 0 and dst.len - o >= 64) {
+            store(u8, native, dst, o, v);
+            p += 64;
+            o += 64;
+            // A long run of ASCII, two blocks a step.
+            while (src.len - p >= 128 and dst.len - o >= 128) {
+                const a = simd.load(u8, src[p..]);
+                const b = simd.load(u8, src[p + 64 ..]);
+                if (!below(0x80, a | b)) break;
+                store(u8, native, dst, o, a);
+                store(u8, native, dst, o + 64, b);
+                p += 128;
+                o += 128;
             }
             continue;
         }
-        const n = @min(rem, 32);
-        const v: @Vector(32, u8) = if (rem >= 32) src[p..][0..32].* else blk: {
-            const a: [64]u8 = simd.loadShort(u8, src[p..][0..n]);
-            break :blk a[0..32].*;
-        };
-        if (!put512(dst, &o, latin1Encode512(v, n))) break;
-        p += n;
+        // Each half to two-byte UTF-8, without branching on whether a
+        // half is ASCII: in Latin-1 text that branch mispredicts. Whole
+        // stores, which the next half rewrites past its bytes. Then the
+        // blocks after it while they are not ASCII, as many as surely
+        // fit without checking the room again: the loop is short enough
+        // that its branches and bookkeeping showed. Each block loaded and
+        // tested once: the first came in tested.
+        if (dst.len - o < 128) break;
+        var k = @min((src.len - p) / 64, (dst.len - o) / 128);
+        while (true) {
+            inline for (latin1Encode512Block(v, high)) |half| {
+                const bytes, const n = half;
+                store(u8, native, dst, o, bytes);
+                o += n;
+            }
+            p += 64;
+            k -= 1;
+            if (k == 0) continue :outer;
+            v = simd.load(u8, src[p..]);
+            high = simd.bitmask(v >= splat(V64, 0x80));
+            if (high == 0) continue :outer;
+        }
     }
     return .{ p, o };
 }
