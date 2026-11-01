@@ -393,8 +393,8 @@ Wave 4:
 
 - **Transcoding**: `src/convert.zig`
   ([convert-wave4-20261031.md](results/convert-wave4-20261031.md)). Every
-  conversion op at or above simdutf at every ISA by its geomean (lowest
-  `Latin1ToUtf8` native, 0.92 to 0.99); rows under simdutf outside the noise
+  conversion op but native `Latin1ToUtf8` (0.92 to 0.99) at or above
+  simdutf at every ISA by its geomean; rows under simdutf outside the noise
   55 to 35 native, 26 to 23 AVX2, 35 to 24 SSE. The valid byte swap's gap
   was a five-instruction loop straddling a 64-byte code line in some links
   (1 against 1.6 cycles a block); it now swaps four blocks a step and ends
