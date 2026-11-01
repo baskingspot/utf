@@ -96,10 +96,11 @@ standard, not from simdutf's source.
      never through a shared helper, and only non-generic functions can be
      wired (wire the public wrappers of a generic one).
    - Inside kernels, call other kernels directly (`barKernel`), not the
-     wired public function, which would check the tier again.
-   - Arguments: slices, pointers, integers, enums, bools, and packed structs
-     travel as words, other types (such as `base64.DecodeOptions`) by
-     pointer, up to six words (a slice is two). Results: `void`, `bool`,
+     wired public function, which would make another indirect call.
+   - Arguments: slices, pointers, integers, enums, bools, packed structs,
+     and structs of those whose fields fit in one word (such as
+     `base64.DecodeOptions`) travel as words, other types by pointer, up to
+     six words (a slice is two). Results: `void`, `bool`,
      `usize`, enums, and structs of up to two scalar fields, such as `Result`.
      Anything else is a compile error in `dispatch.zig`; ask its owner.
    - Comptime choices inside the kernels keep working unchanged: each object
@@ -151,6 +152,12 @@ standard, not from simdutf's source.
    vs 8.8 GB/s), and 10–12% behind it only on non-ASCII UTF-8 at 64 bytes.
    It costs 10–25% over the valid form on non-ASCII UTF-8 and about 2× on
    UTF-32 to UTF-16, whose valid loop is only a narrowing store.
+5. **ReleaseSafe.** **Decided by the owner: ReleaseSafe keeps its safety
+   checks.** No `@setRuntimeSafety(false)`, and no other way around the
+   checks, to win rows. A safe build ran 0.97 of simdutf on
+   `d2d515e` ([baseline-final-20261031.md](results/baseline-final-20261031.md));
+   what the checks cost there is the price of the mode, and a speedup counts
+   only where it keeps every check.
 
 ## Order of work
 
@@ -411,3 +418,30 @@ Wave 4:
   Latin-1 to UTF-8 on Latin-1 text at 64-256 B (0.82-0.93, per-call
   constants), AVX2 UTF-16BE to UTF-32 at 4 KiB (0.89), and rows whose
   instructions match `old`'s but move with the link.
+
+- **Per-call overhead**: `src/dispatch.zig`, `src/simd.zig`, and the
+  short and entry paths of `validate.zig`, `length.zig`, and `base64.zig`
+  ([calls-20261031.md](results/calls-20261031.md)). Each wired function
+  calls through a slot of its own, a pointer to the best tier's export
+  that starts at a cold `resolve` (one load and an indirect call; the
+  cached tier, compare, jump table, and `Init` are gone): dispatch costs a
+  median 0.87 ns a call, from 1.51, where simdutf's costs 2.57. Structs
+  whose scalar fields fit in a word travel as one; tier objects omit the
+  frame pointer. `dispatch.exported` says a build is a tier's object, where
+  a kernel's long path goes out of line so its loops' saved registers do
+  not cost short calls, and `dispatch.pack`/`unpack` carry a `Result` back
+  from such a part in registers (returned whole it went through memory and
+  stalled, 7 ns). UTF-8 validation uses them; `base64.decode` and most
+  AVX-512 conversions still save 3-6 registers on every call. Short paths:
+  AVX-512 length functions count up to a block in one masked load, AVX-512
+  encode tails are one masked load, `utf32WithErrors` tests up to four
+  blocks at once, `asciiWithErrors` takes 64 bytes in one load, and base64
+  decode's last block of up to 32 characters is classified and packed from
+  half the block on AVX2, SSE, and NEON. Measured and dropped: keeping
+  `loadShort`'s and `storePartial`'s page-end constants out of loop
+  preheaders (neutral on transcoding's short rows). utf ÷ simdutf by operation, `origin/main` to
+  here: native 1.13 to 1.13 (16-64 B 1.15 to 1.18), dispatched 1.07 to 1.10
+  (16-64 B 0.96 to 1.04), AVX2 1.52 to 1.53, SSE 16-64 B 1.43 to 1.48.
+  Left: native base64 decode at 16-256 B 0.92-0.94 of `origin/main`
+  (unexplained, layout suspected), 16-byte AVX-512 encode (0.88 of
+  `icelake`), and std's inline UTF-8 loop at baseline (0.72-0.85).
