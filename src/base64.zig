@@ -12,6 +12,7 @@
 //! returns.
 
 const std = @import("std");
+const compat = @import("compat.zig");
 const builtin = @import("builtin");
 const testing = std.testing;
 const simd = @import("simd.zig");
@@ -441,11 +442,17 @@ inline fn decodeLines(
 const Words = @Int(.unsigned, 2 * @bitSizeOf(usize));
 
 inline fn toWords(r: Result) Words {
-    return @as(Words, @intFromEnum(r.err)) << @bitSizeOf(usize) | r.count;
+    return @as(Words, compat.enumToInt(r.err)) << @bitSizeOf(usize) | r.count;
 }
 
 inline fn fromWords(w: Words) Result {
-    return .{ .err = @enumFromInt(@as(u8, @truncate(w >> @bitSizeOf(usize)))), .count = @truncate(w) };
+    return .{
+        .err = compat.enumFromInt(
+            @TypeOf(@as(Result, undefined).err),
+            @as(u8, @truncate(w >> @bitSizeOf(usize))),
+        ),
+        .count = @truncate(w),
+    };
 }
 
 /// How far past a line's start `decodeLines` reads: the line, the four
@@ -681,13 +688,25 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         const clean: CleanTables = blk: {
             const t: CleanTables = switch (alphabet) {
                 .standard => .{
-                    .lo = .{ 0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf9, 0xf1, 0xa2, 0xa1, 0xa1, 0xa0, 0xa4 },
-                    .hi = .{ 0x00, 0x01, 0x00, 0x00, 0x01, 0x06, 0x08, 0x08, 0x10, 0x20, 0x20, 0x10, 0x40, 0x80, 0x80, 0x40 },
+                    .lo = .{
+                        0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8,
+                        0xf8, 0xf9, 0xf1, 0xa2, 0xa1, 0xa1, 0xa0, 0xa4,
+                    },
+                    .hi = .{
+                        0x00, 0x01, 0x00, 0x00, 0x01, 0x06, 0x08, 0x08,
+                        0x10, 0x20, 0x20, 0x10, 0x40, 0x80, 0x80, 0x40,
+                    },
                     .roll = .{ 0xb9, 0xb9, 0xbf, 0xbf, 0x04, 0x10, 0x13, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                 },
                 .url => .{
-                    .lo = .{ 0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf9, 0xf1, 0xa0, 0xa1, 0xa5, 0xa0, 0xa2 },
-                    .hi = .{ 0x00, 0x01, 0x00, 0x00, 0x01, 0x04, 0x08, 0x08, 0x10, 0x20, 0x20, 0x12, 0x40, 0x80, 0x80, 0x40 },
+                    .lo = .{
+                        0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8,
+                        0xf8, 0xf9, 0xf1, 0xa0, 0xa1, 0xa5, 0xa0, 0xa2,
+                    },
+                    .hi = .{
+                        0x00, 0x01, 0x00, 0x00, 0x01, 0x04, 0x08, 0x08,
+                        0x10, 0x20, 0x20, 0x12, 0x40, 0x80, 0x80, 0x40,
+                    },
                     .roll = .{ 0xb9, 0xb9, 0xbf, 0xbf, 0x04, 0x11, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
                 },
             };
@@ -696,7 +715,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             @setEvalBranchQuota(20000);
             for (0..256) |c| {
                 const class = if (c >> 3 < 16) t.lo[c & 15] & t.hi[c >> 3] else 0;
-                const v = std.mem.indexOfScalar(u8, chars, c);
+                const v = std.mem.findScalar(u8, chars, c);
                 if ((class > 1) != (v != null)) @compileError("bad clean class");
                 if (v) |value| {
                     if (@as(u8, c) +% t.roll[@clz(class)] != value) @compileError("bad clean roll");
@@ -895,7 +914,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const ge26 = @as(I, @bitCast(idx)) > @as(I, @splat(25));
             const above: V = @bitCast(@select(i8, ge26, @as(I, @splat(-1)), @as(I, @splat(0))));
             const reduced = (idx -| splat(51)) -% above;
-            const table: [16]u8 = .{ 'A', o_lower } ++ .{o_digit} ** 10 ++ .{ o_62, o_63, 0, 0 };
+            const table: [16]u8 = .{ 'A', o_lower } ++ comptime compat.repeat(u8, o_digit, 10) ++ .{ o_62, o_63, 0, 0 };
             return simd.lookup16(table, reduced);
         }
 

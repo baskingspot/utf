@@ -19,14 +19,22 @@ The repository lives at `baskingspot/utf` on GitHub, where the workflows under
 
 ## Environment
 
-Zig 0.16 only. The flake is the tool contract, from `baskingspot/nix`:
-`nix develop` provides Zig, `ziglint`, the docs tools, and the base tools, and
-nothing comes from the system PATH. The justfile is the command interface:
-`just test`, `just lint`, `just ci`. Run `just fmt` before you commit.
+Zig 0.16 and 0.17. The flake is the tool contract, from `baskingspot/nix`:
+`nix develop` is the current stable, Zig 0.17, and `nix develop .#zig-old` is
+Zig 0.16. Both provide Zig, `ziglint-0-16`, the docs tools, and the base tools,
+and nothing comes from the system PATH. The justfile is the command interface:
+`just test`, `just check`, `just lint`, `just ci`. Run `just fmt` before you
+commit. CI runs `just ci` on the default shell and `just check` on `zig-old`.
+
+Version shims live in `src/compat.zig`. Do not write `@intFromEnum`,
+`@enumFromInt`, or `**` outside it: 0.17's `zig fmt` migrates the first two,
+and 0.17 removed the third. The `// zig fmt: off` block keeps a 0.17 format
+from breaking the 0.16 build. Lint with `ziglint-0-16`, which targets the 0.16
+std, so 0.17-only deprecations do not fire while 0.16 is supported.
 
 Tests run under testingx, the org's test runner, a lazy dependency. Every
-`addTest` carries `.test_runner = .{ .path = dep.path("src/runner.zig"), .mode = .simple }`
-and a `--seed` argument.
+`addTest` carries `.test_runner = .{ .path = dep.path("src/runner.zig"), .mode = .simple }`;
+the runner picks and prints its own seed.
 
 The guide's examples in `docs/examples/` compile against the public module and
 run with `just test`. A snippet in `docs/content/_index.md` that does not build

@@ -39,7 +39,7 @@ test:
 [doc("Lint Zig, Go, Nix, Markdown, the workflows, and this justfile: ziglint, zig fmt, gofmt, nix fmt, oxfmt, actionlint, zizmor, and just --fmt")]
 [group("lint")]
 lint:
-    ziglint
+    ziglint-0-16
     zig fmt --check src docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/zig bench/oracle
     test -z "$(gofmt -l bench/go)"
     nix fmt -- --ci
@@ -57,9 +57,13 @@ fmt:
     oxfmt {{ markdown }}
     just --fmt
 
-[doc("Everything CI runs: the tests, lint, and the site build")]
+[doc("The per-version gate: the unit tests and the guide's examples")]
 [group("ci")]
-ci: test lint doc
+check: test
+
+[doc("Everything CI runs: the gate, lint, and the docs build")]
+[group("ci")]
+ci: check lint doc
 
 [doc("Build the site into zig-out/site/utf/: the guide (Zola, from docs/) and the API reference (docgen JSON, rendered by the theme's api.html) under api/. The router in baskingspot/site serves /utf/... from it")]
 [group("docs")]

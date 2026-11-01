@@ -27,6 +27,7 @@
 //! built at comptime.
 
 const std = @import("std");
+const compat = @import("compat.zig");
 const builtin = @import("builtin");
 const Endian = std.builtin.Endian;
 const result = @import("result.zig");
@@ -1212,7 +1213,8 @@ inline fn utf8ThreeEight(src: []const u8) struct { @Vector(8, u16), @Vector(8, u
     // aaaabbbb bbcccccc above the last byte's six, which the lane's swapped
     // bytes hold low. What the shifts push past bit 15 is gone.
     const hi = sli(mm, ll, 6);
-    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 }));
+    const swap = [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
+    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, swap));
     return .{ sli(last, hi, 6), ll };
 }
 
@@ -1291,12 +1293,22 @@ inline fn utf8AsciiThree(
 /// Stores the four three-byte characters in the first 12 bytes of `in` at
 /// `dst[o..]`, as `utf8ThreeEight` decodes eight, as UTF-16 in byte order
 /// `e` or as UTF-32.
-inline fn utf8FourThree(comptime T: type, comptime e: Endian, in: V16, dst: []T, o: usize) struct { @Vector(8, u16), @Vector(8, u16) } {
+inline fn utf8FourThree(
+    comptime T: type,
+    comptime e: Endian,
+    in: V16,
+    dst: []T,
+    o: usize,
+) struct {
+    @Vector(8, u16),
+    @Vector(8, u16),
+} {
     const U = @Vector(8, u16);
     const sli = @"llvm.aarch64.neon.vsli.v8i16";
     const ll: U = @bitCast(simd.lookup16(in, @as(V16, .{ 0, 2, 3, 5, 6, 8, 9, 11, 0, 2, 3, 5, 6, 8, 9, 11 })));
     const mm: U = @bitCast(simd.lookup16(in, @as(V16, .{ 1, 1, 4, 4, 7, 7, 10, 10, 1, 1, 4, 4, 7, 7, 10, 10 })));
-    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 }));
+    const swap = [16]i32{ 1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14 };
+    const last: U = @bitCast(@shuffle(u8, @as(V16, @bitCast(ll)), undefined, swap));
     const cp = sli(last, sli(mm, ll, 6), 6);
     store(T, e, dst, o, @shuffle(u16, cp, undefined, [4]i32{ 0, 1, 2, 3 }));
     return .{ cp, ll };
@@ -1306,7 +1318,15 @@ inline fn utf8FourThree(comptime T: type, comptime e: Endian, in: V16, dst: []T,
 /// count, and where `checked`, the lanes of those that are not valid: a
 /// lead that is not 1110____, an overlong form, or a surrogate. Groups
 /// that would start past byte 64 read from it instead.
-inline fn utf8ThreeRun(comptime checked: bool, src: []const u8, at: usize, t: usize) struct { cps: [3]@Vector(8, u16), bad: @Vector(8, u16) } {
+inline fn utf8ThreeRun(
+    comptime checked: bool,
+    src: []const u8,
+    at: usize,
+    t: usize,
+) struct {
+    cps: [3]@Vector(8, u16),
+    bad: @Vector(8, u16),
+} {
     const U = @Vector(8, u16);
     var cps: [3]U = undefined;
     var bad: U = @splat(0);
@@ -1367,7 +1387,16 @@ inline fn utf8DecodeFour(comptime T: type, comptime e: Endian, block: @Vector(64
 /// The 64-byte blocks of `src`, on Apple cores, from the start until fewer
 /// than 64 bytes or units are left or a block that is not valid UTF-8: how
 /// far it got in each.
-inline fn utf8BlocksApple(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) struct { usize, usize } {
+inline fn utf8BlocksApple(
+    comptime T: type,
+    comptime e: Endian,
+    comptime checked: bool,
+    src: []const u8,
+    dst: []T,
+) struct {
+    usize,
+    usize,
+} {
     var p: usize = 0;
     var o: usize = 0;
     while (src.len - p >= 64 and dst.len - o >= 64) {
@@ -2179,7 +2208,7 @@ inline fn utf8Encode512(cp: @Vector(16, u32), take: u16) struct { V64, usize } {
         const ctrl: [8]u8 = .{ 18, 12, 6, 0, 50, 44, 38, 32 };
         // Each table as its two halves, the operands of `vpermi2d`.
         const halves = [2][2]D{ .{ mask[0..16].*, mask[16..].* }, .{ tag[0..16].*, tag[16..].* } };
-        break :blk .{ halves[0], halves[1], ctrl ** 8 };
+        break :blk .{ halves[0], halves[1], compat.repeatSlice(&ctrl, 8) };
     };
     const shifted: D = @bitCast(simd.multishift(@as(V64, tables[2]), @bitCast(cp)));
     const lz: D = @clz(cp);
@@ -3777,7 +3806,7 @@ fn largeCases() !void {
         const texts = .{ bufs[0][0..n8], bufs[1][0..n16], bufs[2][0..n16], bufs[3], bufs[4] };
         inline for (conversions) |pair| {
             const from, const to = pair;
-            const src = texts[@intFromEnum(from)];
+            const src = texts[comptime compat.enumToInt(from)];
             if ((from != .latin1 and to != .latin1) or latin1) {
                 const T = to.Unit();
                 const size = needed(from, to, src);

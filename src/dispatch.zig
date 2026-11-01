@@ -20,6 +20,7 @@
 //! before; `-Ddispatch` overrides. aarch64 always chooses at comptime.
 
 const std = @import("std");
+const compat = @import("compat.zig");
 const builtin = @import("builtin");
 const simd = @import("simd.zig");
 const root = @import("root.zig");
@@ -180,8 +181,9 @@ fn fieldBits(comptime T: type) usize {
     const s = @typeInfo(T).@"struct";
     if (s.layout == .@"packed") return @bitSizeOf(T);
     var bits: usize = 0;
-    for (s.fields) |field| bits += switch (@typeInfo(field.type)) {
-        .int, .@"enum", .bool => @bitSizeOf(field.type),
+    const count = comptime compat.fieldCount(s);
+    inline for (0..count) |i| bits += switch (@typeInfo(compat.FieldType(s, i))) {
+        .int, .@"enum", .bool => @bitSizeOf(compat.FieldType(s, i)),
         else => @bitSizeOf(usize) + 1,
     };
     return bits;
@@ -220,9 +222,12 @@ inline fn toWord(x: anytype) usize {
     // A struct of scalars, field by field from the low bits.
     var w: usize = 0;
     comptime var at = 0;
-    inline for (s.fields) |field| {
-        w |= scalarWord(@field(x, field.name)) << at;
-        at += @bitSizeOf(field.type);
+    const count = comptime compat.fieldCount(s);
+    inline for (0..count) |i| {
+        const name = comptime compat.fieldName(s, i);
+        const field_t = comptime compat.FieldType(s, i);
+        w |= scalarWord(@field(x, name)) << at;
+        at += @bitSizeOf(field_t);
     }
     return w;
 }
@@ -232,7 +237,7 @@ inline fn scalarWord(x: anytype) usize {
     return switch (@typeInfo(T)) {
         .pointer => @intFromPtr(x),
         .bool => @intFromBool(x),
-        .@"enum" => @intCast(@intFromEnum(x)),
+        .@"enum" => @intCast(compat.enumToInt(x)),
         .int => |n| @as(@Int(.unsigned, @bitSizeOf(usize)), @as(@Int(.unsigned, n.bits), @bitCast(x))),
         .@"struct" => @as(@Int(.unsigned, @bitSizeOf(T)), @bitCast(x)),
         else => @compileError("dispatch: no word for " ++ @typeName(T)),
@@ -246,9 +251,12 @@ inline fn fromWord(comptime T: type, w: usize) T {
     };
     var x: T = undefined;
     comptime var at = 0;
-    inline for (s.fields) |field| {
-        @field(x, field.name) = scalarFromWord(field.type, w >> at & ((1 << @bitSizeOf(field.type)) - 1));
-        at += @bitSizeOf(field.type);
+    const count = comptime compat.fieldCount(s);
+    inline for (0..count) |i| {
+        const name = comptime compat.fieldName(s, i);
+        const field_t = comptime compat.FieldType(s, i);
+        @field(x, name) = scalarFromWord(field_t, w >> at & ((1 << @bitSizeOf(field_t)) - 1));
+        at += @bitSizeOf(field_t);
     }
     return x;
 }
@@ -257,7 +265,7 @@ inline fn scalarFromWord(comptime T: type, w: usize) T {
     return switch (@typeInfo(T)) {
         .pointer => @ptrFromInt(w),
         .bool => w != 0,
-        .@"enum" => @enumFromInt(w),
+        .@"enum" => compat.enumFromInt(T, w),
         .int => |n| @bitCast(@as(@Int(.unsigned, n.bits), @truncate(w))),
         .@"struct" => @bitCast(@as(@Int(.unsigned, @bitSizeOf(T)), @truncate(w))),
         else => @compileError("dispatch: no word for " ++ @typeName(T)),
@@ -279,10 +287,12 @@ inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
     if (Ret(R) == R) return r;
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
-            if (s.fields.len > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
+            const count = comptime compat.fieldCount(s);
+            if (count > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
             var w: Words = 0;
-            inline for (s.fields, 0..) |field, k| {
-                w |= @as(Words, toWord(@field(r, field.name))) << (@bitSizeOf(usize) * k);
+            inline for (0..count) |k| {
+                const name = comptime compat.fieldName(s, k);
+                w |= @as(Words, toWord(@field(r, name))) << (@bitSizeOf(usize) * k);
             }
             break :blk w;
         },
@@ -295,8 +305,11 @@ inline fn fromWords(comptime R: type, w: Ret(R)) R {
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
             var r: R = undefined;
-            inline for (s.fields, 0..) |field, k| {
-                @field(r, field.name) = fromWord(field.type, @truncate(w >> (@bitSizeOf(usize) * k)));
+            const count = comptime compat.fieldCount(s);
+            inline for (0..count) |k| {
+                const name = comptime compat.fieldName(s, k);
+                const field_t = comptime compat.FieldType(s, k);
+                @field(r, name) = fromWord(field_t, @truncate(w >> (@bitSizeOf(usize) * k)));
             }
             break :blk r;
         },
@@ -333,6 +346,7 @@ fn forwardPanic(msg: []const u8, ret_addr: ?usize) noreturn {
 }
 
 fn panicEntry(ptr: [*]const u8, len: usize, ret_addr: usize) callconv(.c) noreturn {
+    // ziglint-ignore: Z011 -- 0.16 has no std.lang
     std.builtin.panic.call(ptr[0..len], ret_addr);
 }
 
@@ -378,14 +392,14 @@ const pin = builtin.is_test and options.pin;
 pub inline fn level() Isa {
     if (pin) return pinned;
     const c = cached.load(.monotonic);
-    if (c != 0) return @enumFromInt(c - 1);
+    if (c != 0) return compat.enumFromInt(Isa, c - 1);
     return init();
 }
 
 noinline fn init() Isa {
     @branchHint(.cold);
     const l = best(detect());
-    cached.store(@intFromEnum(l) + 1, .monotonic);
+    cached.store(compat.enumToInt(l) + 1, .monotonic);
     return l;
 }
 
@@ -429,31 +443,31 @@ fn detectX86() std.Target.Cpu.Feature.Set {
     const max = cpuid(0, 0)[0];
     const l1 = cpuid(1, 0);
     for (leaf1_ecx) |b| {
-        if (l1[2] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+        if (l1[2] >> b[1] & 1 != 0) set.addFeature(compat.enumToInt(b[0]));
     }
     if (max >= 7) {
         const l7 = cpuid(7, 0);
         for (leaf7_ebx) |b| {
-            if (l7[1] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+            if (l7[1] >> b[1] & 1 != 0) set.addFeature(compat.enumToInt(b[0]));
         }
         for (leaf7_ecx) |b| {
-            if (l7[2] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+            if (l7[2] >> b[1] & 1 != 0) set.addFeature(compat.enumToInt(b[0]));
         }
     }
     if (cpuid(0x80000000, 0)[0] >= 0x80000001) {
         const e1 = cpuid(0x80000001, 0);
-        if (e1[2] & 1 != 0) set.addFeature(@intFromEnum(x86.Feature.sahf));
-        if (e1[2] >> 5 & 1 != 0) set.addFeature(@intFromEnum(x86.Feature.lzcnt));
+        if (e1[2] & 1 != 0) set.addFeature(compat.enumToInt(x86.Feature.sahf));
+        if (e1[2] >> 5 & 1 != 0) set.addFeature(compat.enumToInt(x86.Feature.lzcnt));
     }
     // XCR0: SSE and AVX state (bits 1, 2); AVX-512 opmask and upper ZMM
     // state (bits 5, 6, 7). Readable only when the OS set OSXSAVE.
     const xcr0: u32 = if (l1[2] >> 27 & 1 != 0) xgetbv() else 0;
     if (xcr0 & 0x6 != 0x6) {
-        for ([_]x86.Feature{ .avx, .avx2, .fma, .f16c }) |f| set.removeFeature(@intFromEnum(f));
+        for ([_]x86.Feature{ .avx, .avx2, .fma, .f16c }) |f| set.removeFeature(compat.enumToInt(f));
     }
     if (xcr0 & 0xE6 != 0xE6) {
         for (simd.tiers[0].need) |f| {
-            if (std.mem.startsWith(u8, @tagName(f), "avx512")) set.removeFeature(@intFromEnum(f));
+            if (std.mem.startsWith(u8, @tagName(f), "avx512")) set.removeFeature(compat.enumToInt(f));
         }
     }
     return set;

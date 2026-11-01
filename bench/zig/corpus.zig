@@ -49,6 +49,7 @@ const Out = struct {
 
     fn write(out: Out, sub: []const u8, name: []const u8, data: []const u8) !void {
         var buf: [256]u8 = undefined;
+        // ziglint-ignore: Z011 -- 0.16 has no Allocator.print
         const path = try std.fmt.bufPrint(&buf, "{s}/{s}", .{ sub, name });
         try out.dir.writeFile(out.io, .{ .sub_path = path, .data = data });
     }
@@ -142,6 +143,7 @@ pub fn main(init: std.process.Init) !void {
     }
 
     for (sizes) |n| {
+        // ziglint-ignore: Z011 -- 0.16 has no Allocator.print
         const name = try std.fmt.allocPrint(gpa, "ascii-{d}", .{n});
         const text = try gpa.alloc(u8, n);
         asciiText(text, n);
@@ -153,11 +155,13 @@ pub fn main(init: std.process.Init) !void {
         }
         try out.utf16le(name, wide);
 
+        // ziglint-ignore: Z011 -- 0.16 has no Allocator.print
         const latin1_name = try std.fmt.allocPrint(gpa, "latin1-{d}", .{n});
         const latin1 = try gpa.alloc(u8, n);
         latin1Text(latin1, n);
         try out.latin1(latin1_name, latin1);
 
+        // ziglint-ignore: Z011 -- 0.16 has no Allocator.print
         const random_name = try std.fmt.allocPrint(gpa, "random-{d}", .{n});
         const random = try gpa.alloc(u8, n);
         var prng: std.Random.DefaultPrng = .init(0xba5e64 ^ n);

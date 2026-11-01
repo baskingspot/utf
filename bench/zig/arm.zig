@@ -414,6 +414,7 @@ const Input = struct {
 
 /// Every file in `bench/corpus-gen/<op.dir>`, smallest first, then by name.
 fn load(op: Op, io: Io, gpa: mem.Allocator) ![]Input {
+    // ziglint-ignore: Z011 -- 0.16 has no Allocator.print
     const path = try std.fmt.allocPrint(gpa, corpus ++ "/{s}", .{op.dir});
     var dir = Io.Dir.cwd().openDir(io, path, .{ .iterate = true }) catch |err| {
         std.debug.print("bench-{s}: open {s}: {t} (run `just bench-corpus`)\n", .{ impl, path, err });

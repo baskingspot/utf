@@ -5,6 +5,11 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- `utf` builds with Zig 0.16 and 0.17. `minimum_zig_version` stays `0.16.0`,
+  and CI tests both versions.
+
 ### Added
 
 - Runtime kernel selection on x86-64: a build for a generic x86-64 CPU (`-Dcpu=baseline`, `x86_64_v2`, `x86_64_v3`, or a cross target with no CPU given) now runs the AVX-512, AVX2, or SSE kernels the CPU has, for every `validate` function, `base64.encode`, and `base64.decode`. The `-Ddispatch` build option (`.dispatch` in `b.dependency` arguments) turns it on or off; a native or named CPU still selects at compile time.

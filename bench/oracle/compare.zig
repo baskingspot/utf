@@ -35,6 +35,7 @@
 //! than simdutf's forgiving one.
 
 const std = @import("std");
+const compat = @import("compat.zig");
 const mem = std.mem;
 const Io = std.Io;
 const Random = std.Random;
@@ -135,7 +136,7 @@ fn base64Option(comptime T: type, comptime o: Base64) u8 {
         (if (v.padding) .url_with_padding else .url)
     else
         (if (v.padding) .default else .default_no_padding);
-    return @intFromEnum(format);
+    return compat.enumToInt(format);
 }
 
 fn base64Label(comptime o: Base64) []const u8 {
@@ -470,8 +471,8 @@ const Runner = struct {
                     .skipped => st.skipped += 1,
                     .agree, .disagree => {
                         st.compared += 1;
-                        const e = @intFromEnum(resp.err);
-                        st.kinds[if (e < st.kinds.len) e else @intFromEnum(Oracle.Error.other)] += 1;
+                        const e = compat.enumToInt(resp.err);
+                        st.kinds[if (e < st.kinds.len) e else compat.enumToInt(Oracle.Error.other)] += 1;
                     },
                 }
                 if (verdict != .disagree) continue;
@@ -579,7 +580,7 @@ const Runner = struct {
             });
             try w.writeAll("\n         simdutf said:");
             for (st.kinds, 0..) |count, i| {
-                if (count != 0) try w.print(" {t}={d}", .{ @as(Oracle.Error, @enumFromInt(i)), count });
+                if (count != 0) try w.print(" {t}={d}", .{ compat.enumFromInt(Oracle.Error, @intCast(i)), count });
             }
             try w.writeAll("\n");
         }

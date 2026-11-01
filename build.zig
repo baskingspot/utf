@@ -32,7 +32,6 @@ pub fn build(b: *std.Build) void {
 
     const mod_tests = b.addTest(.{ .root_module = mod, .test_runner = runner });
     const run_mod_tests = b.addRunArtifact(mod_tests);
-    run_mod_tests.addArg(b.fmt("--seed=0x{x}", .{b.graph.random_seed}));
     const test_step = b.step("test", "Run the unit tests and the guide's examples");
     test_step.dependOn(&run_mod_tests.step);
 
@@ -47,7 +46,6 @@ pub fn build(b: *std.Build) void {
     });
     const example_tests = b.addTest(.{ .root_module = examples_mod, .test_runner = runner });
     const run_example_tests = b.addRunArtifact(example_tests);
-    run_example_tests.addArg(b.fmt("--seed=0x{x}", .{b.graph.random_seed}));
     test_step.dependOn(&run_example_tests.step);
 }
 
@@ -103,7 +101,10 @@ fn addDispatch(
                 .pic = true,
                 // Every call into an object is a call more than the kernel
                 // inline; no frame setup on top of it.
-                .omit_frame_pointer = if (optimize == .Debug) null else true,
+                .omit_frame_pointer = if (comptime @hasField(std.builtin.OptimizeMode, "debug"))
+                    (if (optimize == .debug) null else true)
+                else
+                    (if (optimize == .Debug) null else true),
                 .imports = &.{.{ .name = "dispatch_options", .module = kernel_options.createModule() }},
             }),
             // The kernels' byte shuffles are LLVM intrinsics.

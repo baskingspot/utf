@@ -11,26 +11,23 @@
   outputs =
     inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      # imports and inputsFrom below mirror each other, except the toolchain
-      # version: pick that once, in the import.
+      # imports and inputsFrom below mirror each other, including the
+      # toolchain version. Both versions build; the default is the current
+      # stable, and `zig-old` is the previous one for the CI compatibility
+      # lane and for local checks.
       imports = with inputs.baskingspot.flakeModules; [
         base
         docs
         zig."0.16"
+        zig."0.17"
       ];
 
       perSystem =
         { pkgs, config, ... }:
-        {
-          devShells.default = pkgs.mkShell {
-            inputsFrom = with config.devShells; [
-              base
-              docs
-              zig
-            ];
-
-            # Project-specific tools.
-            packages = with pkgs; [
+        let
+          project =
+            with pkgs;
+            [
               # `just bench-compare` and `just oracle` (bench/README.md):
               # simdutf is the C++ arm and the oracle, built with the shell's
               # c++ and found with pkg-config; go and the rust toolchain build
@@ -47,7 +44,26 @@
               util-linux
               time
               curl
+            ]
+            ++ [ config.packages."ziglint-0-16" ];
+        in
+        {
+          devShells.default = pkgs.mkShell {
+            inputsFrom = [
+              config.devShells.base
+              config.devShells.docs
+              config.devShells."zig-0-17"
             ];
+            packages = project;
+          };
+
+          devShells.zig-old = pkgs.mkShell {
+            inputsFrom = [
+              config.devShells.base
+              config.devShells.docs
+              config.devShells."zig-0-16"
+            ];
+            packages = project;
           };
         };
     };

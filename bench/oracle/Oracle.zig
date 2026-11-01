@@ -14,6 +14,7 @@
 const Oracle = @This();
 
 const std = @import("std");
+const compat = @import("compat.zig");
 const mem = std.mem;
 const Io = std.Io;
 
@@ -99,7 +100,7 @@ pub const LastChunk = enum(u2) { loose = 0, strict = 1, stop_before_partial = 2,
 
 /// The option byte of a `base64_decode` request.
 pub fn base64Option(format: Base64Format, last_chunk: LastChunk) u8 {
-    return @intFromEnum(format) | @as(u8, @intFromEnum(last_chunk)) << 4;
+    return compat.enumToInt(format) | @as(u8, compat.enumToInt(last_chunk)) << 4;
 }
 
 pub const Request = struct {
@@ -128,7 +129,7 @@ pub fn run(oracle: Oracle, requests: []const Request) RunError![]Response {
     defer batch.deinit(oracle.gpa);
     for (requests) |req| {
         var header: [6]u8 = undefined;
-        header[0] = @intFromEnum(req.op);
+        header[0] = compat.enumToInt(req.op);
         header[1] = req.option;
         mem.writeInt(u32, header[2..6], @intCast(req.input.len), .little);
         try batch.appendSlice(oracle.gpa, &header);
@@ -162,7 +163,7 @@ pub fn run(oracle: Oracle, requests: []const Request) RunError![]Response {
         if (bytes.len - at < 13) return error.BadResponse;
         const len = mem.readInt(u32, bytes[at + 9 ..][0..4], .little);
         if (bytes.len - at - 13 < len) return error.BadResponse;
-        const err: Error = @enumFromInt(bytes[at]);
+        const err: Error = compat.enumFromInt(Error, @intCast(bytes[at]));
         resp.* = .{
             .err = if (req.op == .validate_ascii and err == .too_large) .not_ascii else err,
             .count = mem.readInt(u64, bytes[at + 1 ..][0..8], .little),

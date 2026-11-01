@@ -1,13 +1,14 @@
-# First class: Linux on x86_64 and aarch64. A failure on either fails CI.
-# The aarch64 job runs the NEON kernels on the hardware they are for.
+# The full gate runs on the default shell, the current stable Zig. The
+# compatibility lane has to compile and pass the suite on the previous one.
 jobs:
-  - recipe: test
-  - recipe: lint
-  - recipe: doc
-  - recipe: test
+  - recipe: ci
+  - recipe: check
+    shell: zig-old
+  # The NEON kernels on the hardware they are for.
+  - recipe: check
     runners: [ubuntu-26.04-arm]
-  # macOS on aarch64 (Apple silicon): the NEON kernels again, under another
-  # OS and toolchain. It runs, shows, and never fails CI.
-  - recipe: test
+  # macOS on aarch64: the NEON kernels under another OS and toolchain. It
+  # runs, shows, and never fails CI.
+  - recipe: check
     runners: [macos-26]
     blocking: false

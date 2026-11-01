@@ -57,7 +57,7 @@ const utf = b.dependency("utf", .{ .target = target, .optimize = optimize });
 exe.root_module.addImport("utf", utf.module("utf"));
 ```
 
-`utf` builds with Zig 0.16 only.
+`utf` builds with Zig 0.16 and 0.17.
 
 ## Documentation
 
