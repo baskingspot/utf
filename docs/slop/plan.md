@@ -556,6 +556,24 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   high bytes (`uzp2`, `tbl` of 32 entries); load them volatile where the
   high byte is the load's only use, or LLVM makes `ld2`, slower on N2.
   UTF-16BE had been 0.88 of LE: masked equalities, where LE got `cmhi`.
+- **Apple Silicon** ([neon-apple-20261101.md](results/neon-apple-20261101.md),
+  M4 Max, Ghostty's two call sites against its vendored simdutf 9.0.0):
+  UTF-8 to UTF-32 on CJK 1.00-1.07 of simdutf from 4 KiB (0.51-0.55), on
+  emoji 1.77-1.97 from 64 B (0.89-1.05), and base64 decode 1.01-1.90
+  (0.74-0.94). Under Zig 0.17, `storeWide`, `storeWideUnits`, and NEON's
+  `lookup16` went through arrays and a lane move each (decode 1.6x slower);
+  store and look up whole registers. `convert.apple` (the CPU model's
+  `apple_` prefix; Zig's default for macOS is `apple_m1`) gates
+  `utf8BlocksApple`: three-byte runs after up to eight ASCII bytes decoded
+  in 16-bit lanes and checked on their values, a long run then anything in
+  windows checked per window, the rest through `utf8DecodeBlock` (emoji
+  1.75 of simdutf, where windows gave 0.94: N2's choice reversed), and the
+  last 64-79 bytes as a block. Base64's NEON `st3` store takes no slack, so
+  a block that fills `dst` stays in the loop (64 characters 0.73 to 1.84),
+  and clean blocks classify as simdutf's do (`clz` of the class picks the
+  offset, +5% from 4 KiB). Costs: calls of 1-16 bytes 0.7-1 ns slower,
+  constants LLVM loads at entry. Left: `cjk-65535` only level; N2 not
+  measured.
 
 In-place base64 decode ([base64-in-place-20261101.md](results/base64-in-place-20261101.md)):
 
