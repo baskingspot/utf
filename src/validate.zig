@@ -617,6 +617,7 @@ fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Resu
     // the first unpaired one is. The zero padding of a short block is not
     // a surrogate, and nothing follows the last unit.
     if (len < n16) {
+        if (neon and len >= 8 and !shortHasSurrogate(endian, units)) return .ok(len);
         const a = simd.loadShort(u16, units);
         if (!hasSurrogate(endian, a)) return .ok(len);
         const s = surrogateMasks(endian, a);
@@ -689,9 +690,9 @@ inline fn anyBelow(key: Units16, max: u16) bool {
 /// native order one subtraction, which takes its block from memory, where
 /// `surrogateKey`'s AND and XOR became a ternary op that overwrites a copy
 /// of a constant: 5-17% from 4 KiB.
-inline fn groupKey(comptime endian: std.builtin.Endian, block: Units16) Units16 {
+inline fn groupKey(comptime endian: std.builtin.Endian, block: anytype) @TypeOf(block) {
     if (endian != builtin.cpu.arch.endian()) return surrogateKey(endian, block);
-    return block -% @as(Units16, @splat(0xD800));
+    return block -% @as(@TypeOf(block), @splat(0xD800));
 }
 fn groupKeyMax(comptime endian: std.builtin.Endian) u16 {
     return if (endian == builtin.cpu.arch.endian()) 0x800 else 1;
@@ -699,10 +700,29 @@ fn groupKeyMax(comptime endian: std.builtin.Endian) u16 {
 
 /// Zero in the lanes that hold a surrogate, in either byte order without
 /// swapping the bytes.
-inline fn surrogateKey(comptime endian: std.builtin.Endian, block: Units16) Units16 {
+inline fn surrogateKey(comptime endian: std.builtin.Endian, block: anytype) @TypeOf(block) {
     const native = endian == builtin.cpu.arch.endian();
-    return (block & @as(Units16, @splat(if (native) 0xF800 else 0x00F8))) ^
-        @as(Units16, @splat(if (native) 0xD800 else 0x00D8));
+    const V = @TypeOf(block);
+    return (block & @as(V, @splat(if (native) 0xF800 else 0x00F8))) ^ @as(V, @splat(if (native) 0xD800 else 0x00D8));
+}
+
+/// Whether any of 8 to 31 units is a surrogate, from two or four
+/// overlapping 16-byte loads: on NEON, building the zero-padded block cost
+/// a short input more than the test.
+inline fn shortHasSurrogate(comptime endian: std.builtin.Endian, units: []const u16) bool {
+    const len = units.len;
+    std.debug.assert(len >= 8);
+    std.debug.assert(len < n16);
+    const V = @Vector(8, u16);
+    const first: V = @as(*align(1) const V, @ptrCast(units[0..8])).*;
+    const last: V = @as(*align(1) const V, @ptrCast(units[len - 8 ..][0..8])).*;
+    var key = @min(groupKey(endian, first), groupKey(endian, last));
+    if (len > 16) {
+        const second: V = @as(*align(1) const V, @ptrCast(units[8..16])).*;
+        const third: V = @as(*align(1) const V, @ptrCast(units[len - 16 ..][0..8])).*;
+        key = @min(key, @min(groupKey(endian, second), groupKey(endian, third)));
+    }
+    return @reduce(.Min, key) < groupKeyMax(endian);
 }
 
 /// One byte per unit of a block, the high byte of each, which says whether
@@ -740,6 +760,7 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
     if (len < n16) {
         // The zero padding is not a low surrogate, so a high one at the end
         // fails here.
+        if (neon and len >= 8 and !shortHasSurrogate(endian, units)) return none;
         const block = simd.loadShort(u16, units);
         if (!hasSurrogate(endian, block)) return none;
         const s = surrogateMasks(endian, block);
