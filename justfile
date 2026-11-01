@@ -57,9 +57,20 @@ fmt:
     oxfmt {{ markdown }}
     just --fmt
 
+[doc("Compile-only check for one target this host cannot run, such as `just check-target x86_64-windows-gnu`: the unit tests and the kernel objects they link, built but not run. CI runs one job per target")]
+[group("test")]
+check-target TARGET:
+    zig build check -Dtarget={{ TARGET }}
+
+[doc("Compile-only gate for Windows on x86-64 and aarch64: its C calling convention differs from Linux's and macOS's, and the kernels' LLVM intrinsics break when it changes how they take vectors")]
+[group("test")]
+check-windows:
+    just check-target x86_64-windows-gnu
+    just check-target aarch64-windows-gnu
+
 [doc("Everything CI runs")]
 [group("ci")]
-ci: test lint
+ci: test lint check-windows
 
 [doc("Fetch and generate the benchmark corpus in bench/corpus-gen/, and verify it against bench/corpus/SHA256SUMS")]
 [group("bench")]

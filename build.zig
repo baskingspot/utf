@@ -34,6 +34,11 @@ pub fn build(b: *std.Build) void {
     const run_mod_tests = b.addRunArtifact(mod_tests);
     run_mod_tests.addPassthruArgs();
     b.step("test", "Run the unit tests").dependOn(&run_mod_tests.step);
+
+    // Compile-only gate for targets this host cannot run, such as
+    // `zig build check -Dtarget=x86_64-windows-gnu`: the test binary and the
+    // kernel objects it links, built but not run.
+    b.step("check", "Compile the unit tests without running them (cross-target gate)").dependOn(&mod_tests.step);
 }
 
 const Role = enum { off, main, kernel };
