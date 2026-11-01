@@ -445,9 +445,11 @@ const byte_2_high = [16]u8{
 // The bytes one, two, and three back come from three unaligned loads on
 // AVX2 and SSE, where that beat shifting them in from the previous block by
 // 10% and 17%; on AVX-512 the loads, which all cross a cache line, lost 11%
-// (docs/slop/results/validate-20261031.md). NEON and the generic path are
-// unmeasured and shift.
-const prev_by_load = simd.isa == .avx2 or simd.isa == .sse;
+// (docs/slop/results/validate-20261031.md). On NEON the loads beat the
+// `ext`s by 9% on non-ASCII text, which frees the two vector pipes of a
+// Neoverse N2 for the lookups (docs/slop/results/neon-validate-20261101.md).
+// The generic path is unmeasured and shifts.
+const prev_by_load = simd.isa == .avx2 or simd.isa == .sse or simd.isa == .neon;
 
 /// Error bits for the pairs ending in `cur`; `before` is the block before it.
 inline fn utf8Errors(cur: Bytes, before: Bytes) Bytes {
