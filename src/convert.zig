@@ -28,7 +28,7 @@
 
 const std = @import("std");
 const builtin = @import("builtin");
-const Endian = std.builtin.Endian;
+const Endian = std.lang.Endian;
 const result = @import("result.zig");
 const Result = result.Result;
 const scalar = @import("scalar_convert.zig");
@@ -1935,10 +1935,10 @@ inline fn utf8Encode512(cp: @Vector(16, u32), take: u16) struct { V64, usize } {
             else
                 .{ 0x3F3F3F07, 0x808080F0 };
         }
-        const ctrl: [8]u8 = .{ 18, 12, 6, 0, 50, 44, 38, 32 };
+        const ctrl: @Vector(8, u8) = .{ 18, 12, 6, 0, 50, 44, 38, 32 };
         // Each table as its two halves, the operands of `vpermi2d`.
         const halves = [2][2]D{ .{ mask[0..16].*, mask[16..].* }, .{ tag[0..16].*, tag[16..].* } };
-        break :blk .{ halves[0], halves[1], ctrl ** 8 };
+        break :blk .{ halves[0], halves[1], std.simd.repeat(64, ctrl) };
     };
     const shifted: D = @bitCast(simd.multishift(@as(V64, tables[2]), @bitCast(cp)));
     const lz: D = @clz(cp);
@@ -3533,7 +3533,7 @@ fn largeCases() !void {
         const texts = .{ bufs[0][0..n8], bufs[1][0..n16], bufs[2][0..n16], bufs[3], bufs[4] };
         inline for (conversions) |pair| {
             const from, const to = pair;
-            const src = texts[@intFromEnum(from)];
+            const src = texts[@backingInt(from)];
             if ((from != .latin1 and to != .latin1) or latin1) {
                 const T = to.Unit();
                 const size = needed(from, to, src);

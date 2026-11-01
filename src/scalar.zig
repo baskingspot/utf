@@ -75,7 +75,7 @@ pub fn validateUtf16be(units: []const u16) Result {
     return validateUtf16(.big, units);
 }
 
-fn validateUtf16(comptime endian: std.builtin.Endian, units: []const u16) Result {
+fn validateUtf16(comptime endian: std.lang.Endian, units: []const u16) Result {
     var i: usize = 0;
     while (i < units.len) {
         const unit = std.mem.toNative(u16, units[i], endian);

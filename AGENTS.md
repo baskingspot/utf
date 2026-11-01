@@ -10,7 +10,7 @@ The repository lives at `baskingspot/utf` on GitHub, where the workflows under `
 
 ## Environment
 
-Zig 0.16 only. The flake is the tool contract, from `baskingspot/nix`: `nix develop` provides Zig, `ziglint`, and the base tools, and nothing comes from the system PATH. The justfile is the command interface: `just test`, `just lint`, `just ci`. Run `just fmt` before you commit. `.agents/setup` installs Nix when an orb lacks it and warms the dev shell.
+Zig 0.17 only. The flake is the tool contract, from `baskingspot/nix`: `nix develop` provides Zig, `ziglint`, and the base tools, and nothing comes from the system PATH. The justfile is the command interface: `just test`, `just lint`, `just ci`. Run `just fmt` before you commit. `.agents/setup` installs Nix when an orb lacks it and warms the dev shell.
 
 ## Performance
 

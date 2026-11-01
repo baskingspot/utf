@@ -49,7 +49,7 @@ const Out = struct {
 
     fn write(out: Out, sub: []const u8, name: []const u8, data: []const u8) !void {
         var buf: [256]u8 = undefined;
-        const path = try std.fmt.bufPrint(&buf, "{s}/{s}", .{ sub, name });
+        const path = try mem.print(&buf, "{s}/{s}", .{ sub, name });
         try out.dir.writeFile(out.io, .{ .sub_path = path, .data = data });
     }
 
@@ -142,7 +142,7 @@ pub fn main(init: std.process.Init) !void {
     }
 
     for (sizes) |n| {
-        const name = try std.fmt.allocPrint(gpa, "ascii-{d}", .{n});
+        const name = try gpa.print("ascii-{d}", .{n});
         const text = try gpa.alloc(u8, n);
         asciiText(text, n);
         try out.utf8(name, text);
@@ -153,12 +153,12 @@ pub fn main(init: std.process.Init) !void {
         }
         try out.utf16le(name, wide);
 
-        const latin1_name = try std.fmt.allocPrint(gpa, "latin1-{d}", .{n});
+        const latin1_name = try gpa.print("latin1-{d}", .{n});
         const latin1 = try gpa.alloc(u8, n);
         latin1Text(latin1, n);
         try out.latin1(latin1_name, latin1);
 
-        const random_name = try std.fmt.allocPrint(gpa, "random-{d}", .{n});
+        const random_name = try gpa.print("random-{d}", .{n});
         const random = try gpa.alloc(u8, n);
         var prng: std.Random.DefaultPrng = .init(0xba5e64 ^ n);
         prng.random().bytes(random);

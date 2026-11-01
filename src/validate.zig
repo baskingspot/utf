@@ -610,7 +610,7 @@ const Units16 = simd.Block(u16);
 const n16 = @typeInfo(Units16).vector.len;
 const Mask16 = @Int(.unsigned, n16);
 
-fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Result {
+fn utf16WithErrors(comptime endian: std.lang.Endian, units: []const u16) Result {
     const len = units.len;
     // Up to two blocks, the first and the last, overlapping it: one test
     // for a surrogate, as most text has none, then their masks say where
@@ -665,7 +665,7 @@ inline fn unpaired(high: u64, low: u64, len: usize) Result {
 }
 
 /// The highs and lows of one block, each as a bit mask.
-inline fn surrogateMasks(comptime endian: std.builtin.Endian, block: Units16) Surrogates {
+inline fn surrogateMasks(comptime endian: std.lang.Endian, block: Units16) Surrogates {
     const v = if (endian == builtin.cpu.arch.endian()) block else @byteSwap(block);
     const top = v & @as(Units16, @splat(0xFC00));
     return .{
@@ -674,7 +674,7 @@ inline fn surrogateMasks(comptime endian: std.builtin.Endian, block: Units16) Su
     };
 }
 
-inline fn hasSurrogate(comptime endian: std.builtin.Endian, block: Units16) bool {
+inline fn hasSurrogate(comptime endian: std.lang.Endian, block: Units16) bool {
     if (neon) return anyBelow(groupKey(endian, block), groupKeyMax(endian));
     return @reduce(.Or, surrogateKey(endian, block) == @as(Units16, @splat(0)));
 }
@@ -690,17 +690,17 @@ inline fn anyBelow(key: Units16, max: u16) bool {
 /// native order one subtraction, which takes its block from memory, where
 /// `surrogateKey`'s AND and XOR became a ternary op that overwrites a copy
 /// of a constant: 5-17% from 4 KiB.
-inline fn groupKey(comptime endian: std.builtin.Endian, block: anytype) @TypeOf(block) {
+inline fn groupKey(comptime endian: std.lang.Endian, block: anytype) @TypeOf(block) {
     if (endian != builtin.cpu.arch.endian()) return surrogateKey(endian, block);
     return block -% @as(@TypeOf(block), @splat(0xD800));
 }
-fn groupKeyMax(comptime endian: std.builtin.Endian) u16 {
+fn groupKeyMax(comptime endian: std.lang.Endian) u16 {
     return if (endian == builtin.cpu.arch.endian()) 0x800 else 1;
 }
 
 /// Zero in the lanes that hold a surrogate, in either byte order without
 /// swapping the bytes.
-inline fn surrogateKey(comptime endian: std.builtin.Endian, block: anytype) @TypeOf(block) {
+inline fn surrogateKey(comptime endian: std.lang.Endian, block: anytype) @TypeOf(block) {
     const native = endian == builtin.cpu.arch.endian();
     const V = @TypeOf(block);
     return (block & @as(V, @splat(if (native) 0xF800 else 0x00F8))) ^ @as(V, @splat(if (native) 0xD800 else 0x00D8));
@@ -709,7 +709,7 @@ inline fn surrogateKey(comptime endian: std.builtin.Endian, block: anytype) @Typ
 /// Whether any of 8 to 31 units is a surrogate, from two or four
 /// overlapping 16-byte loads: on NEON, building the zero-padded block cost
 /// a short input more than the test.
-inline fn shortHasSurrogate(comptime endian: std.builtin.Endian, units: []const u16) bool {
+inline fn shortHasSurrogate(comptime endian: std.lang.Endian, units: []const u16) bool {
     const len = units.len;
     std.debug.assert(len >= 8);
     std.debug.assert(len < n16);
@@ -731,12 +731,12 @@ const Pairs = @Vector(n16, u8);
 const ones: Pairs = @splat(0xFF);
 const zeros: Pairs = @splat(0);
 
-inline fn highBytes(comptime endian: std.builtin.Endian, units: []const u16) Pairs {
+inline fn highBytes(comptime endian: std.lang.Endian, units: []const u16) Pairs {
     const b = simd.loadVolatile(Bytes, std.mem.sliceAsBytes(units[0..n16]));
     return @shuffle(u8, b, undefined, highLanes(endian));
 }
 
-fn highLanes(comptime endian: std.builtin.Endian) [n16]i32 {
+fn highLanes(comptime endian: std.lang.Endian) [n16]i32 {
     var m: [n16]i32 = undefined;
     for (&m, 0..) |*x, i| x.* = @intCast(2 * i + @intFromBool(endian == .little));
     return m;
@@ -745,7 +745,7 @@ fn highLanes(comptime endian: std.builtin.Endian) [n16]i32 {
 /// Checks one block, given whether the unit before it is a high surrogate;
 /// returns whether its last unit is one, or `bad_block` if it fails. Each low
 /// surrogate must follow a high one, and each high one precede a low one.
-inline fn utf16Block(comptime endian: std.builtin.Endian, block: Units16, pending: Mask16) Mask16 {
+inline fn utf16Block(comptime endian: std.lang.Endian, block: Units16, pending: Mask16) Mask16 {
     if (!hasSurrogate(endian, block)) return if (pending != 0) bad_block else 0;
     const s = surrogateMasks(endian, block);
     if (s.low != (s.high << 1 | pending)) return bad_block;
@@ -755,7 +755,7 @@ const bad_block: Mask16 = 2;
 
 /// The index of the first 32-unit block that fails, or `none`;
 /// `units.len` when the input ends in a high surrogate.
-inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16) usize {
+inline fn utf16BadBlock(comptime endian: std.lang.Endian, units: []const u16) usize {
     const len = units.len;
     if (len < n16) {
         // The zero padding is not a low surrogate, so a high one at the end
@@ -1123,21 +1123,21 @@ fn asciiHighByte() !void {
 // block to the boundary, a group of eight blocks, one of four, and a tail.
 const utf16_max_len = 10 * n16 + 2 * 4 * n16 + 4;
 
-fn scalarUtf16(comptime endian: std.builtin.Endian, units: []const u16) Result {
+fn scalarUtf16(comptime endian: std.lang.Endian, units: []const u16) Result {
     return switch (endian) {
         .little => scalar.validateUtf16le(units),
         .big => scalar.validateUtf16be(units),
     };
 }
 
-fn utf16(comptime endian: std.builtin.Endian, units: []const u16) bool {
+fn utf16(comptime endian: std.lang.Endian, units: []const u16) bool {
     return switch (endian) {
         .little => utf16le(units),
         .big => utf16be(units),
     };
 }
 
-fn utf16Errors(comptime endian: std.builtin.Endian, units: []const u16) Result {
+fn utf16Errors(comptime endian: std.lang.Endian, units: []const u16) Result {
     return switch (endian) {
         .little => utf16leWithErrors(units),
         .big => utf16beWithErrors(units),
@@ -1147,7 +1147,7 @@ fn utf16Errors(comptime endian: std.builtin.Endian, units: []const u16) Result {
 /// Checks `units`, in native order, then byte-swapped as the other order.
 fn checkUtf16(units: []u16) !void {
     const native = comptime builtin.cpu.arch.endian();
-    const other: std.builtin.Endian = comptime if (native == .little) .big else .little;
+    const other: std.lang.Endian = comptime if (native == .little) .big else .little;
     const want = scalarUtf16(native, units);
     try testing.expectEqual(want, utf16Errors(native, units));
     try testing.expectEqual(want.err == .none, utf16(native, units));

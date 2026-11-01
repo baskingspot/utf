@@ -15,6 +15,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- utf now requires Zig 0.17.0; Zig 0.16 is no longer supported.
 - On aarch64, `base64.encode` is 1.7× faster (2.1× from 4 KiB) and `base64.decode` 1.3× (1.4–1.5× from 4 KiB, and 1.3× on MIME line-wrapped input).
 - On aarch64, `validate.utf8` and `utf8WithErrors` are 1.7× faster (1.7× on non-ASCII text, up to 2.5× on ASCII), `validate.ascii` and `asciiWithErrors` 1.35–1.45×, the UTF-16 validators 1.2–1.35× (1.7–1.8× on emoji, 1.65× on 16 units), and the UTF-32 validators 1.13×.
 - On aarch64, the `convert` functions from UTF-8 to UTF-32 are 1.3–1.5× faster (2.6–4.7× on emoji), UTF-8 to UTF-16 1.2–1.3× (1.9–2.9× on emoji), UTF-16 to UTF-32 1.35–1.45×, UTF-16 and UTF-32 to UTF-8 1.2× (1.6× on Chinese UTF-16), and Latin-1 to UTF-16 1.1× (1.3× at 4–64 KiB).

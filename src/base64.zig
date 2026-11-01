@@ -441,11 +441,11 @@ inline fn decodeLines(
 const Words = @Int(.unsigned, 2 * @bitSizeOf(usize));
 
 inline fn toWords(r: Result) Words {
-    return @as(Words, @intFromEnum(r.err)) << @bitSizeOf(usize) | r.count;
+    return @as(Words, @backingInt(r.err)) << @bitSizeOf(usize) | r.count;
 }
 
 inline fn fromWords(w: Words) Result {
-    return .{ .err = @enumFromInt(@as(u8, @truncate(w >> @bitSizeOf(usize)))), .count = @truncate(w) };
+    return .{ .err = @fromBackingInt(@intCast(@as(u8, @truncate(w >> @bitSizeOf(usize))))), .count = @truncate(w) };
 }
 
 /// How far past a line's start `decodeLines` reads: the line, the four
@@ -854,7 +854,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const ge26 = @as(I, @bitCast(idx)) > @as(I, @splat(25));
             const above: V = @bitCast(@select(i8, ge26, @as(I, @splat(-1)), @as(I, @splat(0))));
             const reduced = (idx -| splat(51)) -% above;
-            const table: [16]u8 = .{ 'A', o_lower } ++ .{o_digit} ** 10 ++ .{ o_62, o_63, 0, 0 };
+            const table: [16]u8 = .{ 'A', o_lower } ++ @as([10]u8, @splat(o_digit)) ++ .{ o_62, o_63, 0, 0 };
             return simd.lookup16(table, reduced);
         }
 

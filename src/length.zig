@@ -6,7 +6,7 @@
 //! when the input turns out to be invalid.
 
 const std = @import("std");
-const Endian = std.builtin.Endian;
+const Endian = std.lang.Endian;
 const scalar = @import("scalar_convert.zig");
 const simd = @import("simd.zig");
 const dispatch = @import("dispatch.zig");
@@ -249,7 +249,7 @@ fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize {
                 // Two, one more above U+007F, and one less where the top
                 // five bits are 00000 (below U+0800) or 11011 (a
                 // surrogate), which one `tbl` of a 32-entry table finds.
-                const below_800 = [_]u8{0xFF} ++ [_]u8{0} ** 26 ++ [_]u8{0xFF} ++ [_]u8{0} ** 4;
+                const below_800: [32]u8 = .{0xFF} ++ @as([26]u8, @splat(0)) ++ .{0xFF} ++ @as([4]u8, @splat(0));
                 const high = unitBytes(e, v, .high);
                 const below = lookup32(below_800, high >> @splat(3));
                 // Above U+007F: one compare of the units, narrowed. In the
@@ -499,7 +499,7 @@ inline fn lastLanes(comptime W: type, i: usize) W {
 }
 
 /// 64 zero bytes, then 64 of all ones.
-const tail_mask = [_]u8{0} ** 64 ++ [_]u8{0xFF} ** 64;
+const tail_mask: [128]u8 = @as([64]u8, @splat(0)) ++ @as([64]u8, @splat(0xFF));
 
 /// `sumBlocks` in vectors of `n` units, for `src` at least that long,
 /// accumulating in `f`'s lanes: as wide as `T`, or bytes for the NEON
@@ -615,16 +615,16 @@ fn overflowCases() !void {
     const testing = std.testing;
     // Every byte and unit counts the most it can, for more blocks than one
     // accumulator holds.
-    const leads = [_]u8{0xF4} ** (64 * 300 + 5);
+    const leads: [64 * 300 + 5]u8 = @splat(0xF4);
     try testing.expectEqual(leads.len, countUtf8(&leads));
     try testing.expectEqual(2 * leads.len, utf16FromUtf8(&leads));
     try testing.expectEqual(2 * leads.len, utf8FromLatin1(&leads));
     // U+0808 reads the same in either byte order.
-    const units = [_]u16{0x0808} ** (32 * 100 + 3);
+    const units: [32 * 100 + 3]u16 = @splat(0x0808);
     try testing.expectEqual(3 * units.len, utf8FromUtf16le(&units));
     try testing.expectEqual(3 * units.len, utf8FromUtf16be(&units));
     // So does U+DCDC, a low surrogate.
-    const lows = [_]u16{0xDCDC} ** (32 * 300 + 5);
+    const lows: [32 * 300 + 5]u16 = @splat(0xDCDC);
     try testing.expectEqual(0, countUtf16le(&lows));
     try testing.expectEqual(0, countUtf16be(&lows));
     try testing.expectEqual(2 * lows.len, utf8FromUtf16be(&lows));
@@ -634,7 +634,7 @@ fn overflowCases() !void {
     defer testing.allocator.free(many);
     @memset(many, 0x0808);
     try testing.expectEqual(3 * many.len, utf8FromUtf16le(many));
-    const cps = [_]u32{0x10000} ** (16 * 100 + 7);
+    const cps: [16 * 100 + 7]u32 = @splat(0x10000);
     try testing.expectEqual(4 * cps.len, utf8FromUtf32(&cps));
     try testing.expectEqual(2 * cps.len, utf16FromUtf32(&cps));
 }

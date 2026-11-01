@@ -9,12 +9,12 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const optimize: std.builtin.OptimizeMode = .ReleaseFast;
+    const optimize: std.lang.Optimize = .fast;
     const utf = b.dependency("utf", .{ .target = target, .optimize = optimize }).module("utf");
 
     // `just bench-compare`'s `optimize`, `cpu`, and `dispatch`, for the utf arm.
     const arm_optimize = b.option(
-        std.builtin.OptimizeMode,
+        std.lang.Optimize,
         "utf-optimize",
         "The utf arm's optimize mode (default ReleaseFast)",
     ) orelse optimize;

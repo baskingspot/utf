@@ -275,15 +275,15 @@ const Utf = struct {
     /// `(src) usize` validates or counts; `(src, dst) Result` or
     /// `(src, dst) usize` converts; `(dst, src, options)` is base64.
     fn wrap(comptime f: anytype, comptime options: Options) Fn {
-        const params = @typeInfo(@TypeOf(f)).@"fn".params;
+        const params = @typeInfo(@TypeOf(f)).@"fn".param_types;
         return struct {
             fn run(in: []align(4) const u8, out: []align(4) u8) Out {
                 if (params.len == 3) {
-                    return written(u8, f(out, in, comptime optionsValue(params[2].type.?, options)));
+                    return written(u8, f(out, in, comptime optionsValue(params[2].?, options)));
                 }
-                const src = cast(params[0].type.?, in);
+                const src = cast(params[0].?, in);
                 if (params.len == 2) {
-                    const Dst = params[1].type.?;
+                    const Dst = params[1].?;
                     return written(@typeInfo(Dst).pointer.child, f(src, cast(Dst, out)));
                 }
                 const r = f(src);
@@ -414,7 +414,7 @@ const Input = struct {
 
 /// Every file in `bench/corpus-gen/<op.dir>`, smallest first, then by name.
 fn load(op: Op, io: Io, gpa: mem.Allocator) ![]Input {
-    const path = try std.fmt.allocPrint(gpa, corpus ++ "/{s}", .{op.dir});
+    const path = try gpa.print(corpus ++ "/{s}", .{op.dir});
     var dir = Io.Dir.cwd().openDir(io, path, .{ .iterate = true }) catch |err| {
         std.debug.print("bench-{s}: open {s}: {t} (run `just bench-corpus`)\n", .{ impl, path, err });
         return err;

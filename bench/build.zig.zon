@@ -2,7 +2,7 @@
     .name = .utf_bench,
     .version = "0.0.0",
     .fingerprint = 0xc163da9be80991c0,
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
     .dependencies = .{
         // The package under test, from this checkout.
         .utf = .{ .path = ".." },

@@ -50,7 +50,7 @@ const linked = if (role == .main) above(simd.isa) else &[_]Tier{};
 /// words in all; results
 /// are void, a word, or a struct of up to two word fields, like `Result`.
 pub inline fn call(
-    comptime src: std.builtin.SourceLocation,
+    comptime src: std.lang.SourceLocation,
     comptime f: anytype,
     args: std.meta.ArgsTuple(@TypeOf(f)),
 ) Return(f) {
@@ -69,8 +69,8 @@ pub inline fn call(
         .main => {
             var w: [6]usize = undefined;
             comptime var i = 0;
-            inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
-                i += toWords(p.type.?, &args[k], w[i..]);
+            inline for (@typeInfo(@TypeOf(f)).@"fn".param_types, 0..) |p, k| {
+                i += toWords(p.?, &args[k], w[i..]);
             }
             const S = Slot(src, f);
             // A test that pins another tier sends the call back through
@@ -93,7 +93,7 @@ pub inline fn call(
 /// export, which starts as `resolve`. Its first call finds the tier and
 /// stores the pointer, as an ELF IFUNC would at load time; a racing first
 /// call stores the same pointer.
-fn Slot(comptime src: std.builtin.SourceLocation, comptime f: anytype) type {
+fn Slot(comptime src: std.lang.SourceLocation, comptime f: anytype) type {
     return struct {
         var entry: *const EntryFn(Return(f)) = &resolve;
         /// The tier `entry` was resolved for, in pinned test builds.
@@ -150,9 +150,9 @@ fn Entry(comptime f: anytype) type {
 inline fn argsFromWords(comptime f: anytype, w: [6]usize) std.meta.ArgsTuple(@TypeOf(f)) {
     var args: std.meta.ArgsTuple(@TypeOf(f)) = undefined;
     comptime var i = 0;
-    inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
-        args[k] = argFromWords(p.type.?, w[i..]);
-        i += comptime wordCount(p.type.?);
+    inline for (@typeInfo(@TypeOf(f)).@"fn".param_types, 0..) |p, k| {
+        args[k] = argFromWords(p.?, w[i..]);
+        i += comptime wordCount(p.?);
     }
     comptime std.debug.assert(i <= w.len);
     return args;
@@ -180,8 +180,8 @@ fn fieldBits(comptime T: type) usize {
     const s = @typeInfo(T).@"struct";
     if (s.layout == .@"packed") return @bitSizeOf(T);
     var bits: usize = 0;
-    for (s.fields) |field| bits += switch (@typeInfo(field.type)) {
-        .int, .@"enum", .bool => @bitSizeOf(field.type),
+    for (s.field_types) |F| bits += switch (@typeInfo(F)) {
+        .int, .@"enum", .bool => @bitSizeOf(F),
         else => @bitSizeOf(usize) + 1,
     };
     return bits;
@@ -220,9 +220,9 @@ inline fn toWord(x: anytype) usize {
     // A struct of scalars, field by field from the low bits.
     var w: usize = 0;
     comptime var at = 0;
-    inline for (s.fields) |field| {
-        w |= scalarWord(@field(x, field.name)) << at;
-        at += @bitSizeOf(field.type);
+    inline for (s.field_names, s.field_types) |name, F| {
+        w |= scalarWord(@field(x, name)) << at;
+        at += @bitSizeOf(F);
     }
     return w;
 }
@@ -232,7 +232,7 @@ inline fn scalarWord(x: anytype) usize {
     return switch (@typeInfo(T)) {
         .pointer => @intFromPtr(x),
         .bool => @intFromBool(x),
-        .@"enum" => @intCast(@intFromEnum(x)),
+        .@"enum" => @intCast(@backingInt(x)),
         .int => |n| @as(@Int(.unsigned, @bitSizeOf(usize)), @as(@Int(.unsigned, n.bits), @bitCast(x))),
         .@"struct" => @as(@Int(.unsigned, @bitSizeOf(T)), @bitCast(x)),
         else => @compileError("dispatch: no word for " ++ @typeName(T)),
@@ -246,9 +246,9 @@ inline fn fromWord(comptime T: type, w: usize) T {
     };
     var x: T = undefined;
     comptime var at = 0;
-    inline for (s.fields) |field| {
-        @field(x, field.name) = scalarFromWord(field.type, w >> at & ((1 << @bitSizeOf(field.type)) - 1));
-        at += @bitSizeOf(field.type);
+    inline for (s.field_names, s.field_types) |name, F| {
+        @field(x, name) = scalarFromWord(F, w >> at & ((1 << @bitSizeOf(F)) - 1));
+        at += @bitSizeOf(F);
     }
     return x;
 }
@@ -257,7 +257,7 @@ inline fn scalarFromWord(comptime T: type, w: usize) T {
     return switch (@typeInfo(T)) {
         .pointer => @ptrFromInt(w),
         .bool => w != 0,
-        .@"enum" => @enumFromInt(w),
+        .@"enum" => @fromBackingInt(@intCast(w)),
         .int => |n| @bitCast(@as(@Int(.unsigned, n.bits), @truncate(w))),
         .@"struct" => @bitCast(@as(@Int(.unsigned, @bitSizeOf(T)), @truncate(w))),
         else => @compileError("dispatch: no word for " ++ @typeName(T)),
@@ -279,10 +279,10 @@ inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
     if (Ret(R) == R) return r;
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
-            if (s.fields.len > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
+            if (s.field_names.len > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
             var w: Words = 0;
-            inline for (s.fields, 0..) |field, k| {
-                w |= @as(Words, toWord(@field(r, field.name))) << (@bitSizeOf(usize) * k);
+            inline for (s.field_names, 0..) |name, k| {
+                w |= @as(Words, toWord(@field(r, name))) << (@bitSizeOf(usize) * k);
             }
             break :blk w;
         },
@@ -295,8 +295,8 @@ inline fn fromWords(comptime R: type, w: Ret(R)) R {
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
             var r: R = undefined;
-            inline for (s.fields, 0..) |field, k| {
-                @field(r, field.name) = fromWord(field.type, @truncate(w >> (@bitSizeOf(usize) * k)));
+            inline for (s.field_names, s.field_types, 0..) |name, F, k| {
+                @field(r, name) = fromWord(F, @truncate(w >> (@bitSizeOf(usize) * k)));
             }
             break :blk r;
         },
@@ -307,7 +307,7 @@ inline fn fromWords(comptime R: type, w: Ret(R)) R {
 /// The export for `src`'s function in `isa`'s object, such as
 /// `utf_1a2b3c4d_avx2_validate_utf8`. The prefix is unique to this build of
 /// the package, so two builds of it can link into one program.
-fn symbol(comptime src: std.builtin.SourceLocation, comptime isa: Isa) [:0]const u8 {
+fn symbol(comptime src: std.lang.SourceLocation, comptime isa: Isa) [:0]const u8 {
     comptime {
         var file: []const u8 = src.file;
         if (std.mem.endsWith(u8, file, ".zig")) file = file[0 .. file.len - 4];
@@ -333,7 +333,7 @@ fn forwardPanic(msg: []const u8, ret_addr: ?usize) noreturn {
 }
 
 fn panicEntry(ptr: [*]const u8, len: usize, ret_addr: usize) callconv(.c) noreturn {
-    std.builtin.panic.call(ptr[0..len], ret_addr);
+    std.lang.panic.call(ptr[0..len], ret_addr);
 }
 
 comptime {
@@ -351,8 +351,8 @@ comptime {
 }
 
 fn referenceAll(comptime T: type) void {
-    inline for (@typeInfo(T).@"struct".decls) |d| {
-        const x = @field(T, d.name);
+    inline for (@typeInfo(T).@"struct".decl_names) |name| {
+        const x = @field(T, name);
         switch (@typeInfo(@TypeOf(x))) {
             .@"fn" => |info| if (!info.is_generic) {
                 _ = &x;
@@ -378,14 +378,14 @@ const pin = builtin.is_test and options.pin;
 pub inline fn level() Isa {
     if (pin) return pinned;
     const c = cached.load(.monotonic);
-    if (c != 0) return @enumFromInt(c - 1);
+    if (c != 0) return @fromBackingInt(@intCast(c - 1));
     return init();
 }
 
 noinline fn init() Isa {
     @branchHint(.cold);
     const l = best(detect());
-    cached.store(@intFromEnum(l) + 1, .monotonic);
+    cached.store(@backingInt(l) + 1, .monotonic);
     return l;
 }
 
@@ -429,31 +429,31 @@ fn detectX86() std.Target.Cpu.Feature.Set {
     const max = cpuid(0, 0)[0];
     const l1 = cpuid(1, 0);
     for (leaf1_ecx) |b| {
-        if (l1[2] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+        if (l1[2] >> b[1] & 1 != 0) set.addFeature(@backingInt(b[0]));
     }
     if (max >= 7) {
         const l7 = cpuid(7, 0);
         for (leaf7_ebx) |b| {
-            if (l7[1] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+            if (l7[1] >> b[1] & 1 != 0) set.addFeature(@backingInt(b[0]));
         }
         for (leaf7_ecx) |b| {
-            if (l7[2] >> b[1] & 1 != 0) set.addFeature(@intFromEnum(b[0]));
+            if (l7[2] >> b[1] & 1 != 0) set.addFeature(@backingInt(b[0]));
         }
     }
     if (cpuid(0x80000000, 0)[0] >= 0x80000001) {
         const e1 = cpuid(0x80000001, 0);
-        if (e1[2] & 1 != 0) set.addFeature(@intFromEnum(x86.Feature.sahf));
-        if (e1[2] >> 5 & 1 != 0) set.addFeature(@intFromEnum(x86.Feature.lzcnt));
+        if (e1[2] & 1 != 0) set.addFeature(@backingInt(x86.Feature.sahf));
+        if (e1[2] >> 5 & 1 != 0) set.addFeature(@backingInt(x86.Feature.lzcnt));
     }
     // XCR0: SSE and AVX state (bits 1, 2); AVX-512 opmask and upper ZMM
     // state (bits 5, 6, 7). Readable only when the OS set OSXSAVE.
     const xcr0: u32 = if (l1[2] >> 27 & 1 != 0) xgetbv() else 0;
     if (xcr0 & 0x6 != 0x6) {
-        for ([_]x86.Feature{ .avx, .avx2, .fma, .f16c }) |f| set.removeFeature(@intFromEnum(f));
+        for ([_]x86.Feature{ .avx, .avx2, .fma, .f16c }) |f| set.removeFeature(@backingInt(f));
     }
     if (xcr0 & 0xE6 != 0xE6) {
         for (simd.tiers[0].need) |f| {
-            if (std.mem.startsWith(u8, @tagName(f), "avx512")) set.removeFeature(@intFromEnum(f));
+            if (std.mem.startsWith(u8, @tagName(f), "avx512")) set.removeFeature(@backingInt(f));
         }
     }
     return set;

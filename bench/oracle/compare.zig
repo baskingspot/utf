@@ -135,7 +135,7 @@ fn base64Option(comptime T: type, comptime o: Base64) u8 {
         (if (v.padding) .url_with_padding else .url)
     else
         (if (v.padding) .default else .default_no_padding);
-    return @intFromEnum(format);
+    return @backingInt(format);
 }
 
 fn base64Label(comptime o: Base64) []const u8 {
@@ -155,15 +155,15 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
     const label = ns ++ "." ++ name ++ comptime base64Label(extra.base64);
     if (!has(ns, name)) return .{ .name = label, .op = op, .run = null };
     const f = @field(@field(utf, ns), name);
-    const params = @typeInfo(@TypeOf(f)).@"fn".params;
+    const params = @typeInfo(@TypeOf(f)).@"fn".param_types;
     const run = struct {
         fn run(in: []align(16) const u8, out: []align(16) u8) Got {
             if (params.len == 3) {
-                return written(u8, f(out, in, comptime optionsValue(params[2].type.?, extra.base64)), out);
+                return written(u8, f(out, in, comptime optionsValue(params[2].?, extra.base64)), out);
             }
-            const src = cast(params[0].type.?, in);
+            const src = cast(params[0].?, in);
             if (params.len == 2) {
-                const dst = cast(params[1].type.?, out);
+                const dst = cast(params[1].?, out);
                 return written(@typeInfo(@TypeOf(dst)).pointer.child, f(src, dst), out);
             }
             const r = f(src);
@@ -184,7 +184,7 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
     return .{
         .name = label,
         .op = op,
-        .option = if (params.len == 3) base64Option(params[2].type.?, extra.base64) else 0,
+        .option = if (params.len == 3) base64Option(params[2].?, extra.base64) else 0,
         .mode = switch (@typeInfo(@TypeOf(f)).@"fn".return_type.?) {
             bool => .validity,
             usize => if (params.len < 3) .simdutf_accepts else .checked,
@@ -470,8 +470,8 @@ const Runner = struct {
                     .skipped => st.skipped += 1,
                     .agree, .disagree => {
                         st.compared += 1;
-                        const e = @intFromEnum(resp.err);
-                        st.kinds[if (e < st.kinds.len) e else @intFromEnum(Oracle.Error.other)] += 1;
+                        const e = @backingInt(resp.err);
+                        st.kinds[if (e < st.kinds.len) e else @backingInt(Oracle.Error.other)] += 1;
                     },
                 }
                 if (verdict != .disagree) continue;
@@ -579,7 +579,7 @@ const Runner = struct {
             });
             try w.writeAll("\n         simdutf said:");
             for (st.kinds, 0..) |count, i| {
-                if (count != 0) try w.print(" {t}={d}", .{ @as(Oracle.Error, @enumFromInt(i)), count });
+                if (count != 0) try w.print(" {t}={d}", .{ @as(Oracle.Error, @fromBackingInt(@intCast(i))), count });
             }
             try w.writeAll("\n");
         }
@@ -789,7 +789,7 @@ fn randomAscii(r: Random, gpa: Allocator, buf: *std.ArrayList(u8)) Allocator.Err
 /// UTF-16 in byte order `endian`: runs of ASCII, BMP, and supplementary
 /// characters, with lone and reversed surrogates put next to block
 /// boundaries and the end.
-fn randomUtf16(r: Random, gpa: Allocator, buf: *std.ArrayList(u8), endian: std.builtin.Endian) Allocator.Error!void {
+fn randomUtf16(r: Random, gpa: Allocator, buf: *std.ArrayList(u8), endian: std.lang.Endian) Allocator.Error!void {
     var cps: std.ArrayList(u21) = .empty;
     defer cps.deinit(gpa);
     try codePoints(r, gpa, &cps, length(r) / 3);
