@@ -60,7 +60,7 @@ or a cross target with no CPU given) compiles the package once per ISA tier
 above the target and picks the best one on the first call with `cpuid` and XCR0. A native or named CPU selects at compile time instead. `-Ddispatch=false`,
 or `.dispatch = false` in the dependency's arguments, turns dispatch off.
 
-On aarch64, NEON is the only kernel choice, made at compile time.
+On aarch64, the NEON kernel is chosen at compile time.
 
 # Validating text
 
