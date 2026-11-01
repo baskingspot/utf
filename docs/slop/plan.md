@@ -120,8 +120,8 @@ standard, not from simdutf's source.
    generated loops are tight on every x86 level. Load blocks with
    `simd.load`: coercing an array to a vector compiled to a load per lane
    (4× slower). For UTF-8, the bytes one to three back come from unaligned
-   loads on AVX2 and SSE (+10%, +17%) and from shifts on AVX-512, where the
-   loads lost 11%. **Decided for validation: 64 on AVX2**
+   loads on AVX2 and SSE (+10%, +17%) and NEON (+9%) and from shifts on
+   AVX-512, where the loads lost 11%. **Decided for validation: 64 on AVX2**
    ([validate-wave2-20261031.md](results/validate-wave2-20261031.md)):
    against 32-byte blocks on `x86_64_v3`, 64 is 14% faster on UTF-8 at
    4 KiB and 4–5% at 64 KiB, 12–49% on UTF-16, and 16% on ASCII at 4 KiB;
@@ -501,3 +501,12 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   loads and stores and strided `@shuffle`s. Use `sli` (an intrinsic) where
   LLVM would make `usra` from shifts and adds. Encode 1.03 of simdutf
   (0.61), decode 1.08–1.25 (0.83–0.94); MIME 256 B 0.93 is left.
+- **Validation** ([neon-validate-20261101.md](results/neon-validate-20261101.md)):
+  every validation operation at or above simdutf's `arm64` on every row
+  (UTF-8 0.74 to 1.21, ASCII 0.93 to 1.31, UTF-16 emoji 0.52 to 1.15;
+  1.13-1.66 of `1476ab0`), x86 machine code unchanged. Reduce with a byte
+  max or min (`@reduce(.Max, v) < 0x80`), not `@reduce(.Or, <bools>)`:
+  LLVM lowers the latter through a bit mask, four `addv` for 64 lanes,
+  which UTF-8 paid twice a block. UTF-16 groups with a surrogate check the
+  pairs on the units' high bytes (`uzp2`) in vectors; the UTF-8 bytes
+  before a block come from loads (`prev_by_load`, 1.09 on non-ASCII text).

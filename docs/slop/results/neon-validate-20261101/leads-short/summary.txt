@@ -1,0 +1,7 @@
+utf/arm, geomean          rows  utf GB/s  simdutf     base      std     rust       go     ±   <1    ~   slowest vs simdutf
+ValidateUtf8                15     12.44     1.19     1.03     4.34     1.09     3.35    1%    0    0   1.06 [1.06, 1.06] arabic
+ValidateUtf8Err             15      9.23     1.25     1.01     3.64     1.02     2.48    0%    0    0   1.08 [1.08, 1.09] emoji
+ValidateUtf16le             15     37.94     2.48     1.02        -     4.63        -    0%    0    0   1.15 [1.15, 1.15] emoji
+ValidateUtf16leErr          15     33.09     2.34     0.99        -     4.19        -    0%    0    0   1.06 [1.06, 1.07] emoji
+ValidateUtf16be             15     28.66     2.27     1.02        -        -        -    0%    0    0   1.23 [1.23, 1.23] emoji
+all                         75     21.05     1.81     1.02     3.98     2.16     2.88          0    0
