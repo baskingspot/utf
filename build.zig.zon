@@ -35,8 +35,8 @@
         // The test runner. Lazy: only the root build uses it, and build.zig
         // returns before this is fetched for a consumer.
         .testingx = .{
-            .url = "https://baskingspot.dev/testingx/v0.2.0.tar.gz",
-            .hash = "testingx-0.2.0-ib95-5lNAwA8WZQH6Q6eDm2hgfC3ixFJuhkOrR8gcZAm",
+            .url = "https://github.com/baskingspot/testingx/archive/0a3f3e283932841fd86315d25b7cfe64230bafcd.tar.gz",
+            .hash = "testingx-0.3.0-ib95-wVWAwDdMeqmJyF0vCDBnF1YvtPfudmU5YnI4BQS",
             .lazy = true,
         },
     },

@@ -613,7 +613,7 @@ pub fn main(init: std.process.Init) !u8 {
         try serve(io, gpa, ops, defaults, w);
         return 0;
     }
-    var flag_args: testingx.bench.SliceArgs = .{ .args = flags.items };
+    var flag_args: testingx.bench.SliceArgs = .init(flags.items);
     var suite: testingx.B = .init(gpa, io, try .parse(gpa, &flag_args, defaults));
     defer suite.deinit();
 
