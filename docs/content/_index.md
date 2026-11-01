@@ -4,10 +4,10 @@ title = "utf"
 
 SIMD Unicode validation and transcoding, plus base64, in Zig with no C.
 
-simdutf is the C++ library for this job, and it earned its place. This is the
-same job in Zig: validate UTF-8, ASCII, UTF-16LE/BE, and UTF-32; convert
-between any two of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1; size the output;
-and encode or decode base64. Nothing allocates. Every function takes the
+simdutf is the C++ library for this job, and it earned its place. This package
+does the same job in Zig: validate UTF-8, ASCII, UTF-16LE/BE, and UTF-32;
+convert between any two of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1; size the
+output; and encode or decode base64. Nothing allocates. Every function takes the
 buffers it needs, and a length function says how big the output must be.
 
 On a generic x86-64 build the AVX-512, AVX2, and SSE kernels are picked at run
@@ -60,7 +60,7 @@ or a cross target with no CPU given) compiles the package once per ISA tier
 above the target and picks the best one on the first call with `cpuid` and XCR0. A native or named CPU selects at compile time instead. `-Ddispatch=false`,
 or `.dispatch = false` in the dependency's arguments, turns dispatch off.
 
-On aarch64, the NEON kernel is chosen at compile time.
+On aarch64, NEON has no runtime choice to make.
 
 # Validating text
 
@@ -188,7 +188,7 @@ Every byte is a code point from U+0000 to U+00FF. Conversion from Latin-1
 cannot fail except on the output size. Conversion to Latin-1 fails with
 `too_large` for any character above U+00FF, including every emoji.
 
-This is ISO-8859-1, not Windows-1252: bytes `0x80` to `0x9F` become control
+It is ISO-8859-1, not Windows-1252: bytes `0x80` to `0x9F` become control
 characters, not quotation marks or dashes.
 
 ## Byte order
@@ -274,8 +274,8 @@ characters can produce. On success `count` is the number of bytes written.
 ## Whitespace is skipped
 
 `decode` skips tab, line feed, form feed, carriage return, and space, wherever
-they appear. This is WHATWG's forgiving base64 and simdutf's behavior, so a
-MIME or PEM body wrapped at 76 columns decodes without preprocessing.
+they appear. That matches WHATWG's forgiving base64 and simdutf's behavior, so a MIME or
+PEM body wrapped at 76 columns decodes without preprocessing.
 
 No option rejects whitespace. A decoder that must reject it needs its own
 scan first.
