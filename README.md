@@ -7,10 +7,10 @@
 
 SIMD Unicode validation and transcoding, plus base64, in Zig with no C.
 
-simdutf is the C++ library for this job, and it earned its place. This is the
-same job in Zig: validate UTF-8, ASCII, UTF-16LE/BE, and UTF-32; convert
-between any two of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1; size the output;
-and encode or decode base64. Nothing allocates. You pass the destination, and
+simdutf is the C++ library for this job, and it earned its place. This package
+does the same job in Zig: validate UTF-8, ASCII, UTF-16LE/BE, and UTF-32;
+convert between any two of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1; size the
+output; and encode or decode base64. Nothing allocates. You pass the destination, and
 a length function says how big it must be.
 
 On a generic x86-64 build the AVX-512, AVX2, and SSE kernels are picked at run
