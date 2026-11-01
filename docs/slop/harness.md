@@ -29,6 +29,8 @@ Notes for agents on `bench/`: the comparison benchmarks and the simdutf oracle. 
 - The timed loops cost the same in every arm: a call to a function that returns at once costs 1.41 ns in the C++ loop (through the PLT, as libsimdutf is called), 1.25 in the Zig loop (`b.loop()` is itself an out-of-line call per iteration), 1.24 in Rust's, and 1.33 in Go's.
 - Code layout is not controlled: identical code at another address moved rows ±15% in wave 3, and a run's intervals do not include it.
 - A full run (66 operations, 877 rows for simdutf and this package, 156 for std, 248 for Rust, 141 for Go) takes about 26 minutes for 10 rounds at 50 ms a sample on the 4-vCPU orb.
+- `base=<rev>` is an A/B in one run: `bench-build` extracts the revision with `git archive` into `zig-out/base/tree`, builds its own `bench/` with the same `bench_flags`, and installs its `bench-utf` as `bench-base`, which runs from this tree's root with this tree's `ops.tsv` and corpus. The summary's `base` column is utf ÷ base per round. A revision whose arm names an operation this `ops.tsv` lacks fails its check.
+- No orb is aarch64. `.github/workflows/bench.yml` runs `bench-compare` (with `base` if given) on a GitHub-hosted runner, `ubuntu-26.04-arm` by default, and uploads `zig-out/bench-compare` with `lscpu.txt`: `gh workflow run bench.yml -R baskingspot/utf --ref <branch> -f base=<rev> -f ops='validate-utf8 utf8-to-utf16le'`, then `gh run download`. The branch must be on GitHub; hosted runners are shared VMs, so read the ratios, not the GB/s.
 
 ## Oracle
 

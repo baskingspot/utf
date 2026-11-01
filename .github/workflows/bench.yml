@@ -1,0 +1,64 @@
+name: bench
+
+# `just bench-compare` on a GitHub-hosted runner, for a CPU no orb has, such
+# as aarch64. Dispatch it by hand on the revision to measure; `base` adds
+# another revision's utf arm for an A/B in the same run. The output
+# directory, with the runner's lscpu, is the run's artifact. A hosted runner
+# is a shared VM: compare ratios within a run, not GB/s across runs.
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: The runner label
+        type: choice
+        options: [ubuntu-26.04-arm, ubuntu-26.04]
+        default: ubuntu-26.04-arm
+      rounds:
+        description: Rounds after the sizing round
+        default: "10"
+      ops:
+        description: Operations from bench/ops.tsv, separated by spaces (empty for all)
+        default: ""
+      base:
+        description: A Git revision to time as the base arm (empty for none)
+        default: ""
+
+permissions: {}
+
+jobs:
+  bench:
+    name: bench (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 300
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # base can name any revision.
+          fetch-depth: 0
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.35.3/install
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: baskingspot
+          extraPullNames: mattrobenolt
+          skipPush: true
+      - name: Name the CPU
+        run: lscpu
+      - name: Run bench-compare
+        run: |
+          read -r -a ops <<< "$OPS"
+          nix develop --command just base="$BASE" bench-compare "$ROUNDS" "${ops[@]}"
+          lscpu > zig-out/bench-compare/lscpu.txt
+        env:
+          ROUNDS: ${{ inputs.rounds }}
+          OPS: ${{ inputs.ops }}
+          BASE: ${{ inputs.base }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: bench-compare-${{ inputs.runner }}-${{ github.run_id }}
+          path: zig-out/bench-compare
