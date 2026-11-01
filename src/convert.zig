@@ -411,19 +411,20 @@ inline fn storeWide(comptime T: type, comptime e: Endian, dst: []T, o: usize, v:
     if (!neon) return store(T, e, dst, o, v);
     const n = 16 / @sizeOf(T);
     const at = if (T == u16) @intFromBool(e == .big) else if (native == .little) 0 else 3;
-    var w: [@sizeOf(T)]V16 = undefined;
-    inline for (&w, 0..) |*x, q| x.* = simd.lookup16(v, comptime widening(@sizeOf(T), at, n * q));
-    dst[o..][0..16].* = @bitCast(w);
+    // One store per register: Zig 0.17 lowers a `@bitCast` of an array of
+    // registers to `[16]T` through one integer, which LLVM unrolled into
+    // lane moves.
+    inline for (0..@sizeOf(T)) |q| {
+        const x = simd.lookup16(v, comptime widening(@sizeOf(T), at, n * q));
+        dst[o + n * q ..][0..n].* = @as(@Vector(n, T), @bitCast(x));
+    }
 }
 
 /// Stores the 16-bit lanes of `v` widened to UTF-32 at `dst[o..]`: on
 /// NEON with `tbl`, as `storeWide`.
 inline fn storeWideUnits(dst: []u32, o: usize, v: anytype) void {
-    const n = @typeInfo(@TypeOf(v)).vector.len;
     if (!neon) return store(u32, native, dst, o, v);
-    const parts: [n / 8]V16 = @bitCast(v);
-    var w: [n / 4]V16 = undefined;
-    inline for (parts, 0..) |x, k| {
+    inline for (simd.split(V16, v), 0..) |x, k| {
         inline for (0..2) |h| {
             const idx = comptime blk: {
                 var m: [16]u8 = @splat(0x80);
@@ -434,10 +435,10 @@ inline fn storeWideUnits(dst: []u32, o: usize, v: anytype) void {
                 }
                 break :blk m;
             };
-            w[2 * k + h] = simd.lookup16(x, @as(V16, idx));
+            const w = simd.lookup16(x, @as(V16, idx));
+            dst[o + 8 * k + 4 * h ..][0..4].* = @as(@Vector(4, u32), @bitCast(w));
         }
     }
-    dst[o..][0..n].* = @bitCast(w);
 }
 
 // AVX-512 with VBMI and VBMI2: byte permutes across the whole register
