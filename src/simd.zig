@@ -156,6 +156,13 @@ pub inline fn lookup16(table: [16]u8, idx: anytype) @TypeOf(idx) {
         .avx2 => if (n % 32 == 0) 32 else 16,
         .sse, .neon, .generic => 16,
     };
+    if (isa == .neon and llvm) {
+        // Through `split` and `join`: from an array, Zig 0.17 built each
+        // register a lane at a time.
+        var out: [n / 16]@Vector(16, u8) = undefined;
+        inline for (split(@Vector(16, u8), idx), &out) |v, *o| o.* = @"llvm.aarch64.neon.tbl1.v16i8"(t, v);
+        return join(@TypeOf(idx), out);
+    }
     const in: [n]u8 = idx;
     var out: [n]u8 = undefined;
     if (!llvm or isa == .generic) {
@@ -205,6 +212,7 @@ pub inline fn split(comptime P: type, v: anytype) [@sizeOf(@TypeOf(v)) / @sizeOf
     const m = @typeInfo(P).vector.len;
     const E = @typeInfo(P).vector.child;
     const k = @sizeOf(@TypeOf(v)) / @sizeOf(P);
+    @setEvalBranchQuota(10_000);
     const all: @Vector(k * m, E) = @bitCast(v);
     var out: [k]P = undefined;
     inline for (&out, 0..) |*o, j| {
