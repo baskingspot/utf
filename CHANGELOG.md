@@ -46,4 +46,5 @@ All notable changes to utf are recorded here. The format follows
 
 ### Fixed
 
+- `base64.decode` in place (`dst` starting at `src.ptr`) returned wrong bytes or a spurious error on input with ASCII whitespace, such as base64 wrapped at 76 columns; it now returns what decoding into a separate buffer does, and its documentation says `dst` may start where `src` does.
 - On AVX-512, the `validate` functions took about 100–140 ns on inputs under 64 bytes that end within 63 bytes of a page followed by an unmapped or never-written page; they take 4–7 ns, as elsewhere.

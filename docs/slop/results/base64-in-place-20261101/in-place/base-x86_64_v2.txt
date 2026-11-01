@@ -1,0 +1,400 @@
+BenchmarkMimeInPlace/random-16	3330351	15.07 ns/op	1592.91 MB/s
+BenchmarkMimeCopy/random-16	15424107	3.00 ns/op	7994.98 MB/s
+BenchmarkMimeSeparate/random-16	3174789	15.32 ns/op	1566.57 MB/s
+BenchmarkMimeCopy/random-64	13336993	3.62 ns/op	24842.93 MB/s
+BenchmarkMimeSeparate/random-64	1819949	27.25 ns/op	3302.44 MB/s
+BenchmarkMimeInPlace/random-64	1808501	28.98 ns/op	3106.11 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-256	783743	63.39 ns/op	5552.93 MB/s
+BenchmarkMimeInPlace/random-256	712069	67.77 ns/op	5194.33 MB/s
+BenchmarkMimeCopy/random-256	6888117	7.06 ns/op	49826.85 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-4096	82088	621.21 ns/op	9024.29 MB/s
+BenchmarkMimeCopy/random-4096	680366	72.90 ns/op	76897.66 MB/s
+BenchmarkMimeSeparate/random-4096	81699	625.74 ns/op	8958.95 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeCopy/random-65536	24215	2075.94 ns/op	43200.69 MB/s
+BenchmarkMimeSeparate/random-65536	4740	10544.37 ns/op	8505.20 MB/s
+BenchmarkMimeInPlace/random-65536	4705	10664.30 ns/op	8409.55 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-1048576	178	276077.29 ns/op	5197.44 MB/s
+BenchmarkMimeInPlace/random-1048576	212	240200.74 ns/op	5973.74 MB/s
+BenchmarkMimeCopy/random-1048576	491	101385.14 ns/op	14152.92 MB/s
+BenchmarkInPlace/random-16	3158736	15.50 ns/op	1548.24 MB/s
+BenchmarkCopy/random-16	15869925	3.06 ns/op	7834.56 MB/s
+BenchmarkSeparate/random-16	3205449	15.75 ns/op	1524.12 MB/s
+BenchmarkCopy/random-64	12922895	4.05 ns/op	21742.04 MB/s
+BenchmarkSeparate/random-64	2636099	19.03 ns/op	4624.32 MB/s
+BenchmarkInPlace/random-64	2650804	19.06 ns/op	4617.39 MB/s
+BenchmarkSeparate/random-256	1183766	41.86 ns/op	8217.87 MB/s
+BenchmarkInPlace/random-256	1186889	41.07 ns/op	8375.69 MB/s
+BenchmarkCopy/random-256	7556213	6.42 ns/op	53615.29 MB/s
+BenchmarkInPlace/random-4096	94723	583.33 ns/op	9366.85 MB/s
+BenchmarkCopy/random-4096	701463	71.35 ns/op	76581.15 MB/s
+BenchmarkSeparate/random-4096	93172	559.95 ns/op	9757.94 MB/s
+BenchmarkCopy/random-65536	24386	1999.27 ns/op	43707.98 MB/s
+BenchmarkSeparate/random-65536	5241	9695.65 ns/op	9012.70 MB/s
+BenchmarkInPlace/random-65536	5204	9787.06 ns/op	8928.52 MB/s
+BenchmarkSeparate/random-1048576	193	259684.82 ns/op	5383.85 MB/s
+BenchmarkInPlace/random-1048576	233	214379.88 ns/op	6521.62 MB/s
+BenchmarkCopy/random-1048576	525	102689.24 ns/op	13614.90 MB/s
+BenchmarkMimeSeparate/random-16	3115028	15.81 ns/op	1518.15 MB/s
+BenchmarkMimeInPlace/random-16	3198330	15.70 ns/op	1528.36 MB/s
+BenchmarkMimeCopy/random-16	15704307	3.02 ns/op	7947.28 MB/s
+BenchmarkMimeInPlace/random-64	1821804	27.85 ns/op	3231.49 MB/s
+BenchmarkMimeCopy/random-64	12354688	4.05 ns/op	22233.89 MB/s
+BenchmarkMimeSeparate/random-64	1766170	28.50 ns/op	3158.31 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeCopy/random-256	7217055	7.03 ns/op	50041.16 MB/s
+BenchmarkMimeSeparate/random-256	765351	63.93 ns/op	5506.31 MB/s
+BenchmarkMimeInPlace/random-256	621616	71.38 ns/op	4931.04 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-4096	69923	614.83 ns/op	9118.00 MB/s
+BenchmarkMimeInPlace/random-4096	81506	688.89 ns/op	8137.73 MB/s
+BenchmarkMimeCopy/random-4096	580144	71.61 ns/op	78284.74 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-65536	4694	10793.11 ns/op	8309.19 MB/s
+BenchmarkMimeCopy/random-65536	20287	2192.75 ns/op	40899.36 MB/s
+BenchmarkMimeSeparate/random-65536	4729	10970.05 ns/op	8175.17 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeCopy/random-1048576	483	103202.58 ns/op	13903.68 MB/s
+BenchmarkMimeSeparate/random-1048576	177	288000.62 ns/op	4982.27 MB/s
+BenchmarkMimeInPlace/random-1048576	206	243829.01 ns/op	5884.85 MB/s
+BenchmarkSeparate/random-16	3040727	15.77 ns/op	1521.59 MB/s
+BenchmarkInPlace/random-16	3143862	15.74 ns/op	1524.93 MB/s
+BenchmarkCopy/random-16	16156737	3.04 ns/op	7891.20 MB/s
+BenchmarkInPlace/random-64	1264934	29.49 ns/op	2984.42 MB/s
+BenchmarkCopy/random-64	13042685	3.95 ns/op	22253.71 MB/s
+BenchmarkSeparate/random-64	2508579	20.59 ns/op	4274.13 MB/s
+BenchmarkCopy/random-256	7153909	7.19 ns/op	47852.20 MB/s
+BenchmarkSeparate/random-256	1150937	44.38 ns/op	7751.93 MB/s
+BenchmarkInPlace/random-256	1154167	43.74 ns/op	7864.68 MB/s
+BenchmarkSeparate/random-4096	88016	556.90 ns/op	9811.44 MB/s
+BenchmarkInPlace/random-4096	90584	559.00 ns/op	9774.51 MB/s
+BenchmarkCopy/random-4096	701596	71.18 ns/op	76764.11 MB/s
+BenchmarkInPlace/random-65536	5094	9763.88 ns/op	8949.72 MB/s
+BenchmarkCopy/random-65536	23688	2106.59 ns/op	41481.31 MB/s
+BenchmarkSeparate/random-65536	5044	9934.00 ns/op	8796.46 MB/s
+BenchmarkCopy/random-1048576	514	99000.42 ns/op	14122.20 MB/s
+BenchmarkSeparate/random-1048576	187	267781.31 ns/op	5221.07 MB/s
+BenchmarkInPlace/random-1048576	220	224546.78 ns/op	6226.34 MB/s
+BenchmarkMimeCopy/random-16	15545361	3.14 ns/op	7655.47 MB/s
+BenchmarkMimeSeparate/random-16	3123541	16.00 ns/op	1499.83 MB/s
+BenchmarkMimeInPlace/random-16	3229356	15.52 ns/op	1546.59 MB/s
+BenchmarkMimeSeparate/random-64	1796466	27.71 ns/op	3248.05 MB/s
+BenchmarkMimeInPlace/random-64	1759712	28.49 ns/op	3158.88 MB/s
+BenchmarkMimeCopy/random-64	12901342	4.09 ns/op	22029.24 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-256	708089	69.04 ns/op	5098.37 MB/s
+BenchmarkMimeCopy/random-256	6857740	7.25 ns/op	48520.86 MB/s
+BenchmarkMimeSeparate/random-256	734301	64.05 ns/op	5495.92 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeCopy/random-4096	683890	72.41 ns/op	77416.60 MB/s
+BenchmarkMimeSeparate/random-4096	81628	615.03 ns/op	9114.94 MB/s
+BenchmarkMimeInPlace/random-4096	80931	620.89 ns/op	9028.97 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-65536	4736	10397.29 ns/op	8625.52 MB/s
+BenchmarkMimeInPlace/random-65536	4828	10650.27 ns/op	8420.63 MB/s
+BenchmarkMimeCopy/random-65536	24891	1957.62 ns/op	45811.67 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-1048576	234	220079.58 ns/op	6519.90 MB/s
+BenchmarkMimeCopy/random-1048576	583	85759.10 ns/op	16731.71 MB/s
+BenchmarkMimeSeparate/random-1048576	192	252621.85 ns/op	5680.02 MB/s
+BenchmarkCopy/random-16	14497527	3.22 ns/op	7455.85 MB/s
+BenchmarkSeparate/random-16	3206075	15.94 ns/op	1505.94 MB/s
+BenchmarkInPlace/random-16	3250236	15.47 ns/op	1551.41 MB/s
+BenchmarkSeparate/random-64	2597190	19.66 ns/op	4475.15 MB/s
+BenchmarkInPlace/random-64	2553090	20.30 ns/op	4334.82 MB/s
+BenchmarkCopy/random-64	13236099	3.63 ns/op	24231.69 MB/s
+BenchmarkInPlace/random-256	1238791	39.82 ns/op	8638.64 MB/s
+BenchmarkCopy/random-256	7407140	6.83 ns/op	50352.47 MB/s
+BenchmarkSeparate/random-256	1210662	40.83 ns/op	8426.01 MB/s
+BenchmarkCopy/random-4096	725439	67.85 ns/op	80531.02 MB/s
+BenchmarkSeparate/random-4096	95357	524.78 ns/op	10412.02 MB/s
+BenchmarkInPlace/random-4096	90615	555.21 ns/op	9841.27 MB/s
+BenchmarkSeparate/random-65536	5239	9630.78 ns/op	9073.41 MB/s
+BenchmarkInPlace/random-65536	5103	9917.58 ns/op	8811.02 MB/s
+BenchmarkCopy/random-65536	24545	2018.09 ns/op	43300.35 MB/s
+BenchmarkInPlace/random-1048576	252	204417.66 ns/op	6839.45 MB/s
+BenchmarkCopy/random-1048576	594	83023.51 ns/op	16839.86 MB/s
+BenchmarkSeparate/random-1048576	211	249932.23 ns/op	5593.93 MB/s
+BenchmarkMimeCopy/random-16	13844469	3.31 ns/op	7246.88 MB/s
+BenchmarkMimeSeparate/random-16	2952570	16.94 ns/op	1416.84 MB/s
+BenchmarkMimeInPlace/random-16	3063539	16.69 ns/op	1437.92 MB/s
+BenchmarkMimeSeparate/random-64	1643903	29.97 ns/op	3003.37 MB/s
+BenchmarkMimeInPlace/random-64	1686562	30.56 ns/op	2944.92 MB/s
+BenchmarkMimeCopy/random-64	11894613	4.05 ns/op	22237.27 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-256	670361	84.28 ns/op	4176.34 MB/s
+BenchmarkMimeCopy/random-256	4686337	8.23 ns/op	42756.30 MB/s
+BenchmarkMimeSeparate/random-256	695356	72.13 ns/op	4879.87 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeCopy/random-4096	677330	78.13 ns/op	71749.36 MB/s
+BenchmarkMimeSeparate/random-4096	76465	807.72 ns/op	6940.54 MB/s
+BenchmarkMimeInPlace/random-4096	72554	706.82 ns/op	7931.33 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-65536	3324	11484.83 ns/op	7808.74 MB/s
+BenchmarkMimeInPlace/random-65536	3491	12654.91 ns/op	7086.74 MB/s
+BenchmarkMimeCopy/random-65536	21234	2429.42 ns/op	36914.98 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-1048576	196	251547.47 ns/op	5704.28 MB/s
+BenchmarkMimeCopy/random-1048576	486	101199.26 ns/op	14178.92 MB/s
+BenchmarkMimeSeparate/random-1048576	179	277604.41 ns/op	5168.85 MB/s
+BenchmarkCopy/random-16	15293320	3.15 ns/op	7612.44 MB/s
+BenchmarkSeparate/random-16	3110259	16.37 ns/op	1465.72 MB/s
+BenchmarkInPlace/random-16	3043498	16.24 ns/op	1477.50 MB/s
+BenchmarkSeparate/random-64	2494409	20.70 ns/op	4250.82 MB/s
+BenchmarkInPlace/random-64	2558049	20.04 ns/op	4390.19 MB/s
+BenchmarkCopy/random-64	12370671	3.97 ns/op	22181.57 MB/s
+BenchmarkInPlace/random-256	1081945	46.24 ns/op	7439.56 MB/s
+BenchmarkCopy/random-256	5144134	9.80 ns/op	35109.83 MB/s
+BenchmarkSeparate/random-256	1118407	45.27 ns/op	7599.47 MB/s
+BenchmarkCopy/random-4096	690844	72.58 ns/op	75281.28 MB/s
+BenchmarkSeparate/random-4096	87977	570.69 ns/op	9574.34 MB/s
+BenchmarkInPlace/random-4096	89311	560.10 ns/op	9755.35 MB/s
+BenchmarkSeparate/random-65536	4956	10289.86 ns/op	8492.24 MB/s
+BenchmarkInPlace/random-65536	4901	10123.52 ns/op	8631.78 MB/s
+BenchmarkCopy/random-65536	23877	2058.25 ns/op	42455.42 MB/s
+BenchmarkInPlace/random-1048576	228	222612.08 ns/op	6280.45 MB/s
+BenchmarkCopy/random-1048576	514	98443.88 ns/op	14202.04 MB/s
+BenchmarkSeparate/random-1048576	188	267963.65 ns/op	5217.51 MB/s
+BenchmarkMimeInPlace/random-16	2930410	16.08 ns/op	1492.65 MB/s
+BenchmarkMimeCopy/random-16	15210498	3.24 ns/op	7397.00 MB/s
+BenchmarkMimeSeparate/random-16	3083849	16.48 ns/op	1456.04 MB/s
+BenchmarkMimeCopy/random-64	12643755	4.22 ns/op	21344.80 MB/s
+BenchmarkMimeSeparate/random-64	1718933	29.12 ns/op	3090.92 MB/s
+BenchmarkMimeInPlace/random-64	1701460	30.75 ns/op	2927.27 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-256	745337	65.89 ns/op	5341.90 MB/s
+BenchmarkMimeInPlace/random-256	717347	70.48 ns/op	4994.33 MB/s
+BenchmarkMimeCopy/random-256	6974868	7.99 ns/op	44046.73 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-4096	77724	632.34 ns/op	8865.50 MB/s
+BenchmarkMimeCopy/random-4096	688195	72.35 ns/op	77483.66 MB/s
+BenchmarkMimeSeparate/random-4096	80775	622.80 ns/op	9001.22 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeCopy/random-65536	23912	2096.98 ns/op	42767.28 MB/s
+BenchmarkMimeSeparate/random-65536	4469	10650.03 ns/op	8420.82 MB/s
+BenchmarkMimeInPlace/random-65536	4745	10562.90 ns/op	8490.28 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-1048576	162	316544.93 ns/op	4532.99 MB/s
+BenchmarkMimeInPlace/random-1048576	212	240035.16 ns/op	5977.86 MB/s
+BenchmarkMimeCopy/random-1048576	519	98162.71 ns/op	14617.53 MB/s
+BenchmarkInPlace/random-16	3151438	15.85 ns/op	1514.14 MB/s
+BenchmarkCopy/random-16	15121241	3.38 ns/op	7096.76 MB/s
+BenchmarkSeparate/random-16	3129447	15.93 ns/op	1506.12 MB/s
+BenchmarkCopy/random-64	12905418	3.80 ns/op	23162.21 MB/s
+BenchmarkSeparate/random-64	2610093	19.17 ns/op	4591.25 MB/s
+BenchmarkInPlace/random-64	2316473	19.23 ns/op	4576.29 MB/s
+BenchmarkSeparate/random-256	1206363	40.56 ns/op	8480.66 MB/s
+BenchmarkInPlace/random-256	1209545	45.95 ns/op	7485.74 MB/s
+BenchmarkCopy/random-256	7122615	7.18 ns/op	47919.99 MB/s
+BenchmarkInPlace/random-4096	88053	562.27 ns/op	9717.79 MB/s
+BenchmarkCopy/random-4096	692571	72.39 ns/op	75483.45 MB/s
+BenchmarkSeparate/random-4096	89734	554.44 ns/op	9855.03 MB/s
+BenchmarkCopy/random-65536	24422	2073.33 ns/op	42146.69 MB/s
+BenchmarkSeparate/random-65536	5008	9937.78 ns/op	8793.11 MB/s
+BenchmarkInPlace/random-65536	4995	9775.40 ns/op	8939.18 MB/s
+BenchmarkSeparate/random-1048576	200	249168.10 ns/op	5611.09 MB/s
+BenchmarkInPlace/random-1048576	235	212524.44 ns/op	6578.56 MB/s
+BenchmarkCopy/random-1048576	510	91666.39 ns/op	15252.09 MB/s
+BenchmarkMimeInPlace/random-16	2994692	16.19 ns/op	1482.21 MB/s
+BenchmarkMimeCopy/random-16	15172866	3.18 ns/op	7544.24 MB/s
+BenchmarkMimeSeparate/random-16	3036443	16.36 ns/op	1467.19 MB/s
+BenchmarkMimeCopy/random-64	12143676	4.02 ns/op	22407.17 MB/s
+BenchmarkMimeSeparate/random-64	1742473	29.13 ns/op	3089.95 MB/s
+BenchmarkMimeInPlace/random-64	1621709	29.59 ns/op	3041.36 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-256	747786	68.50 ns/op	5138.72 MB/s
+BenchmarkMimeInPlace/random-256	695268	72.56 ns/op	4851.24 MB/s
+BenchmarkMimeCopy/random-256	6719818	7.95 ns/op	44254.36 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-4096	74354	769.54 ns/op	7284.84 MB/s
+BenchmarkMimeCopy/random-4096	670301	78.07 ns/op	71810.11 MB/s
+BenchmarkMimeSeparate/random-4096	73700	728.26 ns/op	7697.85 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeCopy/random-65536	21007	2307.31 ns/op	38868.64 MB/s
+BenchmarkMimeSeparate/random-65536	4464	11242.76 ns/op	7976.87 MB/s
+BenchmarkMimeInPlace/random-65536	4370	11103.47 ns/op	8076.93 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-1048576	171	296256.04 ns/op	4843.43 MB/s
+BenchmarkMimeInPlace/random-1048576	195	260088.39 ns/op	5516.96 MB/s
+BenchmarkMimeCopy/random-1048576	481	102697.28 ns/op	13972.09 MB/s
+BenchmarkInPlace/random-16	2966810	16.79 ns/op	1429.80 MB/s
+BenchmarkCopy/random-16	14217127	3.42 ns/op	7012.66 MB/s
+BenchmarkSeparate/random-16	2877855	17.80 ns/op	1348.61 MB/s
+BenchmarkCopy/random-64	12215624	4.39 ns/op	20068.31 MB/s
+BenchmarkSeparate/random-64	2400007	23.39 ns/op	3762.68 MB/s
+BenchmarkInPlace/random-64	2266159	33.90 ns/op	2595.50 MB/s
+BenchmarkSeparate/random-256	1061390	72.10 ns/op	4771.19 MB/s
+BenchmarkInPlace/random-256	603422	69.24 ns/op	4968.57 MB/s
+BenchmarkCopy/random-256	4412054	12.35 ns/op	27856.49 MB/s
+BenchmarkInPlace/random-4096	51199	664.46 ns/op	8223.17 MB/s
+BenchmarkCopy/random-4096	591415	101.37 ns/op	53899.75 MB/s
+BenchmarkSeparate/random-4096	95537	518.32 ns/op	10541.84 MB/s
+BenchmarkCopy/random-65536	26104	1870.28 ns/op	46722.34 MB/s
+BenchmarkSeparate/random-65536	5447	9185.66 ns/op	9513.08 MB/s
+BenchmarkInPlace/random-65536	5427	9078.67 ns/op	9625.20 MB/s
+BenchmarkSeparate/random-1048576	221	229808.83 ns/op	6083.77 MB/s
+BenchmarkInPlace/random-1048576	253	197817.50 ns/op	7067.65 MB/s
+BenchmarkCopy/random-1048576	578	90232.25 ns/op	15494.50 MB/s
+BenchmarkMimeCopy/random-16	14454631	3.28 ns/op	7326.08 MB/s
+BenchmarkMimeSeparate/random-16	2922980	16.97 ns/op	1414.39 MB/s
+BenchmarkMimeInPlace/random-16	2973522	17.10 ns/op	1403.45 MB/s
+BenchmarkMimeSeparate/random-64	1664264	30.05 ns/op	2994.89 MB/s
+BenchmarkMimeInPlace/random-64	1715996	30.11 ns/op	2989.27 MB/s
+BenchmarkMimeCopy/random-64	11589891	4.21 ns/op	21397.10 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-256	663176	75.44 ns/op	4665.73 MB/s
+BenchmarkMimeCopy/random-256	6469301	7.69 ns/op	45780.14 MB/s
+BenchmarkMimeSeparate/random-256	738176	69.97 ns/op	5030.45 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeCopy/random-4096	663651	76.37 ns/op	73404.97 MB/s
+BenchmarkMimeSeparate/random-4096	77025	683.10 ns/op	8206.69 MB/s
+BenchmarkMimeInPlace/random-4096	77840	668.58 ns/op	8384.88 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-65536	3496	11931.41 ns/op	7516.46 MB/s
+BenchmarkMimeInPlace/random-65536	3475	12912.48 ns/op	6945.37 MB/s
+BenchmarkMimeCopy/random-65536	23065	2171.88 ns/op	41292.41 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-1048576	173	262655.83 ns/op	5463.03 MB/s
+BenchmarkMimeCopy/random-1048576	453	115211.81 ns/op	12454.42 MB/s
+BenchmarkMimeSeparate/random-1048576	146	327993.08 ns/op	4374.78 MB/s
+BenchmarkCopy/random-16	13003776	3.92 ns/op	6118.79 MB/s
+BenchmarkSeparate/random-16	2558557	17.18 ns/op	1396.70 MB/s
+BenchmarkInPlace/random-16	2972953	20.90 ns/op	1148.21 MB/s
+BenchmarkSeparate/random-64	2047546	24.06 ns/op	3657.95 MB/s
+BenchmarkInPlace/random-64	2088939	22.25 ns/op	3954.56 MB/s
+BenchmarkCopy/random-64	11651937	4.02 ns/op	21881.12 MB/s
+BenchmarkInPlace/random-256	1161458	43.31 ns/op	7943.64 MB/s
+BenchmarkCopy/random-256	6653841	7.41 ns/op	46453.23 MB/s
+BenchmarkSeparate/random-256	1156304	43.52 ns/op	7905.05 MB/s
+BenchmarkCopy/random-4096	682598	75.17 ns/op	72689.29 MB/s
+BenchmarkSeparate/random-4096	87311	571.32 ns/op	9563.82 MB/s
+BenchmarkInPlace/random-4096	86521	570.51 ns/op	9577.37 MB/s
+BenchmarkSeparate/random-65536	5118	9723.84 ns/op	8986.58 MB/s
+BenchmarkInPlace/random-65536	5083	10096.21 ns/op	8655.13 MB/s
+BenchmarkCopy/random-65536	22749	2210.55 ns/op	39530.49 MB/s
+BenchmarkInPlace/random-1048576	236	208979.71 ns/op	6690.14 MB/s
+BenchmarkCopy/random-1048576	595	98270.60 ns/op	14227.08 MB/s
+BenchmarkSeparate/random-1048576	175	261525.39 ns/op	5345.96 MB/s
+BenchmarkMimeSeparate/random-16	2917213	20.07 ns/op	1195.83 MB/s
+BenchmarkMimeInPlace/random-16	2984133	17.59 ns/op	1364.66 MB/s
+BenchmarkMimeCopy/random-16	14151399	3.30 ns/op	7278.77 MB/s
+BenchmarkMimeInPlace/random-64	1664085	30.80 ns/op	2922.32 MB/s
+BenchmarkMimeCopy/random-64	12910986	3.89 ns/op	23109.99 MB/s
+BenchmarkMimeSeparate/random-64	1690162	30.63 ns/op	2938.07 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeCopy/random-256	6891074	7.53 ns/op	46766.28 MB/s
+BenchmarkMimeSeparate/random-256	770659	65.19 ns/op	5399.24 MB/s
+BenchmarkMimeInPlace/random-256	720308	71.18 ns/op	4944.93 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-4096	69014	685.80 ns/op	8174.44 MB/s
+BenchmarkMimeInPlace/random-4096	77331	729.28 ns/op	7687.01 MB/s
+BenchmarkMimeCopy/random-4096	624846	78.45 ns/op	71459.26 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-65536	4730	11721.76 ns/op	7650.90 MB/s
+BenchmarkMimeCopy/random-65536	20446	2215.89 ns/op	40472.22 MB/s
+BenchmarkMimeSeparate/random-65536	4678	10948.72 ns/op	8191.10 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeCopy/random-1048576	482	111385.03 ns/op	12882.31 MB/s
+BenchmarkMimeSeparate/random-1048576	173	328146.53 ns/op	4372.73 MB/s
+BenchmarkMimeInPlace/random-1048576	199	249764.51 ns/op	5745.00 MB/s
+BenchmarkSeparate/random-16	1492922	34.61 ns/op	693.42 MB/s
+BenchmarkInPlace/random-16	1471900	34.48 ns/op	696.02 MB/s
+BenchmarkCopy/random-16	2115222	22.52 ns/op	1065.64 MB/s
+BenchmarkInPlace/random-64	2548651	19.49 ns/op	4514.28 MB/s
+BenchmarkCopy/random-64	13108984	3.71 ns/op	23704.67 MB/s
+BenchmarkSeparate/random-64	2684979	18.84 ns/op	4669.69 MB/s
+BenchmarkCopy/random-256	7195849	7.15 ns/op	48117.75 MB/s
+BenchmarkSeparate/random-256	1254061	42.43 ns/op	8108.16 MB/s
+BenchmarkInPlace/random-256	1223982	41.36 ns/op	8316.97 MB/s
+BenchmarkSeparate/random-4096	90882	552.55 ns/op	9888.74 MB/s
+BenchmarkInPlace/random-4096	88751	629.84 ns/op	8675.21 MB/s
+BenchmarkCopy/random-4096	694939	70.85 ns/op	77120.19 MB/s
+BenchmarkInPlace/random-65536	4561	11241.27 ns/op	7773.50 MB/s
+BenchmarkCopy/random-65536	24503	2187.03 ns/op	39955.47 MB/s
+BenchmarkSeparate/random-65536	5111	9807.65 ns/op	8909.78 MB/s
+BenchmarkCopy/random-1048576	518	97418.29 ns/op	14351.56 MB/s
+BenchmarkSeparate/random-1048576	197	254229.02 ns/op	5499.39 MB/s
+BenchmarkInPlace/random-1048576	239	213333.76 ns/op	6553.60 MB/s
+BenchmarkMimeSeparate/random-16	3292246	15.12 ns/op	1587.41 MB/s
+BenchmarkMimeInPlace/random-16	3341557	14.66 ns/op	1637.32 MB/s
+BenchmarkMimeCopy/random-16	17183159	2.96 ns/op	8114.54 MB/s
+BenchmarkMimeInPlace/random-64	1881315	25.48 ns/op	3532.50 MB/s
+BenchmarkMimeCopy/random-64	13566395	3.83 ns/op	23470.65 MB/s
+BenchmarkMimeSeparate/random-64	1868257	26.67 ns/op	3374.41 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeCopy/random-256	4719997	10.59 ns/op	33253.95 MB/s
+BenchmarkMimeSeparate/random-256	814445	60.82 ns/op	5787.71 MB/s
+BenchmarkMimeInPlace/random-256	803735	63.53 ns/op	5540.86 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-4096	86893	564.89 ns/op	9924.11 MB/s
+BenchmarkMimeInPlace/random-4096	84635	615.80 ns/op	9103.57 MB/s
+BenchmarkMimeCopy/random-4096	690647	70.85 ns/op	79125.29 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-65536	4987	11933.83 ns/op	7514.94 MB/s
+BenchmarkMimeCopy/random-65536	22071	2406.86 ns/op	37261.03 MB/s
+BenchmarkMimeSeparate/random-65536	2531	17640.71 ns/op	5083.81 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeCopy/random-1048576	470	102075.49 ns/op	14057.20 MB/s
+BenchmarkMimeSeparate/random-1048576	174	282182.76 ns/op	5084.99 MB/s
+BenchmarkMimeInPlace/random-1048576	209	238866.84 ns/op	6007.10 MB/s
+BenchmarkSeparate/random-16	3040926	16.14 ns/op	1486.69 MB/s
+BenchmarkInPlace/random-16	3049308	16.96 ns/op	1415.30 MB/s
+BenchmarkCopy/random-16	15750864	3.16 ns/op	7597.84 MB/s
+BenchmarkInPlace/random-64	2533822	19.64 ns/op	4479.94 MB/s
+BenchmarkCopy/random-64	12366279	3.80 ns/op	23161.55 MB/s
+BenchmarkSeparate/random-64	2632648	19.51 ns/op	4511.10 MB/s
+BenchmarkCopy/random-256	6937454	7.19 ns/op	47828.23 MB/s
+BenchmarkSeparate/random-256	1138094	42.22 ns/op	8147.55 MB/s
+BenchmarkInPlace/random-256	1191994	41.80 ns/op	8229.08 MB/s
+BenchmarkSeparate/random-4096	92814	556.73 ns/op	9814.44 MB/s
+BenchmarkInPlace/random-4096	89976	553.90 ns/op	9864.64 MB/s
+BenchmarkCopy/random-4096	703197	71.56 ns/op	76353.84 MB/s
+BenchmarkInPlace/random-65536	5018	10006.10 ns/op	8733.07 MB/s
+BenchmarkCopy/random-65536	23515	2081.35 ns/op	41984.29 MB/s
+BenchmarkSeparate/random-65536	5004	9755.40 ns/op	8957.50 MB/s
+BenchmarkCopy/random-1048576	499	97951.56 ns/op	14273.42 MB/s
+BenchmarkSeparate/random-1048576	191	263041.04 ns/op	5315.16 MB/s
+BenchmarkInPlace/random-1048576	228	219209.81 ns/op	6377.93 MB/s
+BenchmarkMimeCopy/random-16	16963859	2.93 ns/op	8186.37 MB/s
+BenchmarkMimeSeparate/random-16	3310553	15.40 ns/op	1558.83 MB/s
+BenchmarkMimeInPlace/random-16	3229696	15.43 ns/op	1555.12 MB/s
+BenchmarkMimeSeparate/random-64	1844574	26.85 ns/op	3351.59 MB/s
+BenchmarkMimeInPlace/random-64	1830264	27.08 ns/op	3323.22 MB/s
+BenchmarkMimeCopy/random-64	13475252	3.78 ns/op	23779.47 MB/s
+# mime random-256: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-256	703947	70.96 ns/op	4960.47 MB/s
+BenchmarkMimeCopy/random-256	6794857	7.18 ns/op	49010.01 MB/s
+BenchmarkMimeSeparate/random-256	770526	64.07 ns/op	5494.37 MB/s
+# mime random-4096: in place differs from a separate buffer
+BenchmarkMimeCopy/random-4096	683682	74.15 ns/op	75606.28 MB/s
+BenchmarkMimeSeparate/random-4096	81092	608.42 ns/op	9214.01 MB/s
+BenchmarkMimeInPlace/random-4096	85971	595.98 ns/op	9406.29 MB/s
+# mime random-65536: in place differs from a separate buffer
+BenchmarkMimeSeparate/random-65536	4635	10047.86 ns/op	8925.48 MB/s
+BenchmarkMimeInPlace/random-65536	5021	9615.68 ns/op	9326.64 MB/s
+BenchmarkMimeCopy/random-65536	25296	2035.85 ns/op	44051.40 MB/s
+# mime random-1048576: in place differs from a separate buffer
+BenchmarkMimeInPlace/random-1048576	188	247600.82 ns/op	5795.20 MB/s
+BenchmarkMimeCopy/random-1048576	477	103407.19 ns/op	13876.17 MB/s
+BenchmarkMimeSeparate/random-1048576	170	286739.25 ns/op	5004.18 MB/s
+BenchmarkCopy/random-16	15770082	2.95 ns/op	8132.63 MB/s
+BenchmarkSeparate/random-16	3385996	14.39 ns/op	1667.87 MB/s
+BenchmarkInPlace/random-16	3349046	14.49 ns/op	1655.97 MB/s
+BenchmarkSeparate/random-64	2848972	17.42 ns/op	5051.26 MB/s
+BenchmarkInPlace/random-64	2911314	17.53 ns/op	5020.24 MB/s
+BenchmarkCopy/random-64	12442273	3.71 ns/op	23747.82 MB/s
+BenchmarkInPlace/random-256	1190974	40.81 ns/op	8428.57 MB/s
+BenchmarkCopy/random-256	7340630	6.96 ns/op	49410.79 MB/s
+BenchmarkSeparate/random-256	1209369	41.18 ns/op	8354.38 MB/s
+BenchmarkCopy/random-4096	734310	69.03 ns/op	79151.94 MB/s
+BenchmarkSeparate/random-4096	92927	528.11 ns/op	10346.42 MB/s
+BenchmarkInPlace/random-4096	96241	521.40 ns/op	10479.50 MB/s
+BenchmarkSeparate/random-65536	5474	9189.66 ns/op	9508.95 MB/s
+BenchmarkInPlace/random-65536	5417	9458.31 ns/op	9238.86 MB/s
+BenchmarkCopy/random-65536	26075	2148.58 ns/op	40670.60 MB/s
+BenchmarkInPlace/random-1048576	230	228767.27 ns/op	6111.47 MB/s
+BenchmarkCopy/random-1048576	628	81044.67 ns/op	17251.03 MB/s
+BenchmarkSeparate/random-1048576	218	237212.29 ns/op	5893.89 MB/s

@@ -51,6 +51,10 @@ fn encodeKernel(dst: []u8, src: []const u8, options: EncodeOptions) usize {
 /// fit, where decoding can resume with more room. A `dst` of
 /// `maxDecodedLen(src.len)` bytes always fits. On failure the contents of
 /// `dst` are unspecified.
+///
+/// `dst` may start where `src` does, to decode in place, with the same
+/// result as decoding into a buffer of its own; on failure the contents of
+/// `src` are then unspecified too. Otherwise the two must not overlap.
 pub fn decode(dst: []u8, src: []const u8, options: DecodeOptions) Result {
     return dispatch.call(@src(), decodeKernel, .{ dst, src, options });
 }
@@ -289,7 +293,15 @@ inline fn decodeBlocks(
         if (p != 0) {
             if (len % 4 != 0 or i == run) break;
             const end = i + p;
-            K.packClean(K.classifyClean(src[end - 64 ..][0..64]).values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
+            if (untouched(dst, src, end - 64, o + K.slack)) {
+                const ending = K.classifyClean(src[end - 64 ..][0..64]);
+                K.packClean(ending.values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
+            } else {
+                // Decoding in place has written over that block's start:
+                // the run's end from this block instead, without the slack,
+                // which would overwrite the characters after it.
+                simd.storePartial(dst[o..], K.packAll(c.values), p / 4 * 3);
+            }
             o += p / 4 * 3;
         }
         const k = @ctz(~(space >> p));
@@ -299,6 +311,10 @@ inline fn decodeBlocks(
         // Then lines of `len` characters, each followed by the same `k`
         // whitespace characters as this one.
         if (t.len - i < len + k or src.len - i < lineReach(K, len)) continue;
+        // In place, not until a line's stores stay behind its start, so
+        // that its loads and a restart at it read what the caller passed.
+        // Each line moves its start further ahead of its output.
+        if (!untouched(dst, src, i, o + lineVectors(K, len) / 4 * 3 + K.slack)) continue;
         const gap = std.mem.readInt(u32, src[i - k ..][0..4], .little) & @as(u32, @truncate(simd.lowBits(u64, 8 * k)));
         o = decodeLines(isa, alphabet, dst, src, t, &i, o, len, k, gap);
         run = i;
@@ -435,8 +451,21 @@ inline fn fromWords(w: Words) Result {
 /// How far past a line's start `decodeLines` reads: the line, the four
 /// bytes after it, and its last vectors past its end.
 fn lineReach(comptime K: type, len: usize) usize {
+    return @max(len + 4, lineVectors(K, len));
+}
+
+/// The characters `decodeLines` decodes of a line: the line, and its last
+/// vectors past its end.
+fn lineVectors(comptime K: type, len: usize) usize {
     const full = len / 64 * 64;
-    return @max(len + 4, if (K.lanes < 64) full + std.mem.alignForward(usize, len - full, K.lanes) else len);
+    return if (K.lanes < 64) full + std.mem.alignForward(usize, len - full, K.lanes) else len;
+}
+
+/// Whether `src[i..]` still holds what the caller passed after writes to
+/// `dst[0..n]`: `dst` either starts where `src` does, to decode in place,
+/// and then the writes must stay behind the reads, or does not overlap it.
+inline fn untouched(dst: []const u8, src: []const u8, i: usize, n: usize) bool {
+    return dst.ptr != src.ptr or n <= i;
 }
 
 /// `decodeWith` from a block at `from` with whitespace it does not decode
@@ -1355,21 +1384,31 @@ const test_isas = blk: {
 
 const all_last_chunks = std.enums.values(LastChunk);
 
-/// Decodes `src` with every kernel and expects the scalar reference's
-/// result and bytes.
+/// Decodes `src` with every kernel, into a buffer of its own and in place,
+/// and expects the scalar reference's result and bytes.
 fn expectSameDecode(dst_len: usize, src: []const u8, options: DecodeOptions) !void {
     var want_buf: [2400]u8 = undefined;
     var got_buf: [2400]u8 = undefined;
+    var in_place: [3200]u8 = undefined;
     const want = scalar.decode(want_buf[0..dst_len], src, options);
     inline for (test_isas) |isa| {
-        const got = switch (options.alphabet) {
-            inline else => |a| decodeWith(isa, a, got_buf[0..dst_len], src, options.last_chunk),
-        };
-        if (!std.meta.eql(want, got)) {
-            std.debug.print("{t} {any} dst_len={d} src=\"{f}\"\n", .{ isa, options, dst_len, std.zig.fmtString(src) });
+        @memcpy(in_place[0..src.len], src);
+        const dsts = [_][]u8{ got_buf[0..dst_len], in_place[0..dst_len] };
+        const srcs = [_][]const u8{ src, in_place[0..src.len] };
+        for (dsts, srcs) |dst, s| {
+            const got = switch (options.alphabet) {
+                inline else => |a| decodeWith(isa, a, dst, s, options.last_chunk),
+            };
+            const same = std.meta.eql(want, got) and
+                (want.err != .none or std.mem.eql(u8, want_buf[0..want.count], dst[0..got.count]));
+            if (!same) {
+                const where = if (dst.ptr == s.ptr) " in place" else "";
+                const fmt = "{t}{s} {any} dst_len={d} src=\"{f}\"\n";
+                std.debug.print(fmt, .{ isa, where, options, dst_len, std.zig.fmtString(src) });
+            }
+            try testing.expectEqual(want, got);
+            if (want.err == .none) try testing.expectEqualSlices(u8, want_buf[0..want.count], dst[0..got.count]);
         }
-        try testing.expectEqual(want, got);
-        if (want.err == .none) try testing.expectEqualSlices(u8, want_buf[0..want.count], got_buf[0..got.count]);
     }
 }
 
@@ -1562,7 +1601,8 @@ test "every kernel decodes regular lines, with a fault in any line" {
 /// Random inputs through `encode` and `decode`, on whichever kernels they
 /// dispatch to, against the scalar reference: every length to 400 bytes,
 /// clean, in MIME lines, and with a byte replaced, with room to spare and
-/// with exactly the room the result needs.
+/// with exactly the room the result needs, into a buffer of its own and in
+/// place.
 fn publicCases(seed: u64) !void {
     var prng: std.Random.DefaultPrng = .init(seed);
     const rand = prng.random();
@@ -1600,6 +1640,10 @@ fn publicCases(seed: u64) !void {
                     const g = decode(got_out[0..room], text, options);
                     try testing.expectEqual(r, g);
                     if (r.err == .none) try testing.expectEqualSlices(u8, want_out[0..r.count], got_out[0..g.count]);
+                    @memcpy(got_out[0..text.len], text);
+                    const p = decode(got_out[0..room], got_out[0..text.len], options);
+                    try testing.expectEqual(r, p);
+                    if (r.err == .none) try testing.expectEqualSlices(u8, want_out[0..r.count], got_out[0..p.count]);
                 }
                 if (text.len > 0) text[at] = saved;
             }

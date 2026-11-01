@@ -24,7 +24,10 @@ memory, as simdutf's `char16_t` functions do. UTF-32 is `[]const u32`.
   `decode(dst, src, options) Result`, `maxDecodedLen(n)`. Options: alphabet
   (standard, URL-safe), padding on encode, and the last-chunk rule on decode
   (loose, strict, stop before a partial chunk), with ASCII whitespace ignored
-  as WHATWG's forgiving-base64 does and simdutf does.
+  as WHATWG's forgiving-base64 does and simdutf does. `decode` may run in
+  place (`dst` starting at `src.ptr`), as simdutf's does: any path that
+  reads `src` again after writing `dst` checks first that its stores end
+  before what it reads (`untouched` in `src/base64.zig`).
 - `Result` and `Error` (`src/result.zig`): simdutf's error kinds and positions,
   so simdutf is a differential oracle.
 
@@ -533,3 +536,18 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   high bytes (`uzp2`, `tbl` of 32 entries); load them volatile where the
   high byte is the load's only use, or LLVM makes `ld2`, slower on N2.
   UTF-16BE had been 0.88 of LE: masked equalities, where LE got `cmhi`.
+
+In-place base64 decode ([base64-in-place-20261101.md](results/base64-in-place-20261101.md)):
+
+- **`decode` in place returned wrong bytes on input with whitespace**: the
+  regular-lines path reloads `src` after writing `dst` (the block ending a
+  run, `decodeLines`' last block on AVX-512, and the restart at a line
+  `decodeLines` stops at). Now the run's end decodes from the block already
+  classified, with an exact store, while the reload would read overwritten
+  bytes, and `decodeLines` waits until a whole line's stores end before its
+  start (MIME: from the fifth line). Separate buffers: within noise on
+  every kernel (AVX2 MIME 256 B 0.96). In place against a separate buffer:
+  MIME 256 B 1.5–1.75× the time, 4 KiB 1.1–1.15×, level from 64 KiB. Left:
+  AVX-512 `loadTail` loads the 64 bytes ending at the input's end, which in
+  place overlap the last block's stores, about 12 ns a call from 64
+  characters (before the fix too).
