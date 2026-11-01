@@ -181,7 +181,8 @@ fn utf32WithErrorsKernel(units: []const u32) Result {
         const max: Units32 = @splat(0x10FFFF);
         const d: Units32 = @splat(0xD800);
         const w: Units32 = @splat(0x800);
-        if (!@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return .ok(len);
+        if (neon and !utf32KeyBad(@max(utf32Key(a), utf32Key(b)))) return .ok(len);
+        if (!neon and !@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return .ok(len);
         const shift: u6 = @intCast(len - n32);
         return utf32Fail(utf32Above(a) | utf32Above(b) << shift, utf32Surrogates(a) | utf32Surrogates(b) << shift);
     }
@@ -199,7 +200,7 @@ fn utf32WithErrorsKernel(units: []const u32) Result {
             simd.load(u32, units[s3..]),
         };
         const key = @max(@max(utf32Key(v[0]), utf32Key(v[1])), @max(utf32Key(v[2]), utf32Key(v[3])));
-        if (!@reduce(.Or, key > @as(Units32, @splat(utf32_key_max)))) return .ok(len);
+        if (!utf32KeyBad(key)) return .ok(len);
         const above = utf32Above(v[0]) | utf32Above(v[1]) << n32 | utf32Above(v[2]) << s2 | utf32Above(v[3]) << s3;
         const surr = utf32Surrogates(v[0]) | utf32Surrogates(v[1]) << n32 |
             utf32Surrogates(v[2]) << s2 | utf32Surrogates(v[3]) << s3;
@@ -221,11 +222,18 @@ inline fn splat(x: u8) Bytes {
     return @splat(x);
 }
 
+/// NEON has no `pmovmskb`: LLVM reduces a vector of bools through a bit
+/// mask, an `and`, `ext`, `zip1`, `addv`, and `fmov` per register, where a
+/// max reduction of the bytes is one `umaxv` once the registers are joined.
+const neon = simd.isa == .neon;
+
 inline fn isAscii(v: Bytes) bool {
+    if (neon) return @reduce(.Max, v) < 0x80;
     return !@reduce(.Or, v >= splat(0x80));
 }
 
 inline fn any(v: Bytes) bool {
+    if (neon) return @reduce(.Max, v) != 0;
     return @reduce(.Or, v != splat(0));
 }
 
@@ -236,6 +244,7 @@ inline fn isAsciiShort(s: []const u8) bool {
         const V = @Vector(16, u8);
         var acc = simd.load16(s) | simd.load16(s[len - 16 ..]);
         if (len > 32) acc |= simd.load16(s[16..]) | simd.load16(s[len - 32 ..]);
+        if (neon) return @reduce(.Max, acc) < 0x80;
         return !@reduce(.Or, acc >= @as(V, @splat(0x80)));
     }
     const x: u64 = if (len >= 8)
@@ -456,8 +465,13 @@ inline fn utf8ErrorsPrev(cur: Bytes, prev1: Bytes, prev2: Bytes, prev3: Bytes) B
     return (must_be_23 & splat(0x80)) ^ special;
 }
 
+/// What `utf8Incomplete` returns: the block, or on NEON its last 16 bytes,
+/// as LLVM kept the saturating subtraction of 0xFF from the other three
+/// registers there, and carried and reduced all four through the loop.
+const Incomplete = if (neon) @Vector(16, u8) else Bytes;
+
 /// Nonzero where a lead in the block's last three bytes needs bytes beyond it.
-inline fn utf8Incomplete(v: Bytes) Bytes {
+inline fn utf8Incomplete(v: Bytes) Incomplete {
     const max = comptime blk: {
         var m: [64]u8 = @splat(0xFF);
         m[61] = 0xF0 - 1;
@@ -465,7 +479,14 @@ inline fn utf8Incomplete(v: Bytes) Bytes {
         m[63] = 0xC0 - 1;
         break :blk m;
     };
-    return v -| @as(Bytes, max);
+    const n = @typeInfo(Incomplete).vector.len;
+    const last = @shuffle(u8, v, undefined, std.simd.iota(i32, n) + @as(@Vector(n, i32), @splat(64 - n)));
+    return last -| @as(Incomplete, max[64 - n ..].*);
+}
+
+inline fn anyIncomplete(v: Incomplete) bool {
+    if (neon) return @reduce(.Max, v) != 0;
+    return any(v);
 }
 
 /// The index of the first 64-byte block that fails, or `none`. Every byte
@@ -511,7 +532,7 @@ inline fn utf8BadRest(bytes: []const u8) usize {
     // the first block that is not ASCII instead.
     if (simd.isa == .generic) return i;
     var before = zero;
-    var incomplete = zero;
+    var incomplete: Incomplete = @splat(0);
     if (i == 0 and bytes.len >= 4096) {
         // The first block, then the rest from the next 64-byte boundary,
         // like the ASCII prefix: 11-12% from 64 KiB, but the extra block
@@ -529,8 +550,8 @@ inline fn utf8BadRest(bytes: []const u8) usize {
     while (i + 64 <= bytes.len) : (i += 64) {
         const cur: Bytes = simd.load(u8, bytes[i..]);
         if (isAscii(cur)) {
-            if (any(incomplete)) return i;
-            incomplete = zero;
+            if (anyIncomplete(incomplete)) return i;
+            incomplete = @splat(0);
         } else {
             const errors = if (prev_by_load and i >= 3)
                 utf8ErrorsPrev(
@@ -559,7 +580,7 @@ inline fn utf8BadRest(bytes: []const u8) usize {
         if (any(utf8Errors(cur, before))) return last;
         incomplete = utf8Incomplete(cur);
     }
-    return if (any(incomplete)) bytes.len else none;
+    return if (anyIncomplete(incomplete)) bytes.len else none;
 }
 
 /// A block whose last lanes are the eight bytes before `pos`, or as many as
@@ -603,7 +624,7 @@ fn utf16WithErrors(comptime endian: std.builtin.Endian, units: []const u16) Resu
         const a = simd.load(u16, units);
         const b = simd.load(u16, units[len - n16 ..]);
         const key = @min(groupKey(endian, a), groupKey(endian, b));
-        if (!@reduce(.Or, key < @as(Units16, @splat(groupKeyMax(endian))))) return .ok(len);
+        if (!anyBelow(key, groupKeyMax(endian))) return .ok(len);
         const sa = surrogateMasks(endian, a);
         const sb = surrogateMasks(endian, b);
         const shift: u6 = @intCast(len - n16);
@@ -651,7 +672,15 @@ inline fn surrogateMasks(comptime endian: std.builtin.Endian, block: Units16) Su
 }
 
 inline fn hasSurrogate(comptime endian: std.builtin.Endian, block: Units16) bool {
+    if (neon) return anyBelow(groupKey(endian, block), groupKeyMax(endian));
     return @reduce(.Or, surrogateKey(endian, block) == @as(Units16, @splat(0)));
+}
+
+/// Whether any lane of `key` is below `max`: on NEON one `uminv`, as for
+/// `isAscii`.
+inline fn anyBelow(key: Units16, max: u16) bool {
+    if (neon) return @reduce(.Min, key) < max;
+    return @reduce(.Or, key < @as(Units16, @splat(max)));
 }
 
 /// Below `groupKeyMax(endian)` in the lanes that hold a surrogate. In
@@ -700,10 +729,9 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
     if (len <= 2 * n16) {
         // Up to two blocks, overlapping loads of the whole input with one
         // test for a surrogate anywhere, as most text has none.
-        const max: Units16 = @splat(groupKeyMax(endian));
         const first = groupKey(endian, simd.load(u16, units));
         const key = @min(first, groupKey(endian, simd.load(u16, units[len - n16 ..])));
-        if (!@reduce(.Or, key < max)) return none;
+        if (!anyBelow(key, groupKeyMax(endian))) return none;
     }
     var pending: Mask16 = 0;
     var i: usize = 0;
@@ -719,7 +747,7 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
         while (i + g * n16 <= len) : (i += g * n16) {
             var key = groupKey(endian, simd.load(u16, units[i..]));
             inline for (1..g) |k| key = @min(key, groupKey(endian, simd.load(u16, units[i + k * n16 ..])));
-            if (!@reduce(.Or, key < @as(Units16, @splat(groupKeyMax(endian))))) {
+            if (!anyBelow(key, groupKeyMax(endian))) {
                 if (pending != 0) return i;
                 continue;
             }
@@ -727,7 +755,8 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
             // it only saves work on blocks without one.
             inline for (0..g) |k| {
                 const j = i + k * n16;
-                const s = surrogateMasks(endian, simd.load(u16, units[j..]));
+                const block = if (neon) simd.loadVolatile(Units16, units[j..]) else simd.load(u16, units[j..]);
+                const s = surrogateMasks(endian, block);
                 if (s.low != (s.high << 1 | pending)) return j;
                 pending = s.high >> (n16 - 1);
             }
@@ -760,9 +789,17 @@ inline fn utf32Key(v: Units32) Units32 {
 }
 const utf32_key_max = 0x10FFFF - 0x800;
 
+/// Whether a lane of `key` is above `utf32_key_max`: on NEON one `umaxv`,
+/// as for `isAscii`.
+inline fn utf32KeyBad(key: Units32) bool {
+    if (neon) return @reduce(.Max, key) > utf32_key_max;
+    return @reduce(.Or, key > @as(Units32, @splat(utf32_key_max)));
+}
+
 /// One block: two compares, which measured 7-25% faster on one block than
 /// the key's three dependent operations.
 inline fn utf32Bad(v: Units32) bool {
+    if (neon) return utf32KeyBad(utf32Key(v));
     const above = v > @as(Units32, @splat(0x10FFFF));
     const surr = v -% @as(Units32, @splat(0xD800)) < @as(Units32, @splat(0x800));
     return @reduce(.Or, above) or @reduce(.Or, surr);
@@ -797,7 +834,8 @@ inline fn utf32BadBlock(units: []const u32) usize {
         const max: Units32 = @splat(0x10FFFF);
         const d: Units32 = @splat(0xD800);
         const w: Units32 = @splat(0x800);
-        if (!@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return none;
+        if (neon and !utf32KeyBad(@max(utf32Key(a), utf32Key(b)))) return none;
+        if (!neon and !@reduce(.Or, (a > max) | (b > max) | (a -% d < w) | (b -% d < w))) return none;
         return if (utf32Bad(a)) 0 else len - n32;
     }
     var i: usize = 0;
@@ -811,7 +849,7 @@ inline fn utf32BadBlock(units: []const u32) usize {
     while (i + 4 * n32 <= len) : (i += 4 * n32) {
         var key = utf32Key(simd.load(u32, units[i..]));
         inline for (1..4) |k| key = @max(key, utf32Key(simd.load(u32, units[i + k * n32 ..])));
-        if (@reduce(.Or, key > @as(Units32, @splat(utf32_key_max)))) break;
+        if (utf32KeyBad(key)) break;
     }
     while (i + n32 <= len) : (i += n32) {
         if (utf32Bad(simd.load(u32, units[i..]))) return i;
