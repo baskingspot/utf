@@ -1,0 +1,8 @@
+peak RSS (MiB)              simdutf      utf     base      std     rust       go
+base64-encode                   6.3      3.7      3.7      3.3      4.1      4.8
+base64-encode-url               6.3      3.7      3.7      3.3      4.1      4.8
+base64-decode                   6.3      3.6      3.6      3.5      4.2      4.8
+base64-decode-url               6.3      3.6      3.6      3.5      4.2      4.8
+base64-decode-strict            6.3      3.6      3.6      3.5      4.2      4.8
+base64-decode-partial           6.3      3.6      3.6        -        -        -
+base64-decode-mime              6.4      3.6      3.6      3.5      4.5      4.9

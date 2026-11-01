@@ -121,6 +121,13 @@ pub fn encodeWith(comptime isa: Isa, comptime alphabet: Alphabet, dst: []u8, src
         }
         return o + K.encodeLast(dst[o..], src, i, src.len, padding);
     }
+    if (K.structured and src.len >= 48) {
+        while (src.len - i >= 48) : ({
+            i += 48;
+            o += 64;
+        }) K.encodeStructured(src[i..][0..48], dst[o..][0..64]);
+        return o + K.encodeLast(dst[o..], src, i, src.len, padding);
+    }
     if (src.len >= 64) {
         // The wide kernel reads from `K.skip` bytes before its input, so the
         // first 12 bytes go through the narrow one.
@@ -241,24 +248,24 @@ inline fn decodeBlocks(
         var clean = @min((t.len - i) / 64, ((dst.len - o) -| K.slack) / 48);
         // Two at a time, with one test for both.
         while (clean >= 2) : (clean -= 2) {
-            const a = K.classifyBlock(src[i..][0..64]);
-            const b = K.classifyBlock(src[i + 64 ..][0..64]);
+            const a = K.classifyClean(src[i..][0..64]);
+            const b = K.classifyClean(src[i + 64 ..][0..64]);
             if (a.anyBadWith(b)) {
                 if (!a.anyBad()) {
-                    K.packBlock(a.values, dst[o..][0 .. 48 + K.slack]);
+                    K.packClean(a.values, dst[o..][0 .. 48 + K.slack]);
                     i += 64;
                     o += 48;
                 }
                 break;
             }
-            K.packBlock(a.values, dst[o..][0 .. 48 + K.slack]);
-            K.packBlock(b.values, dst[o + 48 ..][0 .. 48 + K.slack]);
+            K.packClean(a.values, dst[o..][0 .. 48 + K.slack]);
+            K.packClean(b.values, dst[o + 48 ..][0 .. 48 + K.slack]);
             i += 128;
             o += 96;
         } else if (clean == 1) {
-            const c = K.classifyBlock(src[i..][0..64]);
+            const c = K.classifyClean(src[i..][0..64]);
             if (!c.anyBad()) {
-                K.packBlock(c.values, dst[o..][0 .. 48 + K.slack]);
+                K.packClean(c.values, dst[o..][0 .. 48 + K.slack]);
                 i += 64;
                 o += 48;
             }
@@ -282,7 +289,7 @@ inline fn decodeBlocks(
         if (p != 0) {
             if (len % 4 != 0 or i == run) break;
             const end = i + p;
-            K.packBlock(K.classifyBlock(src[end - 64 ..][0..64]).values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
+            K.packClean(K.classifyClean(src[end - 64 ..][0..64]).values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
             o += p / 4 * 3;
         }
         const k = @ctz(~(space >> p));
@@ -325,15 +332,24 @@ inline fn decodeLast(
         // (docs/slop/results/calls-20261031.md).
         const in: [K.blocks]K.V = @bitCast(block);
         var values: [K.blocks / 2]K.V = undefined;
+        var classes: [K.blocks / 2]K.V = undefined;
         var bad: u64 = 0;
-        inline for (&values, 0..) |*v, k| {
+        inline for (&values, &classes, 0..) |*v, *cl, k| {
             const c = K.classify(in[k]);
             v.* = c.values;
+            cl.* = c.classes;
             bad |= @as(u64, simd.bitmask(c.bad)) << (k * K.lanes);
         }
         if (bad & live == 0) {
             if (K.finish(values, n, dst[o..], t, last_chunk)) |len| return .ok(o + len);
             return scalar.decodeFrom(dst, src, t, i, o, options);
+        }
+        if (K.structured) {
+            // Whitespace, as the line break before MIME's last line: in
+            // the vectors classified, not the whole block again.
+            if (K.finishSpaced(values, classes, n, bad & live, live, dst[o..], t, last_chunk)) |len|
+                return .ok(o + len);
+            return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
         }
     }
     const c = K.classifyBlock(block);
@@ -343,7 +359,7 @@ inline fn decodeLast(
         return scalar.decodeFrom(dst, src, t, i, o, options);
     }
     // Whitespace in it, compressed out in registers.
-    if (K.finishSpaced(c, n, bad, live, dst[o..], t, last_chunk)) |len| return .ok(o + len);
+    if (K.finishSpaced(c.values, c.classes, n, bad, live, dst[o..], t, last_chunk)) |len| return .ok(o + len);
     return fromWords(decodeStaged(isa, alphabet, dst, src, t, i, o, last_chunk));
 }
 
@@ -373,9 +389,9 @@ inline fn decodeLines(
         const at = i.*;
         var j: usize = 0;
         while (j < full) : (j += 64) {
-            const b = K.classifyBlock(src[at + j ..][0..64]);
+            const b = K.classifyClean(src[at + j ..][0..64]);
             if (b.anyBad()) break :lines;
-            K.packBlock(b.values, dst[o + j / 4 * 3 ..][0 .. 48 + K.slack]);
+            K.packClean(b.values, dst[o + j / 4 * 3 ..][0 .. 48 + K.slack]);
         }
         if (rem != 0) {
             if (K.lanes < 64) {
@@ -390,9 +406,9 @@ inline fn decodeLines(
                     }
                 }
             } else {
-                const b = K.classifyBlock(src[at + len - 64 ..][0..64]);
+                const b = K.classifyClean(src[at + len - 64 ..][0..64]);
                 if (b.anyBad()) break;
-                K.packBlock(b.values, dst[o + (len - 64) / 4 * 3 ..][0 .. 48 + K.slack]);
+                K.packClean(b.values, dst[o + (len - 64) / 4 * 3 ..][0 .. 48 + K.slack]);
             }
         }
         if (std.mem.readInt(u32, src[at + len ..][0..4], .little) & mask != gap) break;
@@ -492,7 +508,8 @@ noinline fn decodeStaged(
             return toWords(scalar.decodeFrom(dst, src, t, i, o, options));
         }
         if (w == 0) {
-            if (K.finishSpaced(c, n, bad, live, dst[o..], t, last_chunk)) |len| return toWords(.ok(o + len));
+            if (K.finishSpaced(c.values, c.classes, n, bad, live, dst[o..], t, last_chunk)) |len|
+                return toWords(.ok(o + len));
         }
         const space = if (bad == 0) 0 else c.spaceMask() & live;
         if (bad & ~space == 0) {
@@ -559,6 +576,86 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // split the vector it does not use all of into three loads.
             const in = simd.loadVolatile(V, src);
             return translate(@shuffle(u8, in, undefined, spreadMask(!avx512, 0)), mul);
+        }
+
+        /// NEON's structured loads and stores, as simdutf's arm64 kernel
+        /// uses them: `ld3` puts the first, second, and third byte of each
+        /// group in a vector of their own and `st4` interleaves four
+        /// vectors of characters, and for decode `ld4` and `st3` the
+        /// reverse, so that the bits move with shifts within lanes and no
+        /// shuffle. LLVM makes them from a whole load or store and strided
+        /// shuffles of it.
+        const structured = isa == .neon;
+
+        /// Encodes 48 bytes into 64 characters.
+        inline fn encodeStructured(src: *const [48]u8, out: *[64]u8) void {
+            const in = @as(*align(1) const @Vector(48, u8), @ptrCast(src)).*;
+            const a = @shuffle(u8, in, undefined, strided(3, 0));
+            const b = @shuffle(u8, in, undefined, strided(3, 1));
+            const c = @shuffle(u8, in, undefined, strided(3, 2));
+            const m = splat(0x3f);
+            // `ushr` and `sli`, as simdutf has them, not the `shl` and
+            // `usra` LLVM makes from shifts and ors: 5% faster from 4 KiB
+            // (docs/slop/results/neon-base64-20261101.md).
+            const sli = @"llvm.aarch64.neon.vsli.v16i8";
+            const r0 = lookup64(a >> @splat(2));
+            const r1 = lookup64(sli(b >> @splat(4), a, 4) & m);
+            const r2 = lookup64(sli(c >> @splat(6), b, 2) & m);
+            const r3 = lookup64(c & m);
+            const all = std.simd.join(std.simd.join(r0, r1), std.simd.join(r2, r3));
+            @as(*align(1) V64, @ptrCast(out)).* = @shuffle(u8, all, undefined, blk: {
+                var s: [64]i32 = undefined;
+                for (&s, 0..) |*x, j| x.* = j % 4 * 16 + j / 4;
+                break :blk s;
+            });
+        }
+
+        /// Each index's character: one `tbl` from four table registers.
+        inline fn lookup64(idx: V) V {
+            const t: [4]V = @bitCast(chars.*);
+            return @"llvm.aarch64.neon.tbl4.v16i8"(t[0], t[1], t[2], t[3], idx);
+        }
+
+        /// Lane `j` is lane `j * n + k` of a vector of `16 * n`.
+        fn strided(comptime n: usize, comptime k: usize) [16]i32 {
+            var m: [16]i32 = undefined;
+            for (&m, 0..) |*x, j| x.* = j * n + k;
+            return m;
+        }
+
+        /// Classifies a block known or likely to be clean, for
+        /// `packClean`: on NEON its values come four characters apart, the
+        /// first of each chunk in `values[0]`, so `badMask` and
+        /// `spaceMask` do not give positions.
+        inline fn classifyClean(src: *const [64]u8) Block {
+            if (!structured) return classifyBlock(src);
+            const in = simd.load(u8, src);
+            var b: Block = undefined;
+            inline for (0..blocks) |k| {
+                const c = classify(@shuffle(u8, in, undefined, strided(4, k)));
+                b.values[k] = c.values;
+                b.bad[k] = c.bad;
+                b.classes[k] = c.classes;
+            }
+            return b;
+        }
+
+        /// `packBlock` for the values of `classifyClean`.
+        inline fn packClean(values: [blocks]V, out: *[48 + slack]u8) void {
+            if (!structured) return packBlock(values, out);
+            const a, const b, const c, const d = values;
+            // `sli` shifts its second operand left and inserts it above the
+            // bits the shift left free: 5 instructions where LLVM made 8
+            // from the shifts and ors.
+            const sli = @"llvm.aarch64.neon.vsli.v16i8";
+            const o0 = sli(b >> @splat(4), a, 2);
+            const o1 = sli(c >> @splat(2), b, 4);
+            const o2 = sli(d, c, 6);
+            @as(*align(1) @Vector(48, u8), @ptrCast(out)).* = @shuffle(u8, std.simd.join(o0, o1), o2, blk: {
+                var s: [48]i32 = undefined;
+                for (&s, 0..) |*x, j| x.* = if (j % 3 == 2) ~@as(i32, j / 3) else j % 3 * 16 + j / 3;
+                break :blk s;
+            });
         }
 
         /// Encodes the top 48 bytes of `src`.
@@ -669,6 +766,14 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // x86, where shifts by lane need two and a blend.
             const W = @Vector(lanes / 2, u16);
             const w: W = @bitCast(spread);
+            if (structured) {
+                // NEON shifts each lane by its own count, and looks the
+                // indices up in the whole alphabet at once.
+                const S = @Vector(lanes / 2, u4);
+                const hi = (w & rep(W, .{ 0xfc00, 0x0fc0 })) >> rep(S, .{ 10, 6 });
+                const lo = (w & rep(W, .{ 0x03f0, 0x003f })) << rep(S, .{ 4, 8 });
+                return lookup64(@bitCast(if (big) @byteSwap(hi | lo) else hi | lo));
+            }
             const t0 = w & rep(W, .{ 0xfc00, 0x0fc0 });
             const t1 = mulhi(t0, rep(W, .{ 0x0040, 0x0400 }));
             const t2 = w & rep(W, .{ 0x03f0, 0x003f });
@@ -766,10 +871,18 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // nibble has no characters, with one instruction, or one above 7.
             const special = in == splat(tables.special);
             const I = @Vector(lanes, i8);
+            // On NEON, hidden from LLVM, which would fold the shift into
+            // the add as a `usra`, redoing the shift the lookup has done:
+            // decode was 2.5% slower so
+            // (docs/slop/results/neon-base64-20261101.md).
+            const h = if (structured) asm (""
+                : [ret] "=w" (-> V),
+                : [hi] "0" (hi),
+            ) else hi;
             const slot = if (tables.below)
-                hi +% @as(V, @bitCast(@select(i8, special, @as(I, @splat(-1)), @as(I, @splat(0)))))
+                h +% @as(V, @bitCast(@select(i8, special, @as(I, @splat(-1)), @as(I, @splat(0)))))
             else
-                hi | @select(u8, special, splat(8), splat(0));
+                h | @select(u8, special, splat(8), splat(0));
             const values = in +% simd.lookup16(tables.roll, slot);
             return .{ .values = values, .bad = classes != splat(0), .classes = classes };
         }
@@ -788,6 +901,17 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return simd.lookup16(table, in & splat(0x8f)) == in;
         }
 
+        /// Bit k is set when character k of the vectors whose `classes`
+        /// these are is ASCII whitespace.
+        inline fn spaceBits(classes: anytype) u64 {
+            var m: u64 = 0;
+            inline for (classes, 0..) |c, k| {
+                const space = if (nibbles) c & splat(tables.space) != splat(0) else isSpace(c);
+                m |= @as(u64, simd.bitmask(space)) << (k * lanes);
+            }
+            return m;
+        }
+
         const Block = struct {
             values: [blocks]V,
             bad: [blocks]@Vector(lanes, bool),
@@ -795,12 +919,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
 
             /// Bit k is set when character k is ASCII whitespace.
             inline fn spaceMask(b: Block) u64 {
-                var m: u64 = 0;
-                inline for (b.classes, 0..) |c, k| {
-                    const space = if (nibbles) c & splat(tables.space) != splat(0) else isSpace(c);
-                    m |= @as(u64, simd.bitmask(space)) << (k * lanes);
-                }
-                return m;
+                return spaceBits(b.classes);
             }
 
             inline fn anyBad(b: Block) bool {
@@ -919,7 +1038,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// that `compressVec` removes, decodes the rest. Null where
         /// `finish` is, or when they are not.
         inline fn finishSpaced(
-            c: Block,
+            values: anytype,
+            classes: @TypeOf(values),
             n: usize,
             bad: u64,
             live: u64,
@@ -927,9 +1047,9 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             t: scalar.Trim,
             last: LastChunk,
         ) ?usize {
-            const space = c.spaceMask() & live;
+            const space = spaceBits(classes) & live;
             if (bad & ~space != 0) return null;
-            const v = compressVec(c.values, space) orelse return null;
+            const v = compressVec(values, space) orelse return null;
             return finish(v, n - @popCount(space), dst, t, last);
         }
 
@@ -970,7 +1090,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
 
         /// The bytes of `values` not in `space`, at the front, when that
         /// takes a few vector instructions.
-        inline fn compressVec(values: [blocks]V, space: u64) ?V64 {
+        inline fn compressVec(values: anytype, space: u64) ?@Vector(@sizeOf(@TypeOf(values)), u8) {
             if (avx512 and simd.has_vbmi2) {
                 return simd.compress(values[0], ~space);
             }
@@ -993,10 +1113,10 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
 
         /// `values` with the lanes from `pos` on taken from `by` lanes
         /// later.
-        inline fn shiftFrom(values: [blocks]V, pos: usize, comptime by: usize) [blocks]V {
+        inline fn shiftFrom(values: anytype, pos: usize, comptime by: usize) @TypeOf(values) {
             var v = values;
-            inline for (0..blocks) |k| {
-                const next = if (k + 1 < blocks) values[k + 1] else values[k];
+            inline for (0..values.len) |k| {
+                const next = if (k + 1 < values.len) values[k + 1] else values[k];
                 const shifted = @shuffle(u8, values[k], next, blk: {
                     var m: [lanes]i32 = undefined;
                     for (&m, 0..) |*x, j| x.* = if (j + by < lanes) j + by else ~@as(i32, j + by - lanes);
@@ -1072,23 +1192,36 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                     @"llvm.x86.avx512.pmaddubs.w.512"(values, @bitCast(rep(@Vector(32, u16), .{0x0140}))),
                     @bitCast(rep(@Vector(16, u32), .{0x00011000})),
                 )),
-                .generic, .neon => blk: {
-                    const x: D = @bitCast(values);
-                    // The four values are the bytes of x, the first lowest on
-                    // little-endian targets and highest on big-endian ones.
-                    break :blk if (big)
-                        ((x >> @splat(6)) & rep(D, .{0xfc0000})) |
-                            ((x >> @splat(4)) & rep(D, .{0x3f000})) |
-                            ((x >> @splat(2)) & rep(D, .{0xfc0})) |
-                            (x & rep(D, .{0x3f}))
-                    else
-                        ((x & rep(D, .{0x3f})) << @splat(18)) |
-                            ((x & rep(D, .{0x3f00})) << @splat(4)) |
-                            ((x >> @splat(10)) & rep(D, .{0xfc0})) |
-                            (x >> @splat(24));
-                },
+                // Pairs a:b into a*64 + b in 16-bit lanes, then those in
+                // 32-bit lanes, each with a shift each way: 8 instructions
+                // where the generic form below takes 10.
+                .neon => if (!big) blk: {
+                    const H = @Vector(lanes / 2, u16);
+                    const h: H = @bitCast(values);
+                    const p: D = @bitCast((h >> @splat(8)) | ((h << @splat(8)) >> @splat(2)));
+                    break :blk (p >> @splat(16)) | ((p << @splat(16)) >> @splat(4));
+                } else packWordsGeneric(values),
+                .generic => packWordsGeneric(values),
             };
             return @bitCast(w);
+        }
+
+        /// `packWords` in plain shifts and masks.
+        inline fn packWordsGeneric(values: V) @Vector(lanes / 4, u32) {
+            const D = @Vector(lanes / 4, u32);
+            const x: D = @bitCast(values);
+            // The four values are the bytes of x, the first lowest on
+            // little-endian targets and highest on big-endian ones.
+            return if (big)
+                ((x >> @splat(6)) & rep(D, .{0xfc0000})) |
+                    ((x >> @splat(4)) & rep(D, .{0x3f000})) |
+                    ((x >> @splat(2)) & rep(D, .{0xfc0})) |
+                    (x & rep(D, .{0x3f}))
+            else
+                ((x & rep(D, .{0x3f})) << @splat(18)) |
+                    ((x & rep(D, .{0x3f00})) << @splat(4)) |
+                    ((x >> @splat(10)) & rep(D, .{0xfc0})) |
+                    (x >> @splat(24));
         }
 
         const tables = decodeTables(alphabet);
@@ -1208,6 +1341,9 @@ extern fn @"llvm.x86.sse2.pmulhu.w"(@Vector(8, u16), @Vector(8, u16)) @Vector(8,
 extern fn @"llvm.x86.avx2.pmulhu.w"(@Vector(16, u16), @Vector(16, u16)) @Vector(16, u16);
 extern fn @"llvm.x86.avx512.pmaddubs.w.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(32, i16);
 extern fn @"llvm.x86.avx512.pmaddw.d.512"(@Vector(32, i16), @Vector(32, i16)) @Vector(16, i32);
+const V16 = @Vector(16, u8);
+extern fn @"llvm.aarch64.neon.vsli.v16i8"(V16, V16, i32) V16;
+extern fn @"llvm.aarch64.neon.tbl4.v16i8"(V16, V16, V16, V16, V16) V16;
 
 const test_isas = blk: {
     var isas: []const Isa = &.{};

@@ -1,0 +1,4 @@
+utf/arm, geomean          rows  utf GB/s  simdutf     base      std     rust       go     ±   <1    ~   slowest vs simdutf
+Base64Encode                 6      5.57     1.00     1.00     2.51     1.69     4.26    0%    4    0   0.94 [0.94, 0.94] random-256
+Base64EncodeUrl              6      5.54     0.98     0.99     2.44     1.66     4.22    0%    4    0   0.91 [0.91, 0.91] random-256
+all                         12      5.56     0.99     0.99     2.48     1.67     4.24          8    0

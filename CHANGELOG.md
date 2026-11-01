@@ -15,6 +15,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Changed
 
+- On aarch64, `base64.encode` is 1.7× faster (2.1× from 4 KiB) and `base64.decode` 1.3× (1.4–1.5× from 4 KiB, and 1.3× on MIME line-wrapped input).
 - On aarch64, the `convert` functions from UTF-8 to UTF-16 are 1.1× faster on non-ASCII text, and `validate.utf16le` 1.3× on emoji.
 - `convert` functions with AVX-512 in generic x86-64 builds are 1.05× faster on 16-unit inputs (UTF-32 to UTF-16 and UTF-8 1.25×, UTF-8 to UTF-16, UTF-32, and Latin-1 1.1–1.15×): their short path no longer saves registers for the long one.
 - `convert.latin1ToUtf8` and `validLatin1ToUtf8` with AVX-512 are 1.1–1.3× faster on 256 bytes.

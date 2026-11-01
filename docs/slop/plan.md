@@ -494,3 +494,10 @@ aarch64 ([neon-20261101.md](results/neon-20261101.md)):
   one compare: a bool vector joined from two (`@bitCast([2]@Vector(16,
 bool){...})`) is materialized as an integer, and the NEON path took it
   apart lane by lane (UTF-16 to UTF-8 on Korean 0.45 until split).
+- **Base64** ([neon-base64-20261101.md](results/neon-base64-20261101.md)):
+  NEON encodes with `ld3`, a four-register `tbl`, and `st4`, and decodes
+  clean blocks with `ld4` and `st3`, classifying the de-interleaved
+  characters as they are; LLVM makes the structured accesses from whole
+  loads and stores and strided `@shuffle`s. Use `sli` (an intrinsic) where
+  LLVM would make `usra` from shifts and adds. Encode 1.03 of simdutf
+  (0.61), decode 1.08–1.25 (0.83–0.94); MIME 256 B 0.93 is left.
