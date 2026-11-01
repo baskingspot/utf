@@ -1,0 +1,6 @@
+utf/arm, geomean          rows  utf GB/s      w4a       nb simdutf-icelake     ±   <1    ~   slowest vs w4a
+Utf16leToUtf16be            15     29.14     1.05     1.04     1.38    3%    0   14   0.90 [0.76, 1.10] ascii-16
+Utf16beToUtf16le            15     29.40     1.03     1.01     1.46    1%    2   11   0.81 [0.76, 0.83] ascii-64
+Latin1ToUtf8                13     14.31     1.03     1.00     0.98    3%    2    9   0.89 [0.73, 0.94] latin1-256
+ValidLatin1ToUtf8           13     14.36     1.05     1.02     1.02    1%    2    7   0.87 [0.81, 0.92] ascii-4096
+all                         56     21.01     1.04     1.02     1.21          6   41

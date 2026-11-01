@@ -1,0 +1,4 @@
+utf/arm, geomean          rows  utf GB/s       nc      w4a simdutf-icelake     ±   <1    ~   slowest vs nc
+Latin1ToUtf8                13     13.04     1.01     1.04     1.00    6%    0   13   0.94 [0.93, 1.18] latin1-256
+ValidLatin1ToUtf8           13     14.18     1.03     1.06     1.02    8%    1   11   0.94 [0.91, 1.01] latin1-64
+all                         26     13.60     1.02     1.05     1.01          1   24

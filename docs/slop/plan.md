@@ -388,3 +388,26 @@ On `d2d515e`: 1.18 of `icelake`, 1.55 of `haswell`, 1.39 of `westmere`, 1.13
 dispatching from baseline x86-64, 0.97 in ReleaseSafe; std 7.65-13.74×, Rust
 2.25-3.12×, Go 7.02-12.34×. Code layout is still uncontrolled (±15%), so
 compare rows under that gap with a driver.
+
+Wave 4:
+
+- **Transcoding**: `src/convert.zig`
+  ([convert-wave4-20261031.md](results/convert-wave4-20261031.md)). Every
+  conversion op at or above simdutf at every ISA by its geomean (lowest
+  `Latin1ToUtf8` native, 0.92 to 0.99); rows under simdutf outside the noise
+  55 to 35 native, 26 to 23 AVX2, 35 to 24 SSE. The valid byte swap's gap
+  was a five-instruction loop straddling a 64-byte code line in some links
+  (1 against 1.6 cycles a block); it now swaps four blocks a step and ends
+  without a loop (4 KiB 1.74-1.78×). Zig cannot align a loop, so a short
+  hot loop is a layout risk: unroll it. AVX-512 Latin-1 to UTF-8 uses
+  simdutf's `vpermb` and `vpshldw` layout (Latin-1 text level with
+  `icelake` from 4 KiB) and a 64-byte short path; AVX-512 UTF-8 to Latin-1
+  is full blocks then one masked block (1.13-1.14×). ASCII runs on AVX2 and
+  SSE take loops of their own with one bound (UTF-8 decodes and UTF-16 to
+  UTF-32 1.2-1.4× at 4 KiB). Keep `utf8BlockEnd`'s load volatile: LLVM
+  otherwise extracts it from the block's register on the shuffle port
+  (non-Latin UTF-8 decodes 0.7×). Left, with reasons in the results:
+  native short calls at 16-64 B (0.80-0.96, 1-2 ns a call, unattributed), AVX-512
+  Latin-1 to UTF-8 on Latin-1 text at 64-256 B (0.82-0.93, per-call
+  constants), AVX2 UTF-16BE to UTF-32 at 4 KiB (0.89), and rows whose
+  instructions match `old`'s but move with the link.

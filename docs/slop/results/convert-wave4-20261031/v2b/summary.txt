@@ -1,0 +1,5 @@
+utf/arm, geomean          rows  utf GB/s   old-v2 simdutf-westmere     ±   <1    ~   slowest vs old-v2
+Latin1ToUtf16le             13     12.99     1.15     1.10    6%    0    9   0.97 [0.89, 1.17] latin1-65536
+Latin1ToUtf32               13      7.35     1.00     1.09    3%    2    9   0.94 [0.79, 1.08] latin1-256
+ValidLatin1ToUtf32          13      7.38     1.00     1.12    4%    1   10   0.90 [0.81, 1.15] latin1-256
+all                         39      8.90     1.05     1.10          3   28

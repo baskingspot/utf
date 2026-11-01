@@ -1,0 +1,54 @@
+== zig build test -Doptimize=ReleaseSafe -Dcpu=native --summary all
+testingx: Running 53 tests...
+testingx: 53 passed, 0 failed, 0 skipped (of 53 total) in 3256ms (seed: 0xf952e4c0)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v3 -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3376ms (seed: 0x40830a63)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v2 -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3177ms (seed: 0xc235ef12)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=x86_64_v3 --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 5955ms (seed: 0x9fecabfd)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=baseline --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 12282ms (seed: 0xe2fdbc6b)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dcpu=baseline -Ddispatch=false --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 3239ms (seed: 0xbe4ec15f)
+exit 0
+== zig build test -Doptimize=Debug -Dcpu=baseline --summary all
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 54937ms (seed: 0x89f86d99)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dtarget=aarch64-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 30957ms (seed: 0x45f51bf2)
+exit 0
+== zig build test -Doptimize=Debug -Dtarget=aarch64-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 93941ms (seed: 0x4799d6fc)
+exit 0
+== zig build test -Doptimize=ReleaseSafe -Dtarget=aarch64_be-linux-musl -fqemu --summary all
+testingx: Running 53 tests...
+testingx: 51 passed, 0 failed, 2 skipped (of 53 total) in 31114ms (seed: 0xee2854fe)
+exit 0
+== just oracle
+binary   base64.encode                               250000 compared, 0 mismatches
+binary   base64.encode unpadded                      250000 compared, 0 mismatches
+binary   base64.encode url                           250000 compared, 0 mismatches
+binary   base64.encode url unpadded                  250000 compared, 0 mismatches
+0 mismatches in all
+exit 0
+== just ci
+testingx: Running 53 tests...
+testingx: 52 passed, 0 failed, 1 skipped (of 53 total) in 16261ms (seed: 0xe53e3541)
+testingx: Running 53 tests...
+testingx: 53 passed, 0 failed, 0 skipped (of 53 total) in 3263ms (seed: 0xe8643bf4)
+exit 0
+finished

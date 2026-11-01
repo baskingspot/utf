@@ -1,0 +1,13 @@
+utf/arm, geomean          rows  utf GB/s   old-v3 simdutf-haswell     ±   <1    ~   slowest vs old-v3
+ValidUtf8ToUtf16le          15      7.65     0.99     1.47    3%    3   11   0.92 [0.91, 0.99] arabic
+ValidUtf8ToUtf32            15      6.40     1.00     1.44    1%    2   11   0.91 [0.83, 0.93] korean
+ValidUtf16leToUtf16be       15     37.56     0.99     1.02    1%    2   12   0.86 [0.78, 1.02] ascii-16
+Utf16leToUtf32              15     18.69     1.03     1.14    1%    0   12   0.94 [0.81, 1.04] emoji
+ValidUtf16leToUtf32         15     18.95     1.04     1.27    1%    1   12   0.98 [0.97, 1.03] emoji
+ValidUtf16beToUtf16le       15     37.23     0.99     1.02    0%    2   11   0.85 [0.81, 0.86] ascii-16
+Utf16beToUtf32              15     18.00     0.99     1.08    2%    4    9   0.94 [0.93, 1.08] arabic
+Latin1ToUtf16le             13     15.62     0.99     1.13    2%    1   12   0.98 [0.94, 1.02] latin1-256
+ValidLatin1ToUtf16le        13     16.66     0.99     1.20    1%    0   13   0.95 [0.92, 1.02] ascii-16
+Latin1ToUtf16be             13     15.65     1.00     1.08    2%    0   12   0.97 [0.92, 1.01] ascii-64
+Latin1ToUtf32               13     10.38     1.00     1.14    1%    1   12   0.97 [0.91, 1.02] ascii-64
+all                        157     16.16     1.00     1.17         16  127

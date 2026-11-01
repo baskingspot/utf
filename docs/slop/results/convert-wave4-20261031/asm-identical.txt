@@ -1,0 +1,85 @@
+# objdump of the exports in asm/a.zig, built by asm/obj.sh from 66fa49c (old) and this branch (new),
+# addresses and branch targets stripped; ReleaseFast. Lines differing:
+# validLatin1ToUtf16le: instructions 1-67, the whole path when the output holds the input (the harness and every
+# row), are identical; the differences are register names in the scalar loop for an output shorter than the input.
+validLatin1ToUtf16le (native): 316 vs 316 instructions, 62 lines differ
+    68,69c68,69
+    < mov    r8,rax
+    < sub    r8,rsi
+    ---
+    > mov    r8,rsi
+    > sub    r8,rax
+    71c71,73
+    < mov    ecx,r8d
+    ---
+    > mov    r9,rax
+    > sub    r9,rsi
+    > mov    ecx,r9d
+    73,75c75
+    < mov    r9,rsi
+    < sub    r9,rax
+    < cmp    r9,0xfffffffffffffff8
+    ---
+    > cmp    r8,0xfffffffffffffff8
+    77c77
+    < xor    r9d,r9d
+    ---
+    > xor    r8d,r8d
+    140c140
+    < and    r8,0xfffffffffffffff8
+    ---
+    > and    r9,0xfffffffffffffff8
+    143c143
+    < xor    r9d,r9d
+    ---
+    > xor    r8d,r8d
+    145,162c145,162
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x7]
+    < mov    WORD PTR [r11+r9*2-0xe],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x6]
+    < mov    WORD PTR [r11+r9*2-0xc],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x5]
+    < mov    WORD PTR [r11+r9*2-0xa],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x4]
+    < mov    WORD PTR [r11+r9*2-0x8],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x3]
+    < mov    WORD PTR [r11+r9*2-0x6],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x2]
+    < mov    WORD PTR [r11+r9*2-0x4],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1-0x1]
+    < mov    WORD PTR [r11+r9*2-0x2],bx
+    < movzx  ebx,BYTE PTR [r10+r9*1]
+    < mov    WORD PTR [r11+r9*2],bx
+    < add    r9,0x8
+    < cmp    r8,r9
+    ---
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x7]
+    > mov    WORD PTR [r11+r8*2-0xe],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x6]
+    > mov    WORD PTR [r11+r8*2-0xc],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x5]
+    > mov    WORD PTR [r11+r8*2-0xa],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x4]
+    > mov    WORD PTR [r11+r8*2-0x8],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x3]
+    > mov    WORD PTR [r11+r8*2-0x6],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x2]
+    > mov    WORD PTR [r11+r8*2-0x4],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1-0x1]
+    > mov    WORD PTR [r11+r8*2-0x2],bx
+    > movzx  ebx,BYTE PTR [r10+r8*1]
+    > mov    WORD PTR [r11+r8*2],bx
+    > add    r8,0x8
+    > cmp    r9,r8
+    166,169c166,169
+    < lea    r8,[rsi+rsi*1]
+    < lea    r8,[r8+r9*2]
+    < add    rdx,r8
+    < add    rsi,r9
+    ---
+    > lea    r9,[rsi+rsi*1]
+    > lea    r9,[r9+r8*2]
+    > add    rdx,r9
+    > add    rsi,r8
+validUtf16leToUtf32 (native): 406 vs 406 instructions, 0 lines differ
+validLatin1ToUtf8 (x86_64_v3): 315 vs 315 instructions, 0 lines differ

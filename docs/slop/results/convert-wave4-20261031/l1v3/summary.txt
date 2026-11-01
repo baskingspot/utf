@@ -1,0 +1,4 @@
+utf/arm, geomean          rows  utf GB/s   fin-v3   old-v3 simdutf-haswell     ±   <1    ~   slowest vs fin-v3
+Utf8ToLatin1                13      7.75     1.08     1.08     2.54    3%    2    6   0.96 [0.80, 0.99] latin1-256
+ValidUtf8ToLatin1           13      8.07     1.06     1.03     1.58    6%    2    6   0.87 [0.85, 0.93] latin1-16
+all                         26      7.91     1.07     1.05     2.01          4   12
