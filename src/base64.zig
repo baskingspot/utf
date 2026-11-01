@@ -661,13 +661,49 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             const in = simd.load(u8, src);
             var b: Block = undefined;
             inline for (0..blocks) |k| {
-                const c = classify(@shuffle(u8, in, undefined, strided(4, k)));
-                b.values[k] = c.values;
-                b.bad[k] = c.bad;
-                b.classes[k] = c.classes;
+                const x = @shuffle(u8, in, undefined, strided(4, k));
+                // simdutf's arm64 classifier: one class bit per rectangle
+                // of the alphabet, by the low nibble and the byte over 8,
+                // and the leading zeros of the class pick the offset, where
+                // `classify` makes the roll slot with a compare and an add.
+                const class = simd.lookup16(clean.lo, x & splat(0x0f)) & simd.lookup16(clean.hi, x >> @splat(3));
+                b.values[k] = x +% simd.lookup16(clean.roll, @as(V, @clz(class)));
+                b.bad[k] = class <= splat(1);
             }
             return b;
         }
+
+        /// `classifyClean`'s tables, simdutf's: a character's class is
+        /// `lo[c & 15] & hi[c >> 3]` (an index from 16 looks up 0), none
+        /// outside the alphabet, bit 0 alone for whitespace, and its value
+        /// is `c + roll[@clz(class)]`.
+        const CleanTables = struct { lo: [16]u8, hi: [16]u8, roll: [16]u8 };
+        const clean: CleanTables = blk: {
+            const t: CleanTables = switch (alphabet) {
+                .standard => .{
+                    .lo = .{ 0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf9, 0xf1, 0xa2, 0xa1, 0xa1, 0xa0, 0xa4 },
+                    .hi = .{ 0x00, 0x01, 0x00, 0x00, 0x01, 0x06, 0x08, 0x08, 0x10, 0x20, 0x20, 0x10, 0x40, 0x80, 0x80, 0x40 },
+                    .roll = .{ 0xb9, 0xb9, 0xbf, 0xbf, 0x04, 0x10, 0x13, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                },
+                .url => .{
+                    .lo = .{ 0xa9, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf8, 0xf9, 0xf1, 0xa0, 0xa1, 0xa5, 0xa0, 0xa2 },
+                    .hi = .{ 0x00, 0x01, 0x00, 0x00, 0x01, 0x04, 0x08, 0x08, 0x10, 0x20, 0x20, 0x12, 0x40, 0x80, 0x80, 0x40 },
+                    .roll = .{ 0xb9, 0xb9, 0xbf, 0xbf, 0x04, 0x11, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                },
+            };
+            // Every byte checked: in the alphabet, a class above 1 and its
+            // value; outside it, 0 or 1.
+            @setEvalBranchQuota(20000);
+            for (0..256) |c| {
+                const class = if (c >> 3 < 16) t.lo[c & 15] & t.hi[c >> 3] else 0;
+                const v = std.mem.indexOfScalar(u8, chars, c);
+                if ((class > 1) != (v != null)) @compileError("bad clean class");
+                if (v) |value| {
+                    if (@as(u8, c) +% t.roll[@clz(class)] != value) @compileError("bad clean roll");
+                }
+            }
+            break :blk t;
+        };
 
         /// How many bytes past its 48 `packClean` writes: none with `st3`,
         /// so that a block that fills `dst` exactly, as the only one of 64
