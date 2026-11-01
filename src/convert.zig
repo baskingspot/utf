@@ -1140,7 +1140,10 @@ inline fn utf8DecodeBlock(
         } else {
             // Bits 16 to 20: the rest of the second byte and the lead's.
             const t = (simd.prev(2, s, zero) >> splat(V, 4) | simd.prev(3, s, zero) << splat(V, 2)) & fourth;
-            tops = @bitCast(@shuffle(u8, t, zero, interleave));
+            // Through a vector: Zig 0.17 lowers a @bitCast from a vector to
+            // an array of another lane type as a loop that shifts the whole
+            // 1024-bit value once per lane, 10x slower on this path.
+            tops = @as(@Vector(64, u16), @bitCast(@shuffle(u8, t, zero, interleave)));
         }
     }
     const w: [64]u16 = words;
