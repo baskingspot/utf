@@ -1,0 +1,7 @@
+utf/arm, geomean          rows  utf GB/s    old-n    w66-n simdutf-icelake     ±   <1    ~   slowest vs old-n
+Utf16leToLatin1             13     26.28     0.95     1.02     1.01   12%    3   10   0.81 [0.44, 0.97] ascii-64
+Latin1ToUtf32               13      8.66     0.99     1.03     0.99    6%    0   13   0.85 [0.71, 1.03] latin1-16
+Utf16FromUtf32              15     45.92     1.00     1.02     1.01    3%    1   14   0.82 [0.63, 0.97] ascii-16
+Utf8FromUtf16le             15     26.46     0.99     1.03     0.91    6%    1   13   0.75 [0.65, 0.98] ascii-64
+Utf8FromUtf32               15     28.98     0.99     1.00     0.85    5%    0   15   0.94 [0.77, 1.00] russian
+all                         71     24.67     0.99     1.02     0.95          5   65

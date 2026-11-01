@@ -1,0 +1,5 @@
+utf/arm, geomean          rows  utf GB/s    old-n simdutf-icelake     ±   <1    ~   slowest vs old-n
+Utf16FromUtf8                3     43.37     1.01     0.55    3%    0    2   0.99 [0.93, 1.00] hindi
+Utf8FromLatin1               4     57.46     0.97     0.52    6%    2    2   0.94 [0.61, 0.95] latin1-65536
+CountUtf8                    3     59.91     1.01     0.92   24%    0    2   1.00 [0.97, 1.51] ascii-65536
+all                         10     53.48     1.00     0.63          2    6

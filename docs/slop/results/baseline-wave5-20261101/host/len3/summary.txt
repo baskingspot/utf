@@ -1,0 +1,5 @@
+utf/arm, geomean          rows  utf GB/s    w66-n simdutf-icelake     ±   <1    ~   slowest vs w66-n
+ValidateUtf8Err             15     23.93     1.01     1.81    4%    0   15   0.96 [0.79, 1.26] ascii-64
+Utf8ToUtf32                 15      5.62     1.02     1.11    6%    0   14   0.93 [0.75, 2.12] ascii-256
+ValidUtf8ToUtf32            15      6.01     1.01     1.03    3%    0   14   0.87 [0.74, 1.05] emoji
+all                         45      9.32     1.01     1.27          0   43

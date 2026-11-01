@@ -470,3 +470,12 @@ Wave 5 ([short-20261101.md](results/short-20261101.md)):
 - Identical code still moves up to 23% with the link; AVX2 and SSE short
   calls are unmeasurable here (no tier override, and the host picks
   AVX-512).
+- **Baseline** ([baseline-wave5-20261101.md](results/baseline-wave5-20261101.md)),
+  utf ÷ simdutf against baseline-final: icelake 1.18 → 1.15, haswell 1.55 →
+  1.59, westmere 1.39 → 1.44, baseline 1.13 → 1.11, ReleaseSafe 0.97 →
+  0.98; RSS unchanged. Without the length functions 1.20 and 1.16 on
+  AVX-512: on this orb's host their `popBlocks` loop runs at about half
+  speed in any build (`66fa49c`'s reads the same), cause unexplained. Under
+  simdutf natively: the length functions and 16-256 B rows of Latin-1 to
+  UTF-16 and UTF-32, the valid byte swap, and UTF-16LE to Latin-1 (harness
+  loop); no operation on AVX2, one 64 B row group on SSE.
