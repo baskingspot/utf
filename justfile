@@ -9,12 +9,15 @@ markdown := "README.md AGENTS.md CHANGELOG.md bench/README.md docs/slop .github"
 # this package's, std's, Rust's, and Go's arms for one CPU; optimize and
 # dispatch apply to this package's alone. dispatch empty is the package's
 # default: runtime dispatch for a generic x86-64 CPU (baseline or an x86-64
-# level), none for native.
+# level), none for native. base, a Git revision, adds an arm `base`: that
+# revision's `bench-utf`, built the same way, for an A/B in one run.
 optimize := "ReleaseFast"
 cpu := "native"
 dispatch := ""
 kernel := ""
-bench_zig := "zig build -p ../zig-out -Dcpu=" + cpu + " -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
+base := ""
+bench_flags := "-Dcpu=" + cpu + " -Dutf-optimize=" + optimize + " -Dutf-cpu=" + cpu + if dispatch == "" { "" } else { " -Dutf-dispatch=" + dispatch }
+bench_zig := "zig build -p ../zig-out " + bench_flags
 
 # cpu in Rust's and Go's terms. Go has no native: the highest level the host has.
 # simdutf8 and base64-simd detect AVX2 at run time, as a distribution's build
@@ -85,15 +88,21 @@ bench-build:
         cargo build --quiet --release --locked --manifest-path bench/rust/Cargo.toml \
         {{ if rust_detect == "none" { "--no-default-features" } else { "" } }}
     cp bench/rust/target/{{ rust_cpu }}/release/bench-rust zig-out/bin/
+    if [ -n "{{ base }}" ]; then
+        rm -rf zig-out/base && mkdir -p zig-out/base/tree
+        git archive "{{ base }}" | tar -x -C zig-out/base/tree
+        (cd zig-out/base/tree/bench && zig build -p ../../out {{ bench_flags }})
+        cp zig-out/base/out/bin/bench-utf zig-out/bin/bench-base
+    fi
 
-[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then rounds on one core that time the arms on each row back to back, benchstat against simdutf, and a summary per operation with each row's noise. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds. The numbers are not claims")]
+[doc("Compare with simdutf, Rust, Go, and Zig's std on this machine: checksums, peak RSS, then rounds on one core that time the arms on each row back to back, benchstat against simdutf, and a summary per operation with each row's noise. OPS picks operations from bench/ops.tsv (default all); the variables optimize, cpu, dispatch, and kernel pick the builds, and base adds another revision's utf arm. The numbers are not claims")]
 [group("bench")]
 bench-compare ROUNDS="10" *OPS: bench-corpus bench-build
     #!/usr/bin/env bash
     set -euo pipefail
     out=zig-out/bench-compare
     rm -rf "$out" && mkdir -p "$out"
-    arms=(simdutf utf std rust go)
+    arms=(simdutf utf {{ if base == "" { "" } else { "base " } }}std rust go)
     ops=({{ OPS }})
     if [ -n "{{ kernel }}" ]; then export SIMDUTF_FORCE_IMPLEMENTATION="{{ kernel }}"; fi
     # Each sample's timed loop: short, so the arms' samples of a row are close
@@ -106,7 +115,8 @@ bench-compare ROUNDS="10" *OPS: bench-corpus bench-build
             { cat "$out/stderr-$arm.txt"; exit 1; }
     done
     {
-        echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}"
+        echo "utf: {{ optimize }}, cpu {{ cpu }}, dispatch {{ if dispatch == "" { "default" } else { dispatch } }}, $(git describe --always --dirty)"
+        if [ -n "{{ base }}" ]; then echo "base: {{ base }} ($(git rev-parse --short "{{ base }}")), built as utf"; fi
         echo "std: ReleaseFast, cpu {{ cpu }}; rust: target-cpu={{ rust_cpu }}, run-time detection {{ rust_detect }}; go: GOAMD64={{ goamd64 }}"
         echo "buffers: input ${BENCH_IN_OFFSET:-0} bytes past a page, output ${BENCH_OUT_OFFSET:-2048}; ${BENCHTIME_MS} ms a sample, {{ ROUNDS }} rounds"
         cat "$out/stderr-simdutf.txt"
@@ -228,7 +238,7 @@ bench-summary DIR="zig-out/bench-compare":
     #!/usr/bin/env bash
     set -euo pipefail
     files=()
-    for arm in utf simdutf std rust go; do
+    for arm in utf simdutf base std rust go; do
         [ -s "{{ DIR }}/$arm.txt" ] && files+=("{{ DIR }}/$arm.txt")
     done
     : > "{{ DIR }}/rows.txt"
