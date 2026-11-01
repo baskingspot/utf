@@ -94,6 +94,10 @@ fn addDispatch(
             // The kernels' byte shuffles are LLVM intrinsics.
             .use_llvm = true,
         });
+        // The object exports every wired function; in sections of their
+        // own, the linker keeps only those the program's calls reach.
+        obj.link_function_sections = true;
+        obj.link_data_sections = true;
         mod.addObject(obj);
     }
 }

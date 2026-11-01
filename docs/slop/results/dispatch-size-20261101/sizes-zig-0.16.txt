@@ -1,0 +1,13 @@
+arm      optimize     build                             exe        lib
+before   ReleaseFast  baseline                      1004896     936824
+before   ReleaseSmall baseline                       860088     846536
+before   ReleaseSafe  baseline                      1226680    1102808
+before   Debug        baseline                     32401272   30140450
+before   ReleaseFast  baseline, no dispatch          296568      61432
+before   ReleaseFast  native                         255096      26872
+after    ReleaseFast  baseline                       585648     351024
+after    ReleaseSmall baseline                       482656     340168
+after    ReleaseSafe  baseline                       711272     587352
+after    Debug        baseline                     32401272   30140450
+after    ReleaseFast  baseline, no dispatch          296568      61432
+after    ReleaseFast  native                         255096      26872

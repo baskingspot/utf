@@ -1,0 +1,2 @@
+.{ .name = .calls, .version = "0.0.0", .fingerprint = 0xdaa35c8fa15acd24, .minimum_zig_version = "0.17.0",
+   .dependencies = .{ .utf = .{ .path = "../utf-old" } }, .paths = .{""} }

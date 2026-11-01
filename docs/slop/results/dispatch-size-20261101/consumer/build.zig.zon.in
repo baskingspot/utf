@@ -1,0 +1,9 @@
+.{
+    .name = .consumer,
+    .version = "0.0.0",
+    .fingerprint = 0x705b3727199e9845,
+    .minimum_zig_version = "0.16.0",
+    // sizes.sh writes the checkout's path here.
+    .dependencies = .{ .utf = .{ .path = "@UTF@" } },
+    .paths = .{""},
+}

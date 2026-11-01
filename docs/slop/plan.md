@@ -116,6 +116,14 @@ standard, not from simdutf's source.
      `-Dcpu=baseline` on an AVX-512 machine that is all four.
    - Benchmarks: a `-Dcpu=baseline` build now dispatches; pass
      `.dispatch = false` to `b.dependency("utf", ...)` for the generic path.
+   - Size: each tier's object exports every wired function, built with
+     function and data sections, so the linker's `--gc-sections` (Zig's in
+     every mode but Debug) keeps only the exports the main build's slots
+     reference: the functions the program calls. The main build exports
+     the panic entry the objects forward to only where
+     `std.debug.runtime_safety`; exported always, it linked std's panic
+     handler into every ReleaseFast program
+     ([dispatch-size-20261101.md](results/dispatch-size-20261101.md)).
 2. **Block size.** 64 bytes per iteration on every ISA (four 16-byte vectors,
    two 32-byte, one 64-byte), so the algorithm's carries are the same code and
    only the vector width changes. **Measure** 32 vs 64 on AVX2. Validation

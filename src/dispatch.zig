@@ -320,7 +320,10 @@ fn symbol(comptime src: std.builtin.SourceLocation, comptime isa: Isa) [:0]const
 
 // A safety panic in a tier's object goes to the main build's panic handler,
 // which is the program's, so the objects carry no panic machinery of their
-// own. This file is each object's root.
+// own. This file is each object's root. Only modes with safety checks have
+// such panics, so only they export the entry: exported, it would link the
+// handler, and with it std's stack-trace and DWARF code, into every
+// ReleaseFast program, about 170 KB.
 pub const panic = std.debug.FullPanic(forwardPanic);
 
 fn forwardPanic(msg: []const u8, ret_addr: ?usize) noreturn {
@@ -336,7 +339,9 @@ fn panicEntry(ptr: [*]const u8, len: usize, ret_addr: usize) callconv(.c) noretu
 comptime {
     switch (role) {
         .off => {},
-        .main => @export(&panicEntry, .{ .name = options.prefix ++ "_panic", .visibility = .hidden }),
+        .main => if (std.debug.runtime_safety) {
+            @export(&panicEntry, .{ .name = options.prefix ++ "_panic", .visibility = .hidden });
+        },
         // Every public function, so each `call` in them exports.
         .kernel => {
             referenceAll(root);
