@@ -3,6 +3,6 @@
 .zig-cache/
 zig-out/
 zig-pkg/
-.amp/portals/*
 bench/corpus-gen/
 bench/rust/target/
+docs/themes/

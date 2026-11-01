@@ -33,7 +33,22 @@ pub fn build(b: *std.Build) void {
     const mod_tests = b.addTest(.{ .root_module = mod, .test_runner = runner });
     const run_mod_tests = b.addRunArtifact(mod_tests);
     run_mod_tests.addArg(b.fmt("--seed=0x{x}", .{b.graph.random_seed}));
-    b.step("test", "Run the unit tests").dependOn(&run_mod_tests.step);
+    const test_step = b.step("test", "Run the unit tests and the guide's examples");
+    test_step.dependOn(&run_mod_tests.step);
+
+    // The guide's examples are real programs against the public module,
+    // tested with everything else so a guide page cannot show code that does
+    // not build.
+    const examples_mod = b.createModule(.{
+        .root_source_file = b.path("docs/examples/root.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "utf", .module = mod }},
+    });
+    const example_tests = b.addTest(.{ .root_module = examples_mod, .test_runner = runner });
+    const run_example_tests = b.addRunArtifact(example_tests);
+    run_example_tests.addArg(b.fmt("--seed=0x{x}", .{b.graph.random_seed}));
+    test_step.dependOn(&run_example_tests.step);
 }
 
 const Role = enum { off, main, kernel };

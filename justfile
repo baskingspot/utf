@@ -1,7 +1,7 @@
 # utf: SIMD UTF-8, UTF-16, and UTF-32 validation and transcoding, and base64, in Zig. `just --list` shows the recipes.
 # AGENTS.md holds the working conventions.
 
-markdown := "README.md AGENTS.md CHANGELOG.md bench/README.md docs/slop .github"
+markdown := "README.md AGENTS.md CHANGELOG.md bench/README.md docs/slop docs/content docs/config.toml .github .oxfmtrc.jsonc"
 
 # How `just bench-compare` builds the arms, and which simdutf kernel its arm
 # runs (empty: simdutf's runtime pick). Set them on the command line:
@@ -30,7 +30,7 @@ goamd64 := if cpu == "baseline" { "v1" } else if cpu == "x86_64_v2" { "v2" } els
 default:
     @just --list
 
-[doc("Unit tests, in Debug and ReleaseSafe")]
+[doc("Unit tests and the guide's examples, in Debug and ReleaseSafe, one line per test binary via testingx")]
 [group("test")]
 test:
     zig build test --summary all
@@ -40,7 +40,7 @@ test:
 [group("lint")]
 lint:
     ziglint
-    zig fmt --check src build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/zig bench/oracle
+    zig fmt --check src docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/zig bench/oracle
     test -z "$(gofmt -l bench/go)"
     nix fmt -- --ci
     oxfmt --check {{ markdown }}
@@ -51,15 +51,36 @@ lint:
 [doc("Format everything lint checks")]
 [group("lint")]
 fmt:
-    zig fmt src build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/zig bench/oracle
+    zig fmt src docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/zig bench/oracle
     gofmt -w bench/go
     nix fmt
     oxfmt {{ markdown }}
     just --fmt
 
-[doc("Everything CI runs")]
+[doc("Everything CI runs: the tests, lint, and the site build")]
 [group("ci")]
-ci: test lint
+ci: test lint doc
+
+[doc("Build the site into zig-out/site/utf/: the guide (Zola, from docs/) and the API reference (docgen JSON, rendered by the theme's api.html) under api/. The router in baskingspot/site serves /utf/... from it")]
+[group("docs")]
+doc: api
+    baskingspot-docs build utf
+
+[doc("Edit the guide with live reload (http://127.0.0.1:1111), API reference included")]
+[group("docs")]
+guide: api
+    baskingspot-docs serve utf
+
+# The API reference data. docgen comes from the baskingspot flake's docs shell,
+# so this is not a Zig build dependency.
+[private]
+api:
+    docgen --root src/root.zig --title utf --repo-url https://github.com/baskingspot/utf --rev main --format json --out docs/data
+
+[doc("Deploy the rendered docs to Cloudflare as an assets-only Worker (config in wrangler.jsonc). Needs CLOUDFLARE_API_TOKEN in the environment, plus CLOUDFLARE_ACCOUNT_ID if the token can see more than one account")]
+[group("docs")]
+doc-deploy: doc
+    wrangler deploy
 
 [doc("Fetch and generate the benchmark corpus in bench/corpus-gen/, and verify it against bench/corpus/SHA256SUMS")]
 [group("bench")]
