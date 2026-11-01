@@ -1,0 +1,11 @@
+# First class: Linux on x86_64 and aarch64. A failure on either fails CI.
+# The aarch64 job runs the NEON kernels on the hardware they are for.
+jobs:
+  - recipe: ci
+  - recipe: test
+    runners: [ubuntu-26.04-arm]
+  # macOS on aarch64 (Apple silicon): the NEON kernels again, under another
+  # OS and toolchain. It runs, shows, and never fails CI.
+  - recipe: test
+    runners: [macos-26]
+    blocking: false
