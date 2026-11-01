@@ -1,0 +1,25 @@
+peak RSS (MiB)              simdutf      utf     base      std     rust       go
+utf8-to-utf32                   9.7      7.0      7.0        -        -      7.6
+valid-utf8-to-utf32             9.7      7.1      7.1        -        -        -
+utf8-to-utf16le                 7.6      5.0      5.0      4.8      4.9      5.7
+valid-utf8-to-utf16le           7.6      5.0      5.0        -      4.9        -
+utf8-to-utf16be                 7.6      5.0      5.0        -        -        -
+valid-utf8-to-utf16be           7.6      5.0      5.0        -        -        -
+utf16le-to-utf32               10.8      8.1      8.2        -        -        -
+valid-utf16le-to-utf32         10.8      8.1      8.2        -        -        -
+utf16be-to-utf32               10.8      8.1      8.2        -        -        -
+valid-utf16be-to-utf32         10.8      8.1      8.2        -        -        -
+latin1-to-utf16le               8.2      5.6      5.6        -      5.9        -
+valid-latin1-to-utf16le         8.2      5.6      5.6        -      5.9        -
+latin1-to-utf16be               8.2      5.6      5.6        -        -        -
+valid-latin1-to-utf16be         8.2      5.6      5.6        -        -        -
+latin1-to-utf32                10.2      7.6      7.6        -        -        -
+valid-latin1-to-utf32          10.2      7.6      7.6        -        -        -
+utf16le-to-utf8                 7.8      5.1      5.1      4.8      4.9      5.5
+valid-utf16le-to-utf8           7.8      5.1      5.1        -        -        -
+utf16be-to-utf8                 7.8      5.1      5.1        -        -        -
+valid-utf16be-to-utf8           7.8      5.1      5.1        -        -        -
+utf32-to-utf8                  10.5      7.9      7.9        -        -      8.2
+valid-utf32-to-utf8            10.5      7.9      7.9        -        -        -
+valid-utf16le-to-utf16be        8.8      6.1      6.2        -        -        -
+valid-utf16be-to-utf16le        8.8      6.1      6.2        -        -        -

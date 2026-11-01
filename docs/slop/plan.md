@@ -510,3 +510,15 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   which UTF-8 paid twice a block. UTF-16 groups with a surrogate check the
   pairs on the units' high bytes (`uzp2`) in vectors; the UTF-8 bytes
   before a block come from loads (`prev_by_load`, 1.09 on non-ASCII text).
+- **Transcoding** ([neon-convert-20261101.md](results/neon-convert-20261101.md)):
+  0.97 to 1.20 of simdutf's `arm64` over 24 operations (1.20 of
+  `1476ab0`; rows under 216 to 85), the other 14 conversions 1.00-1.19 of
+  `1476ab0`, x86 machine code unchanged. Neoverse N2 shifts by an
+  immediate on one vector pipe and permutes on both, and counts bits only
+  in vector registers: widen with `tbl` and plain stores (paired to `stp`),
+  not `ushll`; reduce with `orr` and one `umaxp`; count with one `cnt`, not
+  a `@popCount` per mask. Valid UTF-8 decodes runs of 21 or 16 three-byte
+  or 16 four-byte characters before finding a block's end, and other blocks
+  with four-byte characters in 12-byte windows (windows everywhere cost
+  two-byte text 15-20%). Left: 16-256 B rows (0.74-0.90), CJK UTF-8 to
+  UTF-16/32 (0.92-0.97).

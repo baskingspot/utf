@@ -1,0 +1,23 @@
+utf/arm, geomean          rows  utf GB/s  simdutf     base     rust     ±   <1    ~   slowest vs simdutf
+Utf8ToUtf16be               15      4.96     1.39     1.19        -    0%    2    0   0.85 [0.85, 0.85] chinese
+ValidUtf8ToUtf16be          15      6.52     1.32     1.26        -    0%    3    0   0.91 [0.91, 0.92] chinese
+Utf8ToLatin1                13      6.68     1.41     1.08        -    0%    1    2   0.95 [0.94, 1.06] ascii-1048576
+ValidUtf8ToLatin1           13      6.88     1.29     1.09     1.94    0%    5    1   0.81 [0.81, 0.81] latin1-1048576
+ValidUtf16leToUtf8          15      9.39     1.29     1.20        -    0%    5    0   0.92 [0.92, 0.92] russian
+Utf16leToLatin1             13     30.31     2.02     1.19        -    0%    0    0   1.12 [1.12, 1.13] latin1-16
+ValidUtf16leToLatin1        13     38.92     2.36     1.00     1.39    0%    0    0   1.10 [1.10, 1.10] latin1-16
+Utf16beToUtf8               15      8.27     1.43     1.17        -    0%    0    0   1.02 [1.02, 1.02] hindi
+Utf16beToUtf16le            15     15.44     1.64     1.04        -    0%    1    0   0.88 [0.88, 0.88] emoji
+ValidUtf16beToUtf16le       15     49.63     0.97     1.01        -    0%   10    0   0.85 [0.85, 0.85] ascii-64
+Utf16beToUtf32              15     12.24     1.13     1.36        -    0%    1    0   0.90 [0.90, 0.90] ascii-16
+Utf16beToLatin1             13     23.57     1.95     1.14        -    0%    0    0   1.16 [1.16, 1.16] ascii-16
+ValidUtf32ToUtf8            15     13.57     1.41     1.20        -    0%    0    0   1.04 [1.04, 1.04] arabic
+ValidUtf32ToUtf16le         15     37.70     1.95     1.08        -    1%    0    0   1.46 [1.46, 1.46] emoji
+Utf32ToUtf16be              15     15.83     0.98     1.02        -    0%   11    0   0.87 [0.84, 0.87] russian
+Utf32ToLatin1               13     37.90     1.74     1.19        -    0%    0    0   1.29 [1.29, 1.29] latin1-16
+ValidUtf32ToLatin1          13     51.64     2.25     1.01        -    0%    0    0   1.27 [1.27, 1.27] latin1-16
+Latin1ToUtf8                13      8.95     1.77     1.09     2.73    0%    2    0   0.90 [0.90, 0.90] latin1-65536
+ValidLatin1ToUtf8           13      8.93     1.77     1.09     2.73    0%    2    0   0.90 [0.90, 0.90] latin1-65536
+Latin1ToUtf16be             13     18.75     1.23     1.14        -    0%    4    0   0.84 [0.84, 0.84] latin1-16
+ValidLatin1ToUtf32          13     11.45     1.05     1.03        -    0%    4    0   0.74 [0.74, 0.74] latin1-16
+all                        293     15.22     1.48     1.12     2.12         51    3

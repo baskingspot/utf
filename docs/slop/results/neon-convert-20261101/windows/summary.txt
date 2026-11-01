@@ -1,0 +1,15 @@
+utf/arm, geomean          rows  utf GB/s  simdutf     base      std     rust       go     ±   <1    ~   slowest vs simdutf
+Utf8ToUtf16le               15      4.11     1.14     0.97     3.76     1.68    10.18    0%    7    1   0.67 [0.67, 0.67] emoji
+ValidUtf8ToUtf16le          15      5.24     1.03     0.98        -     1.74        -    0%    7    1   0.58 [0.58, 0.59] emoji
+Utf8ToUtf32                 15      3.49     1.07     1.12        -        -     5.09    0%   11    0   0.71 [0.71, 0.72] emoji
+ValidUtf8ToUtf32            15      4.50     0.97     1.19        -        -        -    0%   12    0   0.59 [0.59, 0.60] emoji
+Utf8ToLatin1                13      6.76     1.43     1.09        -        -        -    0%    2    0   0.97 [0.97, 0.97] latin1-1048576
+Utf16leToUtf8               15      9.39     1.36     1.20     3.33     2.82     9.74    0%    5    0   0.91 [0.91, 0.91] russian
+ValidUtf16leToUtf16be       15     48.64     0.95     1.00        -        -        -    0%    9    1   0.85 [0.85, 0.85] ascii-64
+Utf16leToUtf32              15     12.32     1.00     1.28        -        -        -    0%   13    0   0.88 [0.88, 0.88] ascii-16
+ValidUtf16leToUtf32         15     12.32     1.00     1.27        -        -        -    0%   13    1   0.89 [0.89, 0.89] ascii-16
+Utf32ToUtf8                 15     12.81     1.32     1.22        -        -     6.28    0%    2    0   0.92 [0.92, 0.92] hindi
+Latin1ToUtf16le             13     16.30     0.80     0.98        -     1.20        -    0%   13    0   0.73 [0.72, 0.73] ascii-16
+Latin1ToUtf16be             13     16.37     1.08     0.99        -        -        -    0%    4    0   0.78 [0.78, 0.78] ascii-16
+Latin1ToUtf32               13      9.87     0.91     0.89        -        -        -    0%   10    1   0.71 [0.71, 0.72] ascii-16
+all                        187      9.45     1.07     1.09     3.54     1.80     7.50        108    5

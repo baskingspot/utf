@@ -340,7 +340,104 @@ inline fn store(comptime T: type, comptime e: Endian, dst: []T, o: usize, v: any
 inline fn below(comptime limit: comptime_int, v: anytype) bool {
     const V = @TypeOf(v);
     const Elem = @typeInfo(V).vector.child;
+    if (neon and @sizeOf(V) >= 16) return !anySet(fold(v) & splat(Fold(V), ~@as(Elem, limit - 1)));
     return @reduce(.Or, v & splat(V, ~@as(Elem, limit - 1))) == 0;
+}
+
+// NEON, where the code is shaped for Neoverse-class cores (Neoverse N2,
+// docs/slop/results/neon-convert-20261101.md): of their two vector pipes
+// only one shifts by an immediate (`ushll`, `shl`, `ushr`, `shrn`), while
+// both run permutes (`zip`, `uzp`, `tbl`), logic, and compares, and they
+// count bits only in vector registers. So lanes widen with `tbl`, not
+// `ushll`; a reduction to a bool folds lanes with `orr` and one pairwise
+// `umaxp`, read as a word, where LLVM reduces a bool vector through a lane
+// mask or ORs a vector down with shifts on the integer side; and counts
+// come from one `cnt` or a table, not a `@popCount` per mask.
+
+/// NEON with the LLVM backend, which the intrinsics below need.
+const neon = simd.isa == .neon and builtin.zig_backend == .stage2_llvm;
+
+extern fn @"llvm.aarch64.neon.umaxp.v16i8"(V16, V16) V16;
+extern fn @"llvm.aarch64.neon.addp.v8i16"(@Vector(8, u16), @Vector(8, u16)) @Vector(8, u16);
+
+/// One 16-byte register of `V`'s lanes.
+fn Fold(comptime V: type) type {
+    const Elem = @typeInfo(V).vector.child;
+    return @Vector(16 / @sizeOf(Elem), Elem);
+}
+
+/// The 16-byte registers of `v` ORed into one.
+inline fn fold(v: anytype) Fold(@TypeOf(v)) {
+    const F = Fold(@TypeOf(v));
+    const n = @typeInfo(@TypeOf(v)).vector.len / @typeInfo(F).vector.len;
+    if (n == 1) return v;
+    const parts: [n]F = @bitCast(v);
+    var acc = parts[0];
+    inline for (parts[1..]) |x| acc |= x;
+    return acc;
+}
+
+/// Whether any bit of the 16-byte register `v` is set: one `umaxp` and a
+/// move to a general register.
+inline fn anySet(v: anytype) bool {
+    const b: V16 = @bitCast(v);
+    const m = @"llvm.aarch64.neon.umaxp.v16i8"(b, b);
+    return @as(@Vector(2, u64), @bitCast(m))[0] != 0;
+}
+
+/// Whether any lane of `c`, a compare of `Elem` lanes, is true. On NEON
+/// from the compare's lanes, not a lane mask.
+inline fn anyTrue(comptime Elem: type, c: anytype) bool {
+    const V = @Vector(@typeInfo(@TypeOf(c)).vector.len, Elem);
+    if (!neon or @sizeOf(V) < 16) return @reduce(.Or, c);
+    return anySet(fold(@select(Elem, c, splat(V, ~@as(Elem, 0)), splat(V, 0))));
+}
+
+/// `tbl` indexes that widen the bytes `first..` of a register to lanes of
+/// `size` bytes, each byte in the lane's byte `at` and the rest zero.
+fn widening(comptime size: usize, comptime at: usize, comptime first: usize) V16 {
+    var m: [16]u8 = @splat(0x80);
+    for (0..16 / size) |k| m[size * k + at] = first + k;
+    return m;
+}
+
+/// Stores the 16 bytes of `v` widened to `T` at `dst[o..]`, UTF-16 in byte
+/// order `e`. On NEON with `tbl`, and plain stores, which LLVM pairs:
+/// widened with zips against zero, LLVM sees a zero extension and makes
+/// `ushll` of them again, and volatile stores keep it from pairing them
+/// (`str` moves 16 bytes a cycle there, `stp` more: Latin-1 to UTF-32
+/// 13.5 against 18 GB/s).
+inline fn storeWide(comptime T: type, comptime e: Endian, dst: []T, o: usize, v: V16) void {
+    if (!neon) return store(T, e, dst, o, v);
+    const n = 16 / @sizeOf(T);
+    const at = if (T == u16) @intFromBool(e == .big) else if (native == .little) 0 else 3;
+    var w: [@sizeOf(T)]V16 = undefined;
+    inline for (&w, 0..) |*x, q| x.* = simd.lookup16(v, comptime widening(@sizeOf(T), at, n * q));
+    dst[o..][0..16].* = @bitCast(w);
+}
+
+/// Stores the 16-bit lanes of `v` widened to UTF-32 at `dst[o..]`: on
+/// NEON with `tbl`, as `storeWide`.
+inline fn storeWideUnits(dst: []u32, o: usize, v: anytype) void {
+    const n = @typeInfo(@TypeOf(v)).vector.len;
+    if (!neon) return store(u32, native, dst, o, v);
+    const parts: [n / 8]V16 = @bitCast(v);
+    var w: [n / 4]V16 = undefined;
+    inline for (parts, 0..) |x, k| {
+        inline for (0..2) |h| {
+            const idx = comptime blk: {
+                var m: [16]u8 = @splat(0x80);
+                for (0..4) |j| {
+                    const lo = if (native == .little) 0 else 2;
+                    m[4 * j + lo] = 8 * h + 2 * j;
+                    m[4 * j + lo + 1] = 8 * h + 2 * j + 1;
+                }
+                break :blk m;
+            };
+            w[2 * k + h] = simd.lookup16(x, @as(V16, idx));
+        }
+    }
+    dst[o..][0..n].* = @bitCast(w);
 }
 
 // AVX-512 with VBMI and VBMI2: byte permutes across the whole register
@@ -387,7 +484,7 @@ inline fn storeWidened(comptime T: type, comptime e: Endian, dst: []T, o: usize,
 
 /// Widens the 64 bytes at `s` to `T` at `d` (UTF-16 in byte order `e`).
 inline fn widenAscii(comptime T: type, comptime e: Endian, s: []const u8, d: []T) void {
-    inline for (0..4) |k| store(T, e, d, 16 * k, widenLoad(s[16 * k ..]));
+    inline for (0..4) |k| storeWide(T, e, d, 16 * k, widenLoad(s[16 * k ..]));
 }
 
 /// Loads 16 bytes to widen. On AVX2 a plain load, which folds into
@@ -574,6 +671,7 @@ inline fn utf8Invalid(comptime n: usize, cur: @Vector(n, u8)) bool {
     const third = @select(u8, cur >= splat(V, 0xE0), splat(V, 0x80), zero);
     const fourth = @select(u8, cur >= splat(V, 0xF0), splat(V, 0x80), zero);
     const must23 = simd.prev(2, third, zero) | simd.prev(3, fourth, zero);
+    if (neon) return anySet(fold(special ^ must23));
     return @reduce(.Or, special ^ must23) != 0;
 }
 
@@ -677,7 +775,7 @@ inline fn utf8Window(comptime T: type, comptime e: Endian, in: V16, ends: u64, d
     const U16x8 = @Vector(8, u16);
     const U32x4 = @Vector(4, u32);
     if (ends & 0xFFFF == 0xFFFF) {
-        store(T, e, dst, o.*, in);
+        storeWide(T, e, dst, o.*, in);
         o.* += 16;
         return 16;
     }
@@ -731,7 +829,10 @@ inline fn utf8Window(comptime T: type, comptime e: Endian, in: V16, ends: u64, d
                 simd.loadVolatile(V16, &utf16_pairs[mask]),
             );
             store(T, e, dst, o.*, @as(U16x8, @bitCast(units)));
-            o.* += 3 + @as(usize, @popCount(mask));
+            // aarch64 counts bits in a vector register: from a nibble
+            // table, it costs no moves there.
+            const pairs_n = if (neon) @as(u32, 0x3221_2110) >> @as(u5, mask) * 4 & 0xF else @popCount(mask);
+            o.* += 3 + @as(usize, pairs_n);
         }
     }
     return entry[1];
@@ -993,7 +1094,14 @@ inline fn utf8DecodeBlock(
         }
     }
     const w: [64]u16 = words;
+    // On aarch64, which counts bits only in vector registers, every group's
+    // count at once and their sums with one multiply: a count per group
+    // took two moves between register files.
+    const counts: @Vector(8, u8) = if (neon) @popCount(@as(@Vector(8, u8), @bitCast(mend))) else @splat(0);
+    const sums = @as(u64, @bitCast(counts)) *% 0x0101_0101_0101_0101;
+    const start = o.*;
     inline for (0..8) |g| {
+        if (neon and g > 0) o.* = start + @as(u8, @truncate(sums >> 8 * (g - 1)));
         const m: u8 = @truncate(mend >> 8 * g);
         const shuffle = simd.loadVolatile(V16, &compress_words[m]);
         const group: V16 = @bitCast(@as(@Vector(8, u16), w[8 * g ..][0..8].*));
@@ -1011,8 +1119,9 @@ inline fn utf8DecodeBlock(
         } else {
             store(T, e, dst, o.*, packed_words);
         }
-        o.* += @popCount(m);
+        if (!neon) o.* += @popCount(m);
     }
+    if (neon) o.* = start + @as(usize, sums >> 56);
 }
 
 /// Decodes the 16 three-byte characters in the first 48 bytes of `src` and
@@ -1020,12 +1129,63 @@ inline fn utf8DecodeBlock(
 inline fn utf8DecodeThree(comptime T: type, comptime e: Endian, src: []const u8, dst: []T, o: *usize) void {
     const U = @Vector(4, u32);
     const pick = [16]i32{ 2, 1, 0, -1, 5, 4, 3, -1, 8, 7, 6, -1, 11, 10, 9, -1 };
+    if (neon) return utf8DecodeThreeNeon(T, e, 16, src, dst, o);
     inline for (0..4) |q| {
         const x: U = @bitCast(@shuffle(u8, simd.loadVolatile(V16, src[12 * q ..][0..16]), splat(V16, 0), pick));
         store(T, e, dst, o.* + 4 * q, x & splat(U, 0x3F) | (x & splat(U, 0x3F00)) >> splat(U, 2) |
             (x & splat(U, 0x0F0000)) >> splat(U, 4));
     }
     o.* += 16;
+}
+
+/// Decodes the `n` three-byte characters in the first `3 * n` bytes of
+/// `src`, 16 or 21, and stores them as `utf8DecodeThree` does, writing up
+/// to three units past them: four at a time, then one store of them all,
+/// which UTF-16 narrows with `uzp1` and stores with `stp`, where each four
+/// took an `xtn` and a store of eight bytes. Reads 16 bytes from the start
+/// of each four, so up to byte 76 for 21.
+inline fn utf8DecodeThreeNeon(
+    comptime T: type,
+    comptime e: Endian,
+    comptime n: usize,
+    src: []const u8,
+    dst: []T,
+    o: *usize,
+) void {
+    const U = @Vector(4, u32);
+    const pick = [16]i32{ 2, 1, 0, -1, 5, 4, 3, -1, 8, 7, 6, -1, 11, 10, 9, -1 };
+    var cp: [(n + 3) / 4]U = undefined;
+    inline for (&cp, 0..) |*c, q| {
+        const x: U = @bitCast(@shuffle(u8, simd.loadVolatile(V16, src[12 * q ..][0..16]), splat(V16, 0), pick));
+        c.* = x & splat(U, 0x3F) | (x & splat(U, 0x3F00)) >> splat(U, 2) | (x & splat(U, 0x0F0000)) >> splat(U, 4);
+    }
+    store(T, e, dst, o.*, @as(@Vector(4 * cp.len, u32), @bitCast(cp)));
+    o.* += n;
+}
+
+/// Decodes the 16 four-byte characters of `block`, one every four bytes,
+/// and stores them as UTF-16 in byte order `e` or as UTF-32: each 32-bit
+/// lane holds one character, its bytes reversed in place.
+inline fn utf8DecodeFour(comptime T: type, comptime e: Endian, block: @Vector(64, u8), dst: []T, o: *usize) void {
+    const U = @Vector(16, u32);
+    const rev = comptime blk: {
+        var m: [64]i32 = undefined;
+        for (&m, 0..) |*x, i| x.* = @intCast(i / 4 * 4 + 3 - i % 4);
+        break :blk m;
+    };
+    const x: U = @bitCast(@shuffle(u8, block, undefined, rev));
+    const cp = (x & splat(U, 0x3F)) | (x & splat(U, 0x3F00)) >> splat(U, 2) |
+        (x & splat(U, 0x3F_0000)) >> splat(U, 4) | (x & splat(U, 0x0700_0000)) >> splat(U, 6);
+    if (T == u32) {
+        store(T, e, dst, o.*, cp);
+        o.* += 16;
+        return;
+    }
+    // Each pair in its character's lane, the high surrogate first.
+    const s = cp -% splat(U, 0x10000);
+    const pairs = (splat(U, 0xD800) | s >> splat(U, 10)) | (splat(U, 0xDC00) | (s & splat(U, 0x3FF))) << splat(U, 16);
+    store(T, e, dst, o.*, @as(@Vector(32, u16), @bitCast(pairs)));
+    o.* += 32;
 }
 
 fn utf8ToUnitsLong(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
@@ -1091,8 +1251,49 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
             if (src.len - p < 64 + 16 or dst.len - o < 64 + 16) break;
             if (checked and utf8Invalid(64, block)) break;
             const leads = leadMask(64, block);
+            if (neon) {
+                // Runs of one length first, before the block's end is
+                // found: 21 three-byte characters, the whole block's, or
+                // sixteen, as below, or sixteen four-byte ones, which a
+                // lead every four bytes means in valid (or validated)
+                // input. The units written past 21 are written again.
+                if (leads == 0x9249_2492_4924_9249) {
+                    utf8DecodeThreeNeon(T, e, 21, src[p..], dst, &o);
+                    p += 63;
+                    continue;
+                }
+                if (leads & 0x1_FFFF_FFFF_FFFF == 0x1_2492_4924_9249) {
+                    utf8DecodeThreeNeon(T, e, 16, src[p..], dst, &o);
+                    p += 48;
+                    continue;
+                }
+                if (leads == 0x1111_1111_1111_1111) {
+                    utf8DecodeFour(T, e, block, dst, &o);
+                    p += 64;
+                    continue;
+                }
+            }
             const take = utf8BlockEnd(src[p..]) orelse break;
             const whole: u64 = if (take == 64) ~@as(u64, 0) else (@as(u64, 1) << @intCast(take)) - 1;
+            // On NEON another block with four-byte characters decodes in
+            // 12-byte windows, as simdutf's arm64 kernel decodes every
+            // block, where `utf8DecodeBlock` takes twice the vector
+            // operations (emoji, before the run above: 1.1x to UTF-16,
+            // 1.8x to UTF-32); on text without them windows lose 15-20%.
+            // Each window starts on a character and sees twelve bytes of
+            // the block's ends, which hold at least three whole
+            // characters; the rest of the block goes again.
+            const neon_four = neon and anyTrue(u8, block >= splat(@Vector(64, u8), 0xF0));
+            if (neon_four) {
+                const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
+                var pos: usize = 0;
+                while (pos + 12 <= take) {
+                    const in = simd.loadVolatile(V16, src[p + pos ..]);
+                    pos += utf8Window(T, e, in, ends >> @intCast(pos), dst, &o);
+                }
+                p += pos;
+                continue;
+            }
             // Sixteen three-byte characters first: a fixed shuffle for each
             // four, and no table. The rest of the block goes again.
             if (leads & 0x1_FFFF_FFFF_FFFF == 0x1_2492_4924_9249) {
@@ -1101,7 +1302,7 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
                 continue;
             }
             const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
-            if (simd.bitmask(block >= splat(@Vector(64, u8), 0xF0)) & whole == 0)
+            if (neon or simd.bitmask(block >= splat(@Vector(64, u8), 0xF0)) & whole == 0)
                 utf8DecodeBlock(T, e, false, block, ends, dst, &o)
             else
                 utf8DecodeBlock(T, e, true, block, ends, dst, &o);
@@ -1110,7 +1311,7 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
         while (src.len - p >= 16 and dst.len - o >= 16) {
             const w = simd.load16(src[p..]);
             if (below(0x80, w)) {
-                store(T, e, dst, o, w);
+                storeWide(T, e, dst, o, w);
                 p += 16;
                 o += 16;
                 continue;
@@ -1581,6 +1782,20 @@ inline fn utf8From16Three(v: @Vector(16, u16), dst: []u8, o: *usize) void {
         };
         break :blk m;
     };
+    if (neon) {
+        // One `tbl` and one volatile store per group: else LLVM merges the
+        // overlapping stores into byte moves and two-register lookups.
+        const l = [2][2]V16{ @bitCast(lanes[0]), @bitCast(lanes[1]) };
+        const idx: V16 = comptime blk: {
+            var t: [16]u8 = undefined;
+            for (&t, three[0..16]) |*x, m| x.* = m;
+            break :blk t;
+        };
+        inline for ([4]V16{ l[0][0], l[1][0], l[0][1], l[1][1] }, 0..) |part, g|
+            simd.storeVolatile(dst[o.* + 12 * g ..], simd.lookup16(part, idx));
+        o.* += 48;
+        return;
+    }
     const a: [32]u8 = @shuffle(u8, lanes[0], undefined, three);
     const b: [32]u8 = @shuffle(u8, lanes[1], undefined, three);
     inline for ([4][16]u8{ a[0..16].*, b[0..16].*, a[16..32].*, b[16..32].* }, 0..) |part, g|
@@ -1610,6 +1825,25 @@ inline fn utf8FromBmp(v: @Vector(16, u16), dst: []u8, o: *usize) void {
         const m800: u64 = simd.bitmask(@as(S, @bitCast(ones16(lt800))) < splat(S, 0));
         const wide = ~(m80 | m800 << 32);
         inline for (&idx, 0..) |*i, g| i.* = @intCast(simd.pext(wide, @as(u64, 0x55_0000_0055) << 8 * g));
+    } else if (neon and native == .little) {
+        // Each unit's bit of its group's index in its lane, and the lanes
+        // of each group added with two pairwise adds: the four indexes in
+        // one word, where two lane masks take twelve vector operations and
+        // as many to pick the indexes out.
+        const bits = comptime blk: {
+            var a: [16]u16 = undefined;
+            var b: [16]u16 = undefined;
+            for (0..16) |k| {
+                a[k] = 1 << (k % 4);
+                b[k] = 0x10 << (k % 4);
+            }
+            break :blk .{ a, b };
+        };
+        const x: [2]@Vector(8, u16) = @bitCast(@select(u16, lt80, splat(U, 0), bits[0]) |
+            @select(u16, lt800, splat(U, 0), bits[1]));
+        const r = @"llvm.aarch64.neon.addp.v8i16"(x[0], x[1]);
+        const q = @as(@Vector(2, u64), @bitCast(@"llvm.aarch64.neon.addp.v8i16"(r, r)))[0];
+        inline for (&idx, 0..) |*i, g| i.* = @as(u8, @truncate(q >> 16 * g));
     } else {
         // Two masks, not one of the compares joined: joined, NEON's mask
         // takes the lanes back out of an integer one at a time.
@@ -2029,8 +2263,8 @@ fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16,
                 p += 16;
                 continue;
             }
-            if (!@reduce(.Or, v & splat(U, 0xF800) == splat(U, 0xD800))) {
-                if (!@reduce(.Or, v < splat(U, 0x800)))
+            if (!anyTrue(u16, v & splat(U, 0xF800) == splat(U, 0xD800))) {
+                if (!anyTrue(u16, v < splat(U, 0x800)))
                     utf8From16Three(v, dst, &o)
                 else
                     utf8FromBmp(v, dst, &o);
@@ -2108,8 +2342,8 @@ fn utf32ToUtf8Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
                 // register of 16-bit lanes where 32-bit ones take two.
                 const U = @Vector(16, u16);
                 const w = simd.narrow(u16, v);
-                if (checked and @reduce(.Or, w & splat(U, 0xF800) == splat(U, 0xD800))) break;
-                if (!@reduce(.Or, w < splat(U, 0x800)))
+                if (checked and anyTrue(u16, w & splat(U, 0xF800) == splat(U, 0xD800))) break;
+                if (!anyTrue(u16, w < splat(U, 0x800)))
                     utf8From16Three(w, dst, &o)
                 else
                     utf8FromBmp(w, dst, &o);
@@ -2228,10 +2462,13 @@ fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16
             var k = @min(src.len - p, dst.len - o) / 32;
             while (k > 0) : (k -= 1) {
                 const w = load16(e, 32, src, p);
-                if (@reduce(.Or, w & splat(@Vector(32, u16), 0xF800) == splat(@Vector(32, u16), 0xD800))) break;
+                if (anyTrue(u16, w & splat(@Vector(32, u16), 0xF800) == splat(@Vector(32, u16), 0xD800))) break;
                 // Swapped units widen from the register they were swapped
-                // in, where swapping each load would add a shuffle.
-                if (e == native) {
+                // in, where swapping each load would add a shuffle. NEON
+                // widens from the registers it tested.
+                if (neon) {
+                    storeWideUnits(dst, o, w);
+                } else if (e == native) {
                     inline for (0..4) |q| {
                         store(u32, native, dst, o + 8 * q, @as(@Vector(8, u16), src[p + 8 * q ..][0..8].*));
                     }
@@ -2243,8 +2480,8 @@ fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16
             }
             if (src.len - p < 16 or dst.len - o < 16) break;
             const v = load16(e, 16, src, p);
-            if (!@reduce(.Or, v & splat(U, 0xF800) == splat(U, 0xD800))) {
-                store(u32, native, dst, o, v);
+            if (!anyTrue(u16, v & splat(U, 0xF800) == splat(U, 0xD800))) {
+                storeWideUnits(dst, o, v);
                 p += 16;
                 o += 16;
                 continue;
@@ -2578,13 +2815,22 @@ fn utf16SwapImpl(comptime e: Endian, comptime checked: bool, src: []const u16, d
 fn swapValid(comptime e: Endian, src: []const u16, dst: []u16) usize {
     const n = simd.block_len / 2;
     const to: Endian = if (e == .little) .big else .little;
+    // On NEON plain loads, which LLVM pairs (`ldp`), as it pairs the
+    // stores; nothing here loads the unit after a block.
+    const ld = struct {
+        inline fn f(comptime m: usize, s: []const u16, i: usize) @Vector(m, u16) {
+            if (!neon) return load16(e, m, s, i);
+            const v = @as(*align(1) const @Vector(m, u16), @ptrCast(s[i..][0..m])).*;
+            return if (e == native) v else @byteSwap(v);
+        }
+    }.f;
     const len = src.len;
     // Less than a block, at least 4 units: the first and last 16, 8, or 4.
     if (len < n) {
         inline for (.{ 16, 8, 4 }) |m| {
             if (len >= m) {
-                const a = load16(e, m, src, 0);
-                const b = load16(e, m, src, len - m);
+                const a = ld(m, src, 0);
+                const b = ld(m, src, len - m);
                 store(u16, to, dst, 0, a);
                 store(u16, to, dst, len - m, b);
                 return len;
@@ -2594,18 +2840,18 @@ fn swapValid(comptime e: Endian, src: []const u16, dst: []u16) usize {
     }
     var p: usize = 0;
     if (len > 4 * n) {
-        store(u16, to, dst, 0, load16(e, n, src, 0));
+        store(u16, to, dst, 0, ld(n, src, 0));
         p = firstStep(u16, dst, len, n);
         while (len - p > 4 * n) {
-            inline for (0..4) |k| store(u16, to, dst, p + k * n, load16(e, n, src, p + k * n));
+            inline for (0..4) |k| store(u16, to, dst, p + k * n, ld(n, src, p + k * n));
             p += 4 * n;
         }
     }
     const rem = len - p;
     inline for (1..4) |k| {
-        if (rem > k * n) store(u16, to, dst, p + (k - 1) * n, load16(e, n, src, p + (k - 1) * n));
+        if (rem > k * n) store(u16, to, dst, p + (k - 1) * n, ld(n, src, p + (k - 1) * n));
     }
-    store(u16, to, dst, len - n, load16(e, n, src, len - n));
+    store(u16, to, dst, len - n, ld(n, src, len - n));
     return len;
 }
 
@@ -2615,7 +2861,7 @@ inline fn unpaired(v: anytype, next: @TypeOf(v)) bool {
     const U = @TypeOf(v);
     const high = v & splat(U, 0xFC00) == splat(U, 0xD800);
     const low_next = next & splat(U, 0xFC00) == splat(U, 0xDC00);
-    return @reduce(.Or, high != low_next);
+    return anyTrue(@typeInfo(U).vector.child, high != low_next);
 }
 
 /// Swaps `m`-unit blocks from `p.*` on, advancing it, and returns whether
@@ -2639,7 +2885,7 @@ inline fn swapBlocks(
         // Pairs checked only where the block or the unit after it holds a
         // surrogate, where the check takes a second load and four
         // operations a vector.
-        const surrogates = checked and (@reduce(.Or, v & splat(U, 0xF800) == splat(U, 0xD800)) or
+        const surrogates = checked and (anyTrue(u16, v & splat(U, 0xF800) == splat(U, 0xD800)) or
             swap16(e, src[p.* + m]) & 0xFC00 == 0xDC00);
         if (surrogates and unpaired(v, load16(e, m, src, p.* + 1))) return false;
         store(u16, to, dst, p.*, v);
@@ -2652,7 +2898,7 @@ inline fn swapBlocks(
             const a = load16(e, m, src, p.*);
             const b = load16(e, m, src, p.* + m);
             const s = splat(U, 0xD800);
-            if (@reduce(.Or, (a & splat(U, 0xF800) == s) | (b & splat(U, 0xF800) == s)) or
+            if (anyTrue(u16, (a & splat(U, 0xF800) == s) | (b & splat(U, 0xF800) == s)) or
                 swap16(e, src[p.* + 2 * m]) & 0xFC00 == 0xDC00) break;
             store(u16, to, dst, p.*, a);
             store(u16, to, dst, p.* + m, b);
@@ -2868,7 +3114,7 @@ fn latin1ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, s
         while (lim - p >= 64) : (step = 64) {
             // UTF-32 keeps one 64-byte load: 16-byte loads cost SSE 15% at
             // 4 KiB.
-            if (v512 or T == u32)
+            if (v512 or (T == u32 and !neon))
                 store(T, e, dst, p, simd.load(u8, src[p..]))
             else
                 widenAscii(T, e, src[p..], dst[p..]);

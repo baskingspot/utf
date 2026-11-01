@@ -1,0 +1,5 @@
+utf: ReleaseFast, cpu native, dispatch default, aa0cbf5
+base: 1476ab0 (1476ab0), built as utf
+std: ReleaseFast, cpu native; rust: target-cpu=native, run-time detection detect; go: GOAMD64=v2
+buffers: input 0 bytes past a page, output 2048; 50 ms a sample, 3 rounds
+bench-simdutf: simdutf 9.2.1, kernel arm64

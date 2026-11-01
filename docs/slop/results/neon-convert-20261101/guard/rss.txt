@@ -1,0 +1,15 @@
+peak RSS (MiB)              simdutf      utf     base      std     rust       go
+utf32-to-utf16le               11.5      8.9      9.0        -        -        -
+valid-utf32-to-utf16le         11.5      8.9      9.0        -        -        -
+utf32-to-utf16be               11.5      8.9      9.0        -        -        -
+valid-utf32-to-utf16be         11.5      8.9      9.0        -        -        -
+utf16le-to-utf16be              8.8      6.1      6.2        -        -        -
+utf16be-to-utf16le              8.8      6.1      6.2        -        -        -
+latin1-to-utf8                  7.2      4.6      4.6        -      4.9        -
+valid-latin1-to-utf8            7.2      4.6      4.6        -      4.9        -
+utf8-to-latin1                  7.3      4.7      4.7        -        -        -
+valid-utf8-to-latin1            7.3      4.7      4.7        -      5.0        -
+utf16le-to-latin1               9.4      6.8      6.8        -        -        -
+valid-utf16le-to-latin1         9.4      6.8      6.8        -      6.9        -
+utf32-to-latin1                13.8     11.2     11.2        -        -        -
+valid-utf32-to-latin1          13.8     11.2     11.2        -        -        -
