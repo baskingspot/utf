@@ -703,6 +703,23 @@ inline fn surrogateKey(comptime endian: std.builtin.Endian, block: Units16) Unit
         @as(Units16, @splat(if (native) 0xD800 else 0x00D8));
 }
 
+/// One byte per unit of a block, the high byte of each, which says whether
+/// it is a surrogate: `uzp2` (`uzp1` for big-endian units) on NEON.
+const Pairs = @Vector(n16, u8);
+const ones: Pairs = @splat(0xFF);
+const zeros: Pairs = @splat(0);
+
+inline fn highBytes(comptime endian: std.builtin.Endian, units: []const u16) Pairs {
+    const b = simd.loadVolatile(Bytes, std.mem.sliceAsBytes(units[0..n16]));
+    return @shuffle(u8, b, undefined, highLanes(endian));
+}
+
+fn highLanes(comptime endian: std.builtin.Endian) [n16]i32 {
+    var m: [n16]i32 = undefined;
+    for (&m, 0..) |*x, i| x.* = @intCast(2 * i + @intFromBool(endian == .little));
+    return m;
+}
+
 /// Checks one block, given whether the unit before it is a high surrogate;
 /// returns whether its last unit is one, or `bad_block` if it fails. Each low
 /// surrogate must follow a high one, and each high one precede a low one.
@@ -750,6 +767,27 @@ inline fn utf16BadBlock(comptime endian: std.builtin.Endian, units: []const u16)
             if (!anyBelow(key, groupKeyMax(endian))) {
                 if (pending != 0) return i;
                 continue;
+            }
+            if (neon) {
+                // Check the pairs on the units' high bytes, as Keiser and
+                // Lemire check UTF-8: each unit is a low surrogate exactly
+                // when the unit before it is a high one. The masks below
+                // only find the failing block. The loads are volatile, as
+                // there: else LLVM keeps the blocks from the test, spilling
+                // them on every group.
+                var before: Pairs = @splat(0 -% @as(u8, @intCast(pending)));
+                var err: Pairs = @splat(0);
+                inline for (0..g) |k| {
+                    const top = highBytes(endian, units[i + k * n16 ..]) & @as(Pairs, @splat(0xFC));
+                    const h = @select(u8, top == @as(Pairs, @splat(0xD8)), ones, zeros);
+                    const l = @select(u8, top == @as(Pairs, @splat(0xDC)), ones, zeros);
+                    err |= l ^ simd.prev(1, h, before);
+                    before = h;
+                }
+                if (@reduce(.Max, err) == 0) {
+                    pending = before[n16 - 1] & 1;
+                    continue;
+                }
             }
             // The masks alone check a block; the test for a surrogate in
             // it only saves work on blocks without one.
