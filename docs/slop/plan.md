@@ -479,3 +479,18 @@ Wave 5 ([short-20261101.md](results/short-20261101.md)):
   simdutf natively: the length functions and 16-256 B rows of Latin-1 to
   UTF-16 and UTF-32, the valid byte swap, and UTF-16LE to Latin-1 (harness
   loop); no operation on AVX2, one 64 B row group on SSE.
+
+aarch64 ([neon-20261101.md](results/neon-20261101.md)):
+
+- **CI and numbers.** `.github/ci.yaml` runs `test` on `ubuntu-26.04-arm`
+  (blocking) and `macos-26` (not); `.github/workflows/bench.yml` runs
+  `bench-compare` on a hosted aarch64 runner, and `just base=<rev>` adds a
+  revision's `bench-utf` as an arm for an A/B in one run. No orb is aarch64.
+- **First read** (Neoverse N2, ten operations, 3 rounds): 1.20 of simdutf's
+  `arm64`. Under: UTF-8 validation 0.73, base64 encode 0.61, decode 0.89,
+  CJK UTF-16 to UTF-8 0.75, 64-byte `countUtf8` 0.40.
+- **`simd.bitmask`** builds NEON masks of 32 and 64 lanes with `addp`
+  (UTF-8 to UTF-16 1.07, 1.11-1.14 on non-ASCII text). Build a mask from
+  one compare: a bool vector joined from two (`@bitCast([2]@Vector(16,
+bool){...})`) is materialized as an integer, and the NEON path took it
+  apart lane by lane (UTF-16 to UTF-8 on Korean 0.45 until split).

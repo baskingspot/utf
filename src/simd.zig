@@ -130,6 +130,7 @@ extern fn @"llvm.x86.ssse3.pshuf.b.128"(@Vector(16, u8), @Vector(16, u8)) @Vecto
 extern fn @"llvm.x86.avx2.pshuf.b"(@Vector(32, u8), @Vector(32, u8)) @Vector(32, u8);
 extern fn @"llvm.x86.avx512.pshuf.b.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
 extern fn @"llvm.aarch64.neon.tbl1.v16i8"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
+extern fn @"llvm.aarch64.neon.addp.v16i8"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
 
 /// Looks each lane of `idx` up in a 16-entry table: `table[idx[i]]` where
 /// `idx[i] < 16`, and 0 where bit 7 of `idx[i]` is set; other indices give an
@@ -201,9 +202,20 @@ fn prevMask(comptime n: usize, comptime k: usize) [n]i32 {
 /// aarch64_be with Zig 0.16), and fewer than 8 lanes (or a count that is not
 /// a multiple of 8) on the self-hosted backends, where the cast can leave
 /// bits set above the last lane (seen on x86_64 for 2 and 4 lanes after `!`
-/// or a 64-bit compare).
+/// or a 64-bit compare). NEON has no `pmovmskb`: LLVM lowers the cast with an
+/// `addv` per 16 lanes, so 32 and 64 lanes take each lane's bit and add
+/// neighbouring bytes with `addp` instead, as simdutf does.
 pub inline fn bitmask(v: anytype) @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.len) {
     const n = @typeInfo(@TypeOf(v)).vector.len;
+    if (isa == .neon and llvm and builtin.cpu.arch.endian() == .little and (n == 32 or n == 64)) {
+        const z: @Vector(n, u8) = @splat(0);
+        const m: [n / 16]@Vector(16, u8) = @bitCast(@select(u8, v, comptime laneBits(n), z));
+        const addp = @"llvm.aarch64.neon.addp.v16i8";
+        const r = if (n == 64) addp(addp(m[0], m[1]), addp(m[2], m[3])) else addp(m[0], m[1]);
+        const s = addp(r, r);
+        const t = if (n == 64) s else addp(s, s);
+        return @truncate(@as(@Vector(2, u64), @bitCast(t))[0]);
+    }
     if (builtin.cpu.arch.endian() == .little and (llvm or n % 8 == 0)) return @bitCast(v);
     const L = @Int(.unsigned, @max(8, std.math.ceilPowerOfTwoAssert(usize, n)));
     const bits = comptime blk: {
@@ -213,6 +225,13 @@ pub inline fn bitmask(v: anytype) @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.l
         break :blk b;
     };
     return @truncate(@reduce(.Or, @select(L, v, @as(@Vector(n, L), bits), @as(@Vector(n, L), @splat(0)))));
+}
+
+/// Byte i is bit i % 8: each lane's bit within its byte of the mask.
+fn laneBits(comptime n: usize) @Vector(n, u8) {
+    var b: [n]u8 = undefined;
+    for (&b, 0..) |*x, i| x.* = @as(u8, 1) << @intCast(i % 8);
+    return b;
 }
 
 /// Loads the block starting at `src[0]`, which must hold a whole block. One
@@ -710,6 +729,8 @@ test "bitmask puts lane i in bit i" {
     const w: @Vector(16, u16) = @bitCast(a[0..32].*);
     const one: u16 = std.mem.nativeToLittle(u16, 1);
     try testing.expectEqual(0b1, bitmask(w == @as(@Vector(16, u16), @splat(one))));
+    const x: @Vector(32, u16) = @bitCast(a);
+    try testing.expectEqual(0x1_0005, bitmask(x != @as(@Vector(32, u16), @splat(0))));
 }
 
 test "bitmask sets no bits above the last lane of a short vector" {

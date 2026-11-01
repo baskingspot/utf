@@ -1611,7 +1611,9 @@ inline fn utf8FromBmp(v: @Vector(16, u16), dst: []u8, o: *usize) void {
         const wide = ~(m80 | m800 << 32);
         inline for (&idx, 0..) |*i, g| i.* = @intCast(simd.pext(wide, @as(u64, 0x55_0000_0055) << 8 * g));
     } else {
-        const wide = ~simd.bitmask(@as(@Vector(32, bool), @bitCast([2]@Vector(16, bool){ lt80, lt800 })));
+        // Two masks, not one of the compares joined: joined, NEON's mask
+        // takes the lanes back out of an integer one at a time.
+        const wide = ~(@as(u32, simd.bitmask(lt800)) << 16 | simd.bitmask(lt80));
         inline for (&idx, 0..) |*i, g| i.* = (wide >> 4 * g & 15) | (wide >> (12 + 4 * g) & 0xF0);
     }
     if (wide_shuffle) {
