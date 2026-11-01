@@ -399,6 +399,24 @@ inline fn widenLoad(s: []const u8) V16 {
     return if (simd.isa == .avx2) s[0..16].* else simd.loadVolatile(V16, s);
 }
 
+/// `f(ct ++ .{ src, dst })`, a kernel's long path: out of line when
+/// `apart`, so that the registers its loops save cost the short path before
+/// it nothing (LLVM saves them on entry, before any length test), with its
+/// `Result` back through `dispatch.pack`, in registers. Apart only in the
+/// tier objects (`dispatch.exported`), whose kernels are called out of line
+/// anyway, and only for kernels that saved three registers or more: the
+/// call costs 64-256-byte inputs about 3 TSC ticks, more than one or two
+/// saved registers (docs/slop/results/short-20261101.md).
+inline fn longPath(comptime apart: bool, comptime f: anytype, comptime ct: anytype, src: anytype, dst: anytype) Result {
+    if (!(apart and dispatch.exported)) return @call(.always_inline, f, ct ++ .{ src, dst });
+    const Long = struct {
+        fn run(s: @TypeOf(src), d: @TypeOf(dst)) dispatch.Packed(Result) {
+            return dispatch.pack(@call(.always_inline, f, ct ++ .{ s, d }));
+        }
+    };
+    return dispatch.unpack(Result, @call(.never_inline, Long.run, .{ src, dst }));
+}
+
 /// Combines a checked scalar tail at input `p` and output `o` with the
 /// work before it.
 inline fn tail(r: Result, p: usize, o: usize) Result {
@@ -788,15 +806,6 @@ fn utf8ToUnitsAvx512(
         for (&t, 0..) |*x, i| x.* = if (i % 2 == 0) 0 else 64;
         break :blk t;
     };
-    // Up to 64 ASCII bytes, before the loop loads its constants: set up
-    // first, they cost every short call 2-4 ns.
-    if (src.len <= 64 and src.len <= dst.len) {
-        const block = simd.loadShort(u8, src);
-        if (below(0x80, block)) {
-            if (src.len > 0) storeWidened(T, e, dst, 0, block, src.len);
-            return .{ src.len, src.len };
-        }
-    }
     var p: usize = 0;
     var o: usize = 0;
     while (p < src.len) {
@@ -1019,6 +1028,16 @@ inline fn utf8DecodeThree(comptime T: type, comptime e: Endian, src: []const u8,
     o.* += 16;
 }
 
+fn utf8ToUnitsLong(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
+    const p, const o = utf8ToUnitsAvx512(T, e, checked, src, dst);
+    if (T == u16) {
+        if (checked) return tail(scalar.utf8ToUtf16(e, src[p..], dst[o..]), p, o);
+        return .ok(o + scalar.validUtf8ToUtf16(e, src[p..], dst[o..]));
+    }
+    if (checked) return tail(scalar.utf8ToUtf32(src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validUtf8ToUtf32(src[p..], dst[o..]));
+}
+
 fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
     const run = struct {
         fn f(s: []const u8, d: []T) Result {
@@ -1031,8 +1050,16 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
         }
     }.f;
     if (v512) {
-        const p, const o = utf8ToUnitsAvx512(T, e, checked, src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        // Up to 64 ASCII bytes, before the loop loads its constants: set
+        // up first, they cost every short call 2-4 ns.
+        if (src.len <= 64 and src.len <= dst.len) {
+            const block = simd.loadShort(u8, src);
+            if (below(0x80, block)) {
+                if (src.len > 0) storeWidened(T, e, dst, 0, block, src.len);
+                return .ok(src.len);
+            }
+        }
+        return longPath(true, utf8ToUnitsLong, .{ T, e, checked }, src, dst);
     }
     var p: usize = 0;
     var o: usize = 0;
@@ -1223,6 +1250,12 @@ inline fn utf8ToLatin1Step(
     return true;
 }
 
+fn utf8ToLatin1Long(comptime checked: bool, src: []const u8, dst: []u8) Result {
+    const p, const o = utf8ToLatin1Avx512(checked, src, dst);
+    if (checked) return tail(scalar.utf8ToLatin1(src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validUtf8ToLatin1(src[p..], dst[o..]));
+}
+
 fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
     const run = struct {
         fn f(s: []const u8, d: []u8) Result {
@@ -1231,8 +1264,14 @@ fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
         }
     }.f;
     if (v512) {
-        const p, const o = utf8ToLatin1Avx512(checked, src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        // Up to a block in one masked step.
+        if (src.len <= 64) {
+            if (src.len == 0) return .ok(0);
+            var p: usize = 0;
+            var o: usize = 0;
+            if (utf8ToLatin1Step(checked, false, src, dst, &p, &o)) return .ok(o);
+        }
+        return longPath(true, utf8ToLatin1Long, .{checked}, src, dst);
     }
     var p: usize = 0;
     var o: usize = 0;
@@ -1802,17 +1841,6 @@ fn utf16ToUtf8Avx512(comptime e: Endian, comptime checked: bool, src: []const u1
     const U = @Vector(32, u16);
     var p: usize = 0;
     var o: usize = 0;
-    // Up to 32 ASCII units, before the loop loads its constants: set up
-    // first, they cost every short call 2-4 ns.
-    if (src.len <= 32 and src.len <= dst.len) {
-        var v = simd.loadShort(u16, src);
-        if (e != native) v = @byteSwap(v);
-        if (below(0x80, v)) {
-            const narrow: @Vector(32, u8) = @truncate(v);
-            simd.storePartial(dst, @as(V64, @bitCast([2]@Vector(32, u8){ narrow, @splat(0) })), src.len);
-            return .{ src.len, src.len };
-        }
-    }
     while (p < src.len) {
         const rem = src.len - p;
         const n = @min(rem, 32);
@@ -1926,15 +1954,25 @@ fn utf32ToUtf8Avx512(comptime checked: bool, src: []const u32, dst: []u8) struct
         }
         const n = @min(rem, 16);
         const v: D = if (rem >= 16) simd.load(u32, src[p..]) else simd.loadShort(u32, src[p..][0..n]);
-        if (checked) {
-            const too_big = v > splat(D, 0x10FFFF);
-            const surrogates = v & splat(D, 0xFFFFF800) == splat(D, 0xD800);
-            if (simd.bitmask(too_big) | simd.bitmask(surrogates) != 0) break;
-        }
+        if (checked and utf32Invalid(v)) break;
         if (!put512(dst, &o, utf8Encode512(v, simd.lowBits(u16, n)))) break;
         p += n;
     }
     return .{ p, o };
+}
+
+/// Whether `v` holds a surrogate or a value above U+10FFFF.
+inline fn utf32Invalid(v: @Vector(16, u32)) bool {
+    const D = @Vector(16, u32);
+    const too_big = v > splat(D, 0x10FFFF);
+    const surrogates = v & splat(D, 0xFFFFF800) == splat(D, 0xD800);
+    return simd.bitmask(too_big) | simd.bitmask(surrogates) != 0;
+}
+
+fn utf16ToUtf8Long(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) Result {
+    const p, const o = utf16ToUtf8Avx512(e, checked, src, dst);
+    if (checked) return tail(scalar.utf16ToUtf8(e, src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validUtf16ToUtf8(e, src[p..], dst[o..]));
 }
 
 fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) Result {
@@ -1946,8 +1984,18 @@ fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16,
         }
     }.f;
     if (v512) {
-        const p, const o = utf16ToUtf8Avx512(e, checked, src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        // Up to 32 ASCII units, before the loop loads its constants: set
+        // up first, they cost every short call 2-4 ns.
+        if (src.len <= 32 and src.len <= dst.len) {
+            var v = simd.loadShort(u16, src);
+            if (e != native) v = @byteSwap(v);
+            if (below(0x80, v)) {
+                const narrow: @Vector(32, u8) = @truncate(v);
+                simd.storePartial(dst, @as(V64, @bitCast([2]@Vector(32, u8){ narrow, @splat(0) })), src.len);
+                return .ok(src.len);
+            }
+        }
+        return longPath(true, utf16ToUtf8Long, .{ e, checked }, src, dst);
     }
     var p: usize = 0;
     var o: usize = 0;
@@ -2004,6 +2052,12 @@ fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16,
     return tail(run(src[p..], dst[o..]), p, o);
 }
 
+fn utf32ToUtf8Long(comptime checked: bool, src: []const u32, dst: []u8) Result {
+    const p, const o = utf32ToUtf8Avx512(checked, src, dst);
+    if (checked) return tail(scalar.utf32ToUtf8(src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validUtf32ToUtf8(src[p..], dst[o..]));
+}
+
 fn utf32ToUtf8Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
     const run = struct {
         fn f(s: []const u32, d: []u8) Result {
@@ -2012,8 +2066,15 @@ fn utf32ToUtf8Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
         }
     }.f;
     if (v512) {
-        const p, const o = utf32ToUtf8Avx512(checked, src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        // Up to 16 values in one masked step, for the checked form, which
+        // saved six registers on every call (the valid one none).
+        if (checked and src.len <= 16) {
+            if (src.len == 0) return .ok(0);
+            const v = simd.loadShort(u32, src);
+            var o: usize = 0;
+            if (!utf32Invalid(v) and put512(dst, &o, utf8Encode512(v, simd.lowBits(u16, src.len)))) return .ok(o);
+        }
+        return longPath(checked, utf32ToUtf8Long, .{checked}, src, dst);
     }
     const W = @Vector(16, u32);
     var p: usize = 0;
@@ -2247,27 +2308,37 @@ fn utf32ToUtf16Avx512(
         }
         const n = @min(rem, 16);
         const v: D = if (rem >= 16) simd.load(u32, src[p..]) else simd.loadShort(u32, src[p..][0..n]);
-        if (checked) {
-            const too_big = v > splat(D, 0x10FFFF);
-            const surrogates = v & splat(D, 0xFFFFF800) == splat(D, 0xD800);
-            if (simd.bitmask(too_big) | simd.bitmask(surrogates) != 0) break;
-        }
-        // Each lane as one unit, or as a high and a low surrogate.
-        const pairs: u16 = simd.bitmask(v >= splat(D, 0x10000)) & simd.lowBits(u16, n);
-        const s = v -% splat(D, 0x10000);
-        const hi = splat(D, 0xD800) | s >> splat(D, 10);
-        const lo = splat(D, 0xDC00) | (s & splat(D, 0x3FF));
-        const pair = hi | lo << splat(D, 16);
-        const keep: u32 = @truncate(simd.pdep(simd.lowBits(u16, n), 0x55555555) | simd.pdep(pairs, 0xAAAAAAAA));
-        const count: usize = @popCount(keep);
-        if (count > dst.len - o) break;
-        var w = simd.compress(@as(W, @bitCast(@select(u32, @as(@Vector(16, bool), @bitCast(pairs)), pair, v))), keep);
-        if (e != native) w = @byteSwap(w);
-        simd.storePartial(dst[o..], w, count);
+        if (checked and utf32Invalid(v)) break;
+        o += utf32ToUtf16Step(e, v, n, dst[o..]) orelse break;
         p += n;
-        o += count;
     }
     return .{ p, o };
+}
+
+/// Stores the first `n` values of `v` as UTF-16 in byte order `e` at the
+/// start of `dst`, and returns how many units, or null if they do not fit.
+inline fn utf32ToUtf16Step(comptime e: Endian, v: @Vector(16, u32), n: usize, dst: []u16) ?usize {
+    const D = @Vector(16, u32);
+    const W = @Vector(32, u16);
+    // Each lane as one unit, or as a high and a low surrogate.
+    const pairs: u16 = simd.bitmask(v >= splat(D, 0x10000)) & simd.lowBits(u16, n);
+    const s = v -% splat(D, 0x10000);
+    const hi = splat(D, 0xD800) | s >> splat(D, 10);
+    const lo = splat(D, 0xDC00) | (s & splat(D, 0x3FF));
+    const pair = hi | lo << splat(D, 16);
+    const keep: u32 = @truncate(simd.pdep(simd.lowBits(u16, n), 0x55555555) | simd.pdep(pairs, 0xAAAAAAAA));
+    const count: usize = @popCount(keep);
+    if (count > dst.len) return null;
+    var w = simd.compress(@as(W, @bitCast(@select(u32, @as(@Vector(16, bool), @bitCast(pairs)), pair, v))), keep);
+    if (e != native) w = @byteSwap(w);
+    simd.storePartial(dst, w, count);
+    return count;
+}
+
+fn utf32ToUtf16Long(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) Result {
+    const p, const o = utf32ToUtf16Avx512(e, checked, src, dst);
+    if (checked) return tail(scalar.utf32ToUtf16(e, src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validUtf32ToUtf16(e, src[p..], dst[o..]));
 }
 
 fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) Result {
@@ -2278,8 +2349,14 @@ fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32
         }
     }.f;
     if (v512) {
-        const p, const o = utf32ToUtf16Avx512(e, checked, src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        // Up to 16 values in one masked step, for the checked form, which
+        // saved six registers on every call (the valid one none).
+        if (checked and src.len <= 16) {
+            if (src.len == 0) return .ok(0);
+            const v = simd.loadShort(u32, src);
+            if (!utf32Invalid(v)) if (utf32ToUtf16Step(e, v, src.len, dst)) |n| return .ok(n);
+        }
+        return longPath(checked, utf32ToUtf16Long, .{ e, checked }, src, dst);
     }
     const W = @Vector(16, u32);
     const U32x4 = @Vector(4, u32);
@@ -2402,6 +2479,31 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
 }
 
 fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
+    // The checked form saved six registers on every call; the valid one
+    // none, and its loops take 16 values without a mask.
+    if (v512 and checked) {
+        // Up to 64 values in steps of 16, the last masked: the call to the
+        // long path cost 64 values more than the registers it saves.
+        if (src.len <= 64 and src.len <= dst.len) short: {
+            var p: usize = 0;
+            while (src.len - p >= 16) : (p += 16) {
+                const v = simd.load(u32, src[p..]);
+                if (!below(0x100, v)) break :short;
+                dst[p..][0..16].* = @as(V16, @truncate(v));
+            }
+            if (p == src.len) return .ok(p);
+            const v = simd.loadShort(u32, src[p..]);
+            if (!below(0x100, v)) break :short;
+            const bytes: V64 = @bitCast([4]V16{ @truncate(v), @splat(0), @splat(0), @splat(0) });
+            simd.storePartial(dst[p..], bytes, src.len - p);
+            return .ok(src.len);
+        }
+        return longPath(true, utf32ToLatin1Rest, .{checked}, src, dst);
+    }
+    return utf32ToLatin1Rest(checked, src, dst);
+}
+
+fn utf32ToLatin1Rest(comptime checked: bool, src: []const u32, dst: []u8) Result {
     var p: usize = 0;
     if (use_simd) {
         const lim = @min(src.len, dst.len);
@@ -2582,6 +2684,23 @@ inline fn latin1ToUtf8Short(src: []const u8, dst: []u8) struct { usize, usize } 
     return .{ src.len, o };
 }
 
+/// Up to 64 bytes where the output has room for whole registers, 64 bytes
+/// for each 32 of input: stored whole, the second half over the first's
+/// slack, with no mask or page test, which took registers the call then
+/// saved. Null where the room is short.
+inline fn latin1ToUtf8Whole(src: []const u8, dst: []u8) ?usize {
+    if (src.len == 0) return 0;
+    if (dst.len < 64 or (src.len > 32 and dst.len < 128)) return null;
+    const a: [64]u8 = simd.loadShort(u8, src);
+    const n = @min(src.len, 32);
+    const lo, const k = latin1Encode512(a[0..32].*, n);
+    store(u8, native, dst, 0, lo);
+    if (src.len <= 32) return k;
+    const hi, const m = latin1Encode512(a[32..64].*, src.len - 32);
+    store(u8, native, dst, k, hi);
+    return k + m;
+}
+
 fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize } {
     var p: usize = 0;
     // ASCII blocks first, in loops of their own: before the main loop,
@@ -2667,8 +2786,8 @@ fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
         }
     }.f;
     if (v512) {
-        const p, const o = if (src.len <= 64) latin1ToUtf8Short(src, dst) else latin1ToUtf8Avx512(src, dst);
-        return tail(run(src[p..], dst[o..]), p, o);
+        if (src.len <= 64) if (latin1ToUtf8Whole(src, dst)) |o| return .ok(o);
+        return longPath(true, latin1ToUtf8Long, .{checked}, src, dst);
     }
     var p: usize = 0;
     var o: usize = 0;
@@ -2708,6 +2827,12 @@ fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
         if (scalarStep(run, src, p + @min(steps.next(p), src.len - p), dst, &p, &o, &steps)) |r| return r;
     };
     return tail(run(src[p..], dst[o..]), p, o);
+}
+
+fn latin1ToUtf8Long(comptime checked: bool, src: []const u8, dst: []u8) Result {
+    const p, const o = if (src.len <= 64) latin1ToUtf8Short(src, dst) else latin1ToUtf8Avx512(src, dst);
+    if (checked) return tail(scalar.latin1ToUtf8(src[p..], dst[o..]), p, o);
+    return .ok(o + scalar.validLatin1ToUtf8(src[p..], dst[o..]));
 }
 
 fn latin1ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
