@@ -204,7 +204,7 @@ inline fn decodeShort(
         // Classify and pack only the first half of the block, one vector
         // on AVX2 and two on SSE and NEON
         // (docs/slop/results/calls-20261031.md).
-        const in: [K.blocks]K.V = @bitCast(block);
+        const in = simd.split(K.V, block);
         var values: [K.blocks / 2]K.V = undefined;
         var bad: u64 = 0;
         inline for (&values, 0..) |*v, k| {
@@ -347,7 +347,7 @@ inline fn decodeLast(
         // Classify and pack only the first half of the block, one vector
         // on AVX2 and two on SSE and NEON
         // (docs/slop/results/calls-20261031.md).
-        const in: [K.blocks]K.V = @bitCast(block);
+        const in = simd.split(K.V, block);
         var values: [K.blocks / 2]K.V = undefined;
         var classes: [K.blocks / 2]K.V = undefined;
         var bad: u64 = 0;
@@ -1033,7 +1033,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
 
         /// Classifies a block, from memory or a vector.
         inline fn classifyBlock(src: anytype) Block {
-            const in: [blocks]V = @bitCast(if (@TypeOf(src) == V64) src else simd.load(u8, src));
+            const in = simd.split(V, if (@TypeOf(src) == V64) src else simd.load(u8, src));
             var b: Block = undefined;
             inline for (0..blocks) |k| {
                 const c = classify(in[k]);
@@ -1062,7 +1062,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             if (isa == .avx2) {
                 // Each 16-byte half from its own store, which saves the
                 // shuffle across halves, a shuffle-port instruction.
-                const halves: [2]@Vector(16, u8) = @bitCast(@shuffle(u8, packWords(values), undefined, blk: {
+                const halves = simd.split(@Vector(16, u8), @shuffle(u8, packWords(values), undefined, blk: {
                     // The lanes left over stay in their half too.
                     var m: [lanes]i32 = std.simd.iota(i32, lanes);
                     for (0..lanes / 4) |g| m[g / 4 * 16 + g % 4 * 3 ..][0..3].* = .{ g * 4 + 2, g * 4 + 1, g * 4 };
@@ -1160,7 +1160,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// `w`, and may write the ring up to 64 positions past them.
         inline fn stagePut(stage: *[stage_len]u8, w: usize, values: [blocks]V, space: u64) void {
             const p = 64 + w % ring;
-            const v: V64 = if (space == 0) @bitCast(values) else compressVec(values, space) orelse {
+            const v: V64 = if (space == 0) simd.join(V64, values) else compressVec(values, space) orelse {
                 compressMem(values, space, stage[p..][0..72]);
                 if (p + 72 > 64 + ring) stage[64..][0..72].* = stage[64 + ring ..][0..72].*;
                 return;
@@ -1174,7 +1174,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         inline fn stageGet(stage: *const [stage_len]u8, r: usize) [blocks]V {
             // Through an unaligned vector pointer: Debug builds bitcast the
             // array in place as the 64-byte-aligned result, which faults.
-            return @bitCast(@as(*align(1) const V64, @ptrCast(stage[64 + r % ring ..][0..64])).*);
+            return simd.split(V, @as(*align(1) const V64, @ptrCast(stage[64 + r % ring ..][0..64])).*);
         }
 
         /// The bytes of `values` not in `space`, at the front, when that
@@ -1187,7 +1187,8 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             // blocks: remove each by shifting what follows it down a lane,
             // the last first, or a CR LF pair two lanes at once.
             if (@popCount(space) <= 2) {
-                if (space & (space >> 1) != 0) return @bitCast(shiftFrom(values, @ctz(space), 2));
+                const R = @Vector(@sizeOf(@TypeOf(values)), u8);
+                if (space & (space >> 1) != 0) return simd.join(R, shiftFrom(values, @ctz(space), 2));
                 var v = values;
                 var rest = space;
                 while (rest != 0) {
@@ -1195,7 +1196,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                     rest &= ~(@as(u64, 1) << @intCast(pos));
                     v = shiftFrom(v, pos, 1);
                 }
-                return @bitCast(v);
+                return simd.join(R, v);
             }
             return null;
         }
@@ -1222,7 +1223,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
         /// Copies the bytes of `values` not in `space` to the front of
         /// `out`. It may write all of `out`.
         inline fn compressMem(values: [blocks]V, space: u64, out: *[72]u8) void {
-            const src: [64]u8 = @bitCast(values);
+            const src: [64]u8 = simd.join(V64, values);
             var n: usize = 0;
             if (isa == .generic) {
                 for (src, 0..) |c, k| {
@@ -1238,7 +1239,7 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
                 const keep: u16 = ~@as(u16, @truncate(space >> (k * 16)));
                 const lo: u8 = @truncate(keep);
                 const hi: u8 = @truncate(keep >> 8);
-                const halves = [2]u64{ compress_table[lo], compress_table[hi] + 0x0808080808080808 };
+                const halves: @Vector(2, u64) = .{ compress_table[lo], compress_table[hi] + 0x0808080808080808 };
                 const idx: @Vector(16, u8) = @bitCast(halves);
                 const v: @Vector(16, u8) = src[k * 16 ..][0..16].*;
                 const packed_: [16]u8 = simd.lookup16(v, idx);
