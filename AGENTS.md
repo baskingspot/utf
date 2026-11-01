@@ -87,12 +87,13 @@ can be a second oracle.
 - This repo's GitHub settings come from `baskingspot/.github`: run
   `just settings --repo utf` in a checkout of that repo. Do not change them by
   hand.
-- To release, run `release-prep.py VERSION` in the repo, review the diff,
-  commit it signed, push, then dispatch `release.yml` with the version. The
-  workflow changes no files: it refuses a tag that exists, a missing changelog
-  section, or a manifest that names another version, then creates the tag and
-  opens the release. Do not tag or commit by hand, and never add a commit step
-  to a workflow.
+- To release, run
+  `just --justfile ~/code/baskingspot/.github/justfile release-prep VERSION`,
+  review the diff, commit it signed, push, then dispatch `release.yml` with the
+  version. The workflow changes no files: it refuses a tag that exists, a
+  missing changelog section, or a manifest that names another version, then
+  creates the tag and opens the release. Do not tag or commit by hand, and
+  never add a commit step to a workflow.
 
 ## Changelog
 
