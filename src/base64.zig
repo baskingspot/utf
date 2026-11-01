@@ -248,28 +248,28 @@ inline fn decodeBlocks(
     // constants LLVM loads before it.
     while (t.len - i >= 64) {
         // Blocks without whitespace go straight to `dst`, as many as fit
-        // with the slack.
-        var clean = @min((t.len - i) / 64, ((dst.len - o) -| K.slack) / 48);
+        // with `packClean`'s slack.
+        var clean = @min((t.len - i) / 64, ((dst.len - o) -| K.clean_slack) / 48);
         // Two at a time, with one test for both.
         while (clean >= 2) : (clean -= 2) {
             const a = K.classifyClean(src[i..][0..64]);
             const b = K.classifyClean(src[i + 64 ..][0..64]);
             if (a.anyBadWith(b)) {
                 if (!a.anyBad()) {
-                    K.packClean(a.values, dst[o..][0 .. 48 + K.slack]);
+                    K.packClean(a.values, dst[o..][0 .. 48 + K.clean_slack]);
                     i += 64;
                     o += 48;
                 }
                 break;
             }
-            K.packClean(a.values, dst[o..][0 .. 48 + K.slack]);
-            K.packClean(b.values, dst[o + 48 ..][0 .. 48 + K.slack]);
+            K.packClean(a.values, dst[o..][0 .. 48 + K.clean_slack]);
+            K.packClean(b.values, dst[o + 48 ..][0 .. 48 + K.clean_slack]);
             i += 128;
             o += 96;
         } else if (clean == 1) {
             const c = K.classifyClean(src[i..][0..64]);
             if (!c.anyBad()) {
-                K.packClean(c.values, dst[o..][0 .. 48 + K.slack]);
+                K.packClean(c.values, dst[o..][0 .. 48 + K.clean_slack]);
                 i += 64;
                 o += 48;
             }
@@ -295,7 +295,7 @@ inline fn decodeBlocks(
             const end = i + p;
             if (untouched(dst, src, end - 64, o + K.slack)) {
                 const ending = K.classifyClean(src[end - 64 ..][0..64]);
-                K.packClean(ending.values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.slack]);
+                K.packClean(ending.values, dst[o + p / 4 * 3 - 48 ..][0 .. 48 + K.clean_slack]);
             } else {
                 // Decoding in place has written over that block's start:
                 // the run's end from this block instead, without the slack,
@@ -407,7 +407,7 @@ inline fn decodeLines(
         while (j < full) : (j += 64) {
             const b = K.classifyClean(src[at + j ..][0..64]);
             if (b.anyBad()) break :lines;
-            K.packClean(b.values, dst[o + j / 4 * 3 ..][0 .. 48 + K.slack]);
+            K.packClean(b.values, dst[o + j / 4 * 3 ..][0 .. 48 + K.clean_slack]);
         }
         if (rem != 0) {
             if (K.lanes < 64) {
@@ -424,7 +424,7 @@ inline fn decodeLines(
             } else {
                 const b = K.classifyClean(src[at + len - 64 ..][0..64]);
                 if (b.anyBad()) break;
-                K.packClean(b.values, dst[o + (len - 64) / 4 * 3 ..][0 .. 48 + K.slack]);
+                K.packClean(b.values, dst[o + (len - 64) / 4 * 3 ..][0 .. 48 + K.clean_slack]);
             }
         }
         if (std.mem.readInt(u32, src[at + len ..][0..4], .little) & mask != gap) break;
@@ -669,8 +669,13 @@ fn Kernel(comptime isa: Isa, comptime alphabet: Alphabet) type {
             return b;
         }
 
+        /// How many bytes past its 48 `packClean` writes: none with `st3`,
+        /// so that a block that fills `dst` exactly, as the only one of 64
+        /// characters does, need not go through `decodeStaged`.
+        const clean_slack = if (structured) 0 else slack;
+
         /// `packBlock` for the values of `classifyClean`.
-        inline fn packClean(values: [blocks]V, out: *[48 + slack]u8) void {
+        inline fn packClean(values: [blocks]V, out: *[48 + clean_slack]u8) void {
             if (!structured) return packBlock(values, out);
             const a, const b, const c, const d = values;
             // `sli` shifts its second operand left and inserts it above the
