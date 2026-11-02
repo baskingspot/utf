@@ -68,9 +68,16 @@ check-windows:
     just check-target x86_64-windows-gnu
     just check-target aarch64-windows-gnu
 
+[doc("Compile-only gate for 32-bit targets, where `usize` is narrower than the `u64` sums and masks the kernels use")]
+[group("test")]
+check-32:
+    just check-target arm-linux-gnueabihf
+    just check-target arm-linux-androideabi
+    just check-target x86-linux
+
 [doc("Everything CI runs")]
 [group("ci")]
-ci: test lint check-windows
+ci: test lint check-windows check-32
 
 [doc("Fetch and generate the benchmark corpus in bench/corpus-gen/, and verify it against bench/corpus/SHA256SUMS")]
 [group("bench")]
