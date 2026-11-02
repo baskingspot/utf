@@ -57,9 +57,20 @@ fmt:
     oxfmt {{ markdown }}
     just --fmt
 
-[doc("The per-version gate: the unit tests and the guide's examples")]
+[doc("Compile-only check for one target this host cannot run, such as `just check-target x86_64-windows-gnu`: the unit tests, the guide's examples, and the kernel objects they link, built but not run")]
+[group("test")]
+check-target TARGET:
+    zig build check -Dtarget={{ TARGET }}
+
+[doc("Compile-only gate for Windows on x86-64 and aarch64: its C calling convention differs from Linux's and macOS's, and the kernels' LLVM intrinsics break when it changes how they take vectors")]
+[group("test")]
+check-windows:
+    just check-target x86_64-windows-gnu
+    just check-target aarch64-windows-gnu
+
+[doc("The per-version gate: the unit tests and the guide's examples, and the Windows compile gate")]
 [group("ci")]
-check: test
+check: test check-windows
 
 [doc("Everything CI runs: the gate, lint, and the docs build")]
 [group("ci")]

@@ -47,6 +47,13 @@ pub fn build(b: *std.Build) void {
     const example_tests = b.addTest(.{ .root_module = examples_mod, .test_runner = runner });
     const run_example_tests = b.addRunArtifact(example_tests);
     test_step.dependOn(&run_example_tests.step);
+
+    // Compile-only gate for targets this host cannot run, such as
+    // `zig build check -Dtarget=x86_64-windows-gnu`: the test binaries and
+    // the kernel objects they link, built but not run.
+    const check_step = b.step("check", "Compile the unit tests and the guide's examples without running them");
+    check_step.dependOn(&mod_tests.step);
+    check_step.dependOn(&example_tests.step);
 }
 
 const Role = enum { off, main, kernel };
