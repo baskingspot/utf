@@ -27,7 +27,7 @@ The [API reference](api/) documents every public symbol.
 ## Install
 
 ```sh
-zig fetch --save git+https://github.com/baskingspot/utf
+zig fetch --save https://baskingspot.dev/utf/v0.1.0.tar.gz
 ```
 
 Add the module in `build.zig`:
@@ -334,4 +334,4 @@ is no in-place encode.
 - Latin-1 only. Conversion to Latin-1 fails above U+00FF, and there is no Windows-1252 mode.
 - No in-place conversion. Only `base64.decode` documents overlapping buffers.
 - Base64 whitespace is always skipped. There is no strict no-whitespace mode.
-- No release tag. The package is pre-1.0, so pin a commit.
+- Pre-1.0. A minor release can change the API, and the changelog says what to change.

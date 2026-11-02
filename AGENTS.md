@@ -5,8 +5,9 @@ Working notes for AI coding agents in baskingspot/utf.
 ## What this is
 
 SIMD Unicode validation and transcoding, plus base64, in Zig with no C: what
-simdutf does, as a Zig package. The public API moves with semver, and there is
-no release tag, so a consumer pins a commit.
+simdutf does, as a Zig package. The public API moves with semver. Releases are
+tags made by `release.yml`, from v0.1.0; a consumer fetches a release's archive,
+or pins a commit for work between releases.
 
 `validate` checks UTF-8, ASCII, UTF-16LE/BE, and UTF-32. `convert` moves
 between any two of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1, with a checked form

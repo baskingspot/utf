@@ -26,7 +26,7 @@ const result = utf.convert.utf8ToUtf16le(input, buffer);
 if (result.err != .none) return error.InvalidUtf8;
 ```
 
-There is no release tag, so pin a commit.
+Releases are tagged, from v0.1.0. Before 1.0 a minor release can change the API; the changelog says what to change.
 
 ## What is in it
 
@@ -47,7 +47,7 @@ Not implemented:
 ## Install
 
 ```sh
-zig fetch --save git+https://github.com/baskingspot/utf
+zig fetch --save https://baskingspot.dev/utf/v0.1.0.tar.gz
 ```
 
 Add the module in `build.zig`:
