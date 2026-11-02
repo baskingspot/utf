@@ -68,9 +68,16 @@ check-windows:
     just check-target x86_64-windows-gnu
     just check-target aarch64-windows-gnu
 
-[doc("The per-version gate: the unit tests and the guide's examples, and the Windows compile gate")]
+[doc("Compile-only gate for 32-bit targets, where `usize` is narrower than the `u64` sums and masks the kernels use")]
+[group("test")]
+check-32:
+    just check-target arm-linux-gnueabihf
+    just check-target arm-linux-androideabi
+    just check-target x86-linux
+
+[doc("The per-version gate: the unit tests and the guide's examples, and the Windows and 32-bit compile gates")]
 [group("ci")]
-check: test check-windows
+check: test check-windows check-32
 
 [doc("Everything CI runs: the gate, lint, and the docs build")]
 [group("ci")]
