@@ -535,7 +535,7 @@ test "arguments and results cross as words unchanged" {
     try testing.expectEqual(o, argFromWords(Opts, w[2..]));
     try testing.expectEqual(p, argFromWords(P, w[3..]));
     try testing.expectEqual(n, argFromWords(i32, w[4..]));
-    const r = Result.fail(.surrogate, 1 << 40);
+    const r = Result.fail(.surrogate, 1 << (@bitSizeOf(usize) - 24));
     try testing.expectEqual(r, fromWords(Result, toResult(r)));
     try testing.expectEqual(E.two, fromWords(E, toResult(E.two)));
     try testing.expectEqual(true, fromWords(bool, toResult(true)));

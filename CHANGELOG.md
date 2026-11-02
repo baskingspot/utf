@@ -49,6 +49,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Fixed
 
+- Builds for 32-bit targets, such as `arm-linux-gnueabihf`, `arm-linux-androideabi`, and `x86-linux`, failed with "expected type 'usize', found 'u64'" in the `length` functions; they now build.
 - Builds for x86-64 Windows (`x86_64-windows-gnu` and `x86_64-windows-msvc`) with SSSE3, AVX2, or AVX-512 kernels, which every generic x86-64 build has, failed with LLVM's "Intrinsic has incorrect argument type!"; they now build.
 - Generic x86-64 builds, which select kernels at runtime, linked the AVX-512, AVX2, and SSE kernels of every function and, in ReleaseFast and ReleaseSmall, std's panic handler, whatever the program called; they now link only the kernels of the functions it calls (in every mode but Debug). A shared library calling `convert.utf8ToUtf32`, `length.countUtf8`, and `base64.decode` is 351 KB stripped in ReleaseFast, from 937 KB.
 - `base64.decode` in place (`dst` starting at `src.ptr`) returned wrong bytes or a spurious error on input with ASCII whitespace, such as base64 wrapped at 76 columns; it now returns what decoding into a separate buffer does, and its documentation says `dst` may start where `src` does.
