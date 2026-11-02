@@ -25,7 +25,8 @@ Zig 0.16 and 0.17. The flake is the tool contract, from `baskingspot/nix`:
 Zig 0.16. Both provide Zig, `ziglint-0-16`, the docs tools, and the base tools,
 and nothing comes from the system PATH. The justfile is the command interface:
 `just test`, `just check`, `just lint`, `just ci`. Run `just fmt` before you
-commit. CI runs `just ci` on the default shell and `just check` on `zig-old`.
+commit. CI runs `just ci` on the default shell, `just check` on `zig-old`, and
+`just check-dispatch` on x86-64.
 
 Version shims live in `src/compat.zig`. Do not write `@intFromEnum`,
 `@enumFromInt`, or `**` outside it: 0.17's `zig fmt` migrates the first two,

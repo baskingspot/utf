@@ -75,6 +75,13 @@ check-32:
     just check-target arm-linux-androideabi
     {{ if os() + "-" + arch() == "linux-x86_64" { "zig build test -Dtarget=x86-linux --summary all" } else { "just check-target x86-linux" } }}
 
+[doc("Runtime dispatch on x86-64: the tests and the guide's examples built for the baseline CPU, so every wired call crosses into each kernel tier this CPU has, and the oracle against simdutf through the same build")]
+[group("test")]
+check-dispatch:
+    zig build test -Dcpu=baseline --summary all
+    zig build test -Dcpu=baseline -Doptimize=ReleaseSafe --summary all
+    just cpu=baseline oracle
+
 [doc("The per-version gate: the unit tests and the guide's examples, and the Windows and 32-bit compile gates")]
 [group("ci")]
 check: test check-windows check-32
@@ -294,9 +301,9 @@ oracle-build:
     c++ -O2 -std=c++20 -o zig-out/bin/utf-oracle bench/oracle/oracle.cpp \
         $(pkg-config --cflags --libs simdutf) -Wl,-rpath,"$(pkg-config --variable=libdir simdutf)"
 
-[doc("Compare this package's results with simdutf's on N random and adversarial inputs (default 1000000), under simdutf's best kernel and its scalar fallback")]
+[doc("Compare this package's results with simdutf's on N random and adversarial inputs (default 1000000), under simdutf's best kernel and its scalar fallback, with this package built for cpu: `just cpu=baseline oracle` checks the dispatched build")]
 [group("bench")]
 oracle N="1000000" SEED="1": oracle-build
-    cd bench && zig build -p ../zig-out
+    cd bench && zig build -p ../zig-out -Dcpu={{ cpu }}
     zig-out/bin/oracle-compare {{ N }} {{ SEED }}
     SIMDUTF_FORCE_IMPLEMENTATION=fallback zig-out/bin/oracle-compare {{ N }} {{ SEED }}

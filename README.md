@@ -75,6 +75,8 @@ just ci
 
 `nix develop` provides the toolchain and the site tools. `just` lists the
 recipes, and `just ci` runs what CI runs: the tests, lint, and the site build.
+`just check-dispatch` adds CI's x86-64 job: the tests and the simdutf oracle
+built for the baseline CPU, which picks its kernels at run time.
 `just guide` serves the guide with live reload, and `just doc` builds the whole
 site into `zig-out/site/utf/`.
 

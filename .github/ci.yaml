@@ -4,6 +4,9 @@ jobs:
   - recipe: ci
   - recipe: check
     shell: zig-old
+  # Runtime dispatch, which only a generic x86-64 build takes: the tests and
+  # the oracle built for the baseline CPU, on an x86-64 runner.
+  - recipe: check-dispatch
   # The NEON kernels on the hardware they are for.
   - recipe: check
     runners: [ubuntu-26.04-arm]
