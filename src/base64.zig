@@ -1422,17 +1422,17 @@ inline fn bothTrue(a: anytype, b: @TypeOf(a)) @TypeOf(a) {
     return @select(bool, a, b, a);
 }
 
-extern fn @"llvm.x86.ssse3.pmadd.ub.sw.128"(@Vector(16, u8), @Vector(16, u8)) @Vector(8, i16);
-extern fn @"llvm.x86.avx2.pmadd.ub.sw"(@Vector(32, u8), @Vector(32, u8)) @Vector(16, i16);
-extern fn @"llvm.x86.sse2.pmadd.wd"(@Vector(8, i16), @Vector(8, i16)) @Vector(4, i32);
-extern fn @"llvm.x86.avx2.pmadd.wd"(@Vector(16, i16), @Vector(16, i16)) @Vector(8, i32);
-extern fn @"llvm.x86.sse2.pmulhu.w"(@Vector(8, u16), @Vector(8, u16)) @Vector(8, u16);
-extern fn @"llvm.x86.avx2.pmulhu.w"(@Vector(16, u16), @Vector(16, u16)) @Vector(16, u16);
-extern fn @"llvm.x86.avx512.pmaddubs.w.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(32, i16);
-extern fn @"llvm.x86.avx512.pmaddw.d.512"(@Vector(32, i16), @Vector(32, i16)) @Vector(16, i32);
+extern fn @"llvm.x86.ssse3.pmadd.ub.sw.128"(@Vector(16, u8), @Vector(16, u8)) callconv(simd.llvm_cc) @Vector(8, i16);
+extern fn @"llvm.x86.avx2.pmadd.ub.sw"(@Vector(32, u8), @Vector(32, u8)) callconv(simd.llvm_cc) @Vector(16, i16);
+extern fn @"llvm.x86.sse2.pmadd.wd"(@Vector(8, i16), @Vector(8, i16)) callconv(simd.llvm_cc) @Vector(4, i32);
+extern fn @"llvm.x86.avx2.pmadd.wd"(@Vector(16, i16), @Vector(16, i16)) callconv(simd.llvm_cc) @Vector(8, i32);
+extern fn @"llvm.x86.sse2.pmulhu.w"(@Vector(8, u16), @Vector(8, u16)) callconv(simd.llvm_cc) @Vector(8, u16);
+extern fn @"llvm.x86.avx2.pmulhu.w"(@Vector(16, u16), @Vector(16, u16)) callconv(simd.llvm_cc) @Vector(16, u16);
+extern fn @"llvm.x86.avx512.pmaddubs.w.512"(@Vector(64, u8), @Vector(64, u8)) callconv(simd.llvm_cc) @Vector(32, i16);
+extern fn @"llvm.x86.avx512.pmaddw.d.512"(@Vector(32, i16), @Vector(32, i16)) callconv(simd.llvm_cc) @Vector(16, i32);
 const V16 = @Vector(16, u8);
-extern fn @"llvm.aarch64.neon.vsli.v16i8"(V16, V16, i32) V16;
-extern fn @"llvm.aarch64.neon.tbl4.v16i8"(V16, V16, V16, V16, V16) V16;
+extern fn @"llvm.aarch64.neon.vsli.v16i8"(V16, V16, i32) callconv(simd.llvm_cc) V16;
+extern fn @"llvm.aarch64.neon.tbl4.v16i8"(V16, V16, V16, V16, V16) callconv(simd.llvm_cc) V16;
 
 const test_isas = blk: {
     var isas: []const Isa = &.{};

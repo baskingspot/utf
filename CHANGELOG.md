@@ -53,6 +53,7 @@ All notable changes to utf are recorded here. The format follows
 
 ### Fixed
 
+- With Zig 0.17, builds for a generic x86-64 CPU (`-Dcpu=baseline`, an x86-64 level, or a cross target with no CPU given) failed to compile their SSE, AVX2, and AVX-512 kernels, and builds with AVX-512 VBMI2 failed in LLVM's verifier; on x86-64 Windows (`x86_64-windows-gnu` and `x86_64-windows-msvc`) every build with those kernels failed with "Intrinsic has incorrect argument type!". They now build.
 - Generic x86-64 builds, which select kernels at runtime, linked the AVX-512, AVX2, and SSE kernels of every function and, in ReleaseFast and ReleaseSmall, std's panic handler, whatever the program called; they now link only the kernels of the functions it calls (in every mode but Debug). A shared library calling `convert.utf8ToUtf32`, `length.countUtf8`, and `base64.decode` is 351 KB stripped in ReleaseFast, from 937 KB.
 - `base64.decode` in place (`dst` starting at `src.ptr`) returned wrong bytes or a spurious error on input with ASCII whitespace, such as base64 wrapped at 76 columns; it now returns what decoding into a separate buffer does, and its documentation says `dst` may start where `src` does.
 - On AVX-512, the `validate` functions took about 100–140 ns on inputs under 64 bytes that end within 63 bytes of a page followed by an unmapped or never-written page; they take 4–7 ns, as elsewhere.

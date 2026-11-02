@@ -26,6 +26,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const testing = std.testing;
 const x86 = std.Target.x86;
+const compat = @import("compat.zig");
 
 pub const Isa = enum { avx512, avx2, sse, neon, generic };
 
@@ -126,11 +127,22 @@ fn hasX86(comptime feature: x86.Feature) bool {
 // LLVM intrinsics resolve only under the LLVM backend; the self-hosted
 // backends (Debug builds on x86_64) take the portable loop instead.
 const llvm = builtin.zig_backend == .stage2_llvm;
-extern fn @"llvm.x86.ssse3.pshuf.b.128"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
-extern fn @"llvm.x86.avx2.pshuf.b"(@Vector(32, u8), @Vector(32, u8)) @Vector(32, u8);
-extern fn @"llvm.x86.avx512.pshuf.b.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.aarch64.neon.tbl1.v16i8"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
-extern fn @"llvm.aarch64.neon.addp.v16i8"(@Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
+
+/// The calling convention every `extern fn @"llvm.…"` intrinsic declares.
+/// Zig lowers an extern's parameters as its calling convention passes them,
+/// and since Zig 0.17 the Windows x64 C convention passes a vector by
+/// reference, which gives the intrinsic a pointer where LLVM's signature has
+/// the vector and fails LLVM's verifier. System V passes the vector by
+/// value, as the signature has it, and is already the C convention on every
+/// other x86-64 OS, where nothing changes. Elsewhere, the C convention
+/// passes vectors by value on every OS.
+pub const llvm_cc: std.builtin.CallingConvention = if (builtin.cpu.arch == .x86_64) .{ .x86_64_sysv = .{} } else .c;
+
+extern fn @"llvm.x86.ssse3.pshuf.b.128"(@Vector(16, u8), @Vector(16, u8)) callconv(llvm_cc) @Vector(16, u8);
+extern fn @"llvm.x86.avx2.pshuf.b"(@Vector(32, u8), @Vector(32, u8)) callconv(llvm_cc) @Vector(32, u8);
+extern fn @"llvm.x86.avx512.pshuf.b.512"(@Vector(64, u8), @Vector(64, u8)) callconv(llvm_cc) @Vector(64, u8);
+extern fn @"llvm.aarch64.neon.tbl1.v16i8"(@Vector(16, u8), @Vector(16, u8)) callconv(llvm_cc) @Vector(16, u8);
+extern fn @"llvm.aarch64.neon.addp.v16i8"(@Vector(16, u8), @Vector(16, u8)) callconv(llvm_cc) @Vector(16, u8);
 
 /// Looks each lane of `idx` up in a 16-entry table: `table[idx[i]]` where
 /// `idx[i] < 16`, and 0 where bit 7 of `idx[i]` is set; other indices give an
@@ -394,9 +406,9 @@ pub inline fn loadShort(comptime T: type, src: []const T) Block(T) {
 /// A masked load of a whole register, zeros in the lanes `mask` leaves out.
 inline fn maskedLoad(comptime T: type, ptr: *const anyopaque, mask: @Vector(block_len / @sizeOf(T), bool)) Block(T) {
     return switch (T) {
-        u8 => @"llvm.masked.load.v64i8.p0"(ptr, 1, mask, @splat(0)),
-        u16 => @"llvm.masked.load.v32i16.p0"(ptr, 1, mask, @splat(0)),
-        u32 => @"llvm.masked.load.v16i32.p0"(ptr, 1, mask, @splat(0)),
+        u8 => @"llvm.masked.load.v64i8.p0"(ptr, 1, @bitCast(mask), @splat(0)),
+        u16 => @"llvm.masked.load.v32i16.p0"(ptr, 1, @bitCast(mask), @splat(0)),
+        u32 => @"llvm.masked.load.v16i32.p0"(ptr, 1, @bitCast(mask), @splat(0)),
         else => @compileError("no masked load for " ++ @typeName(T)),
     };
 }
@@ -404,9 +416,9 @@ inline fn maskedLoad(comptime T: type, ptr: *const anyopaque, mask: @Vector(bloc
 /// A masked store of a whole register, of the lanes `mask` selects.
 inline fn maskedStore(v: anytype, ptr: *anyopaque, mask: @Vector(@typeInfo(@TypeOf(v)).vector.len, bool)) void {
     switch (@TypeOf(v)) {
-        @Vector(64, u8) => @"llvm.masked.store.v64i8.p0"(v, ptr, 1, mask),
-        @Vector(32, u16) => @"llvm.masked.store.v32i16.p0"(v, ptr, 1, mask),
-        @Vector(16, u32) => @"llvm.masked.store.v16i32.p0"(v, ptr, 1, mask),
+        @Vector(64, u8) => @"llvm.masked.store.v64i8.p0"(v, ptr, 1, @bitCast(mask)),
+        @Vector(32, u16) => @"llvm.masked.store.v32i16.p0"(v, ptr, 1, @bitCast(mask)),
+        @Vector(16, u32) => @"llvm.masked.store.v16i32.p0"(v, ptr, 1, @bitCast(mask)),
         else => @compileError("no masked store for " ++ @typeName(@TypeOf(v))),
     }
 }
@@ -541,7 +553,7 @@ pub inline fn shuffleLanes(data: anytype, idx: @TypeOf(data)) @TypeOf(data) {
 /// (`vpcompressb/w/d`). Byte and 16-bit lanes need VBMI2.
 pub inline fn compress(v: anytype, keep: @Int(.unsigned, @typeInfo(@TypeOf(v)).vector.len)) @TypeOf(v) {
     comptime std.debug.assert(isa == .avx512 and llvm);
-    const m: @Vector(@typeInfo(@TypeOf(v)).vector.len, bool) = @bitCast(keep);
+    const m: @Vector(@typeInfo(@TypeOf(v)).vector.len, compat.MaskLane) = @bitCast(keep);
     return switch (@TypeOf(v)) {
         @Vector(64, u8) => @"llvm.x86.avx512.mask.compress.v64i8"(v, @splat(0), m),
         @Vector(32, u16) => @"llvm.x86.avx512.mask.compress.v32i16"(v, @splat(0), m),
@@ -671,29 +683,51 @@ const narrow_bytes: [2][64]u8 = blk: {
     break :blk t;
 };
 
-extern fn @"llvm.x86.bmi.bzhi.64"(u64, u64) u64;
-extern fn @"llvm.x86.bmi.bzhi.32"(u32, u32) u32;
-extern fn @"llvm.x86.bmi.pext.64"(u64, u64) u64;
-extern fn @"llvm.x86.bmi.pdep.64"(u64, u64) u64;
-extern fn @"llvm.masked.load.v64i8.p0"(*const anyopaque, u32, @Vector(64, bool), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.masked.load.v32i16.p0"(*const anyopaque, u32, @Vector(32, bool), W32) W32;
-extern fn @"llvm.masked.load.v16i32.p0"(*const anyopaque, u32, @Vector(16, bool), D16) D16;
-extern fn @"llvm.masked.store.v64i8.p0"(@Vector(64, u8), *anyopaque, u32, @Vector(64, bool)) void;
-extern fn @"llvm.masked.store.v32i16.p0"(W32, *anyopaque, u32, @Vector(32, bool)) void;
-extern fn @"llvm.masked.store.v16i32.p0"(D16, *anyopaque, u32, @Vector(16, bool)) void;
-extern fn @"llvm.x86.avx512.mask.compress.v64i8"(@Vector(64, u8), @Vector(64, u8), @Vector(64, bool)) @Vector(64, u8);
+extern fn @"llvm.x86.bmi.bzhi.64"(u64, u64) callconv(llvm_cc) u64;
+extern fn @"llvm.x86.bmi.bzhi.32"(u32, u32) callconv(llvm_cc) u32;
+extern fn @"llvm.x86.bmi.pext.64"(u64, u64) callconv(llvm_cc) u64;
+extern fn @"llvm.x86.bmi.pdep.64"(u64, u64) callconv(llvm_cc) u64;
+extern fn @"llvm.masked.load.v64i8.p0"(
+    *const anyopaque,
+    u32,
+    @Vector(64, compat.MaskLane),
+    @Vector(64, u8),
+) callconv(llvm_cc) @Vector(64, u8);
+extern fn @"llvm.masked.load.v32i16.p0"(*const anyopaque, u32, @Vector(32, compat.MaskLane), W32) callconv(llvm_cc) W32;
+extern fn @"llvm.masked.load.v16i32.p0"(*const anyopaque, u32, @Vector(16, compat.MaskLane), D16) callconv(llvm_cc) D16;
+extern fn @"llvm.masked.store.v64i8.p0"(
+    @Vector(64, u8),
+    *anyopaque,
+    u32,
+    @Vector(64, compat.MaskLane),
+) callconv(llvm_cc) void;
+extern fn @"llvm.masked.store.v32i16.p0"(W32, *anyopaque, u32, @Vector(32, compat.MaskLane)) callconv(llvm_cc) void;
+extern fn @"llvm.masked.store.v16i32.p0"(D16, *anyopaque, u32, @Vector(16, compat.MaskLane)) callconv(llvm_cc) void;
+extern fn @"llvm.x86.avx512.mask.compress.v64i8"(
+    @Vector(64, u8),
+    @Vector(64, u8),
+    @Vector(64, compat.MaskLane),
+) callconv(llvm_cc) @Vector(64, u8);
 const W32 = @Vector(32, u16);
 const D16 = @Vector(16, u32);
-extern fn @"llvm.x86.avx512.mask.compress.v32i16"(W32, W32, @Vector(32, bool)) W32;
-extern fn @"llvm.x86.avx512.mask.compress.v16i32"(D16, D16, @Vector(16, bool)) D16;
-extern fn @"llvm.x86.avx512.permvar.qi.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx512.vpermi2var.qi.512"(@Vector(64, u8), @Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx512.vpermi2var.d.512"(@Vector(16, u32), @Vector(16, u32), @Vector(16, u32)) @Vector(16, u32);
-extern fn @"llvm.x86.avx512.pmultishift.qb.512"(@Vector(64, u8), @Vector(64, u8)) @Vector(64, u8);
-extern fn @"llvm.x86.avx2.packusdw"(@Vector(8, u32), @Vector(8, u32)) @Vector(16, u16);
-extern fn @"llvm.x86.sse41.packusdw"(@Vector(4, u32), @Vector(4, u32)) @Vector(8, u16);
-extern fn @"llvm.x86.avx2.packuswb"(@Vector(16, u16), @Vector(16, u16)) @Vector(32, u8);
-extern fn @"llvm.x86.avx2.permd"(@Vector(8, u32), @Vector(8, u32)) @Vector(8, u32);
+extern fn @"llvm.x86.avx512.mask.compress.v32i16"(W32, W32, @Vector(32, compat.MaskLane)) callconv(llvm_cc) W32;
+extern fn @"llvm.x86.avx512.mask.compress.v16i32"(D16, D16, @Vector(16, compat.MaskLane)) callconv(llvm_cc) D16;
+extern fn @"llvm.x86.avx512.permvar.qi.512"(@Vector(64, u8), @Vector(64, u8)) callconv(llvm_cc) @Vector(64, u8);
+extern fn @"llvm.x86.avx512.vpermi2var.qi.512"(
+    @Vector(64, u8),
+    @Vector(64, u8),
+    @Vector(64, u8),
+) callconv(llvm_cc) @Vector(64, u8);
+extern fn @"llvm.x86.avx512.vpermi2var.d.512"(
+    @Vector(16, u32),
+    @Vector(16, u32),
+    @Vector(16, u32),
+) callconv(llvm_cc) @Vector(16, u32);
+extern fn @"llvm.x86.avx512.pmultishift.qb.512"(@Vector(64, u8), @Vector(64, u8)) callconv(llvm_cc) @Vector(64, u8);
+extern fn @"llvm.x86.avx2.packusdw"(@Vector(8, u32), @Vector(8, u32)) callconv(llvm_cc) @Vector(16, u16);
+extern fn @"llvm.x86.sse41.packusdw"(@Vector(4, u32), @Vector(4, u32)) callconv(llvm_cc) @Vector(8, u16);
+extern fn @"llvm.x86.avx2.packuswb"(@Vector(16, u16), @Vector(16, u16)) callconv(llvm_cc) @Vector(32, u8);
+extern fn @"llvm.x86.avx2.permd"(@Vector(8, u32), @Vector(8, u32)) callconv(llvm_cc) @Vector(8, u32);
 
 test "lookup16 matches a table lookup at every index and width" {
     const table: [16]u8 = .{ 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5 };

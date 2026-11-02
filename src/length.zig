@@ -320,9 +320,13 @@ inline fn unitBytes(comptime e: Endian, v: anytype, comptime which: enum { high,
     return @shuffle(u8, b, undefined, pick);
 }
 
-extern fn @"llvm.aarch64.neon.uaddlv.i32.v16i8"(@Vector(16, u8)) u32;
-extern fn @"llvm.aarch64.neon.uaddlv.i32.v8i8"(@Vector(8, u8)) u32;
-extern fn @"llvm.aarch64.neon.tbl2.v16i8"(@Vector(16, u8), @Vector(16, u8), @Vector(16, u8)) @Vector(16, u8);
+extern fn @"llvm.aarch64.neon.uaddlv.i32.v16i8"(@Vector(16, u8)) callconv(simd.llvm_cc) u32;
+extern fn @"llvm.aarch64.neon.uaddlv.i32.v8i8"(@Vector(8, u8)) callconv(simd.llvm_cc) u32;
+extern fn @"llvm.aarch64.neon.tbl2.v16i8"(
+    @Vector(16, u8),
+    @Vector(16, u8),
+    @Vector(16, u8),
+) callconv(simd.llvm_cc) @Vector(16, u8);
 
 /// `table[i]` for each lane `i` of `idx`, all below 32: one `tbl` of two
 /// registers per 16 lanes.

@@ -70,8 +70,8 @@ pub inline fn call(
         .main => {
             var w: [6]usize = undefined;
             comptime var i = 0;
-            inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
-                i += toWords(p.type.?, &args[k], w[i..]);
+            inline for (comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn"), 0..) |p, k| {
+                i += toWords(p.?, &args[k], w[i..]);
             }
             const S = Slot(src, f);
             // A test that pins another tier sends the call back through
@@ -151,9 +151,9 @@ fn Entry(comptime f: anytype) type {
 inline fn argsFromWords(comptime f: anytype, w: [6]usize) std.meta.ArgsTuple(@TypeOf(f)) {
     var args: std.meta.ArgsTuple(@TypeOf(f)) = undefined;
     comptime var i = 0;
-    inline for (@typeInfo(@TypeOf(f)).@"fn".params, 0..) |p, k| {
-        args[k] = argFromWords(p.type.?, w[i..]);
-        i += comptime wordCount(p.type.?);
+    inline for (comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn"), 0..) |p, k| {
+        args[k] = argFromWords(p.?, w[i..]);
+        i += comptime wordCount(p.?);
     }
     comptime std.debug.assert(i <= w.len);
     return args;
@@ -365,8 +365,8 @@ comptime {
 }
 
 fn referenceAll(comptime T: type) void {
-    inline for (@typeInfo(T).@"struct".decls) |d| {
-        const x = @field(T, d.name);
+    inline for (comptime compat.declNames(@typeInfo(T).@"struct")) |name| {
+        const x = @field(T, name);
         switch (@typeInfo(@TypeOf(x))) {
             .@"fn" => |info| if (!info.is_generic) {
                 _ = &x;

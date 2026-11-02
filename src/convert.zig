@@ -366,8 +366,8 @@ const neon = simd.isa == .neon and builtin.zig_backend == .stage2_llvm;
 /// docs/slop/results/neon-apple-20261101.md); other NEON cores keep N2's.
 const apple = neon and native == .little and std.mem.startsWith(u8, builtin.cpu.model.name, "apple_");
 
-extern fn @"llvm.aarch64.neon.umaxp.v16i8"(V16, V16) V16;
-extern fn @"llvm.aarch64.neon.addp.v8i16"(@Vector(8, u16), @Vector(8, u16)) @Vector(8, u16);
+extern fn @"llvm.aarch64.neon.umaxp.v16i8"(V16, V16) callconv(simd.llvm_cc) V16;
+extern fn @"llvm.aarch64.neon.addp.v8i16"(@Vector(8, u16), @Vector(8, u16)) callconv(simd.llvm_cc) @Vector(8, u16);
 
 /// One 16-byte register of `V`'s lanes.
 fn Fold(comptime V: type) type {
@@ -459,7 +459,11 @@ inline fn storeWideUnits(dst: []u32, o: usize, v: anytype) void {
 const v512 = fast_shuffle and simd.has_vbmi and simd.has_vbmi2 and simd.has_bmi2;
 
 /// A funnel shift of 16-bit lanes: `vpshldw` with VBMI2.
-extern fn @"llvm.fshl.v32i16"(@Vector(32, u16), @Vector(32, u16), @Vector(32, u16)) @Vector(32, u16);
+extern fn @"llvm.fshl.v32i16"(
+    @Vector(32, u16),
+    @Vector(32, u16),
+    @Vector(32, u16),
+) callconv(simd.llvm_cc) @Vector(32, u16);
 
 /// The first step of a long AVX-512 loop over `s`: the units before its
 /// first 64-byte boundary, or a whole block when it starts on one or the
@@ -1172,8 +1176,8 @@ inline fn utf8DecodeThreeNeon(
     o.* += n;
 }
 
-extern fn @"llvm.aarch64.neon.tbl2.v16i8"(V16, V16, V16) V16;
-extern fn @"llvm.aarch64.neon.vsli.v8i16"(@Vector(8, u16), @Vector(8, u16), i32) @Vector(8, u16);
+extern fn @"llvm.aarch64.neon.tbl2.v16i8"(V16, V16, V16) callconv(simd.llvm_cc) V16;
+extern fn @"llvm.aarch64.neon.vsli.v8i16"(@Vector(8, u16), @Vector(8, u16), i32) callconv(simd.llvm_cc) @Vector(8, u16);
 
 /// The eight three-byte characters in the first 24 bytes of `src`, as
 /// 16-bit code points, on little-endian NEON. Byte j of the 24 is lane j
