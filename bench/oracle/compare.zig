@@ -35,7 +35,7 @@
 //! than simdutf's forgiving one.
 
 const std = @import("std");
-const compat = @import("compat.zig");
+const compat = @import("compat");
 const mem = std.mem;
 const Io = std.Io;
 const Random = std.Random;
@@ -156,15 +156,15 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
     const label = ns ++ "." ++ name ++ comptime base64Label(extra.base64);
     if (!has(ns, name)) return .{ .name = label, .op = op, .run = null };
     const f = @field(@field(utf, ns), name);
-    const params = @typeInfo(@TypeOf(f)).@"fn".params;
+    const params = comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn");
     const run = struct {
         fn run(in: []align(16) const u8, out: []align(16) u8) Got {
             if (params.len == 3) {
-                return written(u8, f(out, in, comptime optionsValue(params[2].type.?, extra.base64)), out);
+                return written(u8, f(out, in, comptime optionsValue(params[2].?, extra.base64)), out);
             }
-            const src = cast(params[0].type.?, in);
+            const src = cast(params[0].?, in);
             if (params.len == 2) {
-                const dst = cast(params[1].type.?, out);
+                const dst = cast(params[1].?, out);
                 return written(@typeInfo(@TypeOf(dst)).pointer.child, f(src, dst), out);
             }
             const r = f(src);
@@ -185,7 +185,7 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
     return .{
         .name = label,
         .op = op,
-        .option = if (params.len == 3) base64Option(params[2].type.?, extra.base64) else 0,
+        .option = if (params.len == 3) base64Option(params[2].?, extra.base64) else 0,
         .mode = switch (@typeInfo(@TypeOf(f)).@"fn".return_type.?) {
             bool => .validity,
             usize => if (params.len < 3) .simdutf_accepts else .checked,

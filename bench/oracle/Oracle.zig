@@ -14,7 +14,7 @@
 const Oracle = @This();
 
 const std = @import("std");
-const compat = @import("compat.zig");
+const compat = @import("compat");
 const mem = std.mem;
 const Io = std.Io;
 

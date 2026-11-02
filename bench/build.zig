@@ -11,6 +11,9 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize: std.builtin.OptimizeMode = .ReleaseFast;
     const utf = b.dependency("utf", .{ .target = target, .optimize = optimize }).module("utf");
+    // The Zig 0.16 and 0.17 shims, one module so each program and the
+    // oracle client can share it.
+    const compat = b.createModule(.{ .root_source_file = b.path("compat.zig") });
 
     // `just bench-compare`'s `optimize`, `cpu`, and `dispatch`, for the utf arm.
     const arm_optimize = b.option(
@@ -57,6 +60,7 @@ pub fn build(b: *std.Build) void {
                 .optimize = exe_optimize,
                 .imports = &.{
                     .{ .name = "utf", .module = arm_utf },
+                    .{ .name = "compat", .module = compat },
                     .{ .name = "testingx", .module = testingx },
                     .{ .name = "build_options", .module = options.createModule() },
                 },
@@ -82,6 +86,7 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("oracle/Oracle.zig"),
         .target = target,
         .optimize = optimize,
+        .imports = &.{.{ .name = "compat", .module = compat }},
     });
     const compare = b.addExecutable(.{
         .name = "oracle-compare",
@@ -91,6 +96,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .imports = &.{
                 .{ .name = "utf", .module = utf },
+                .{ .name = "compat", .module = compat },
                 .{ .name = "Oracle", .module = oracle },
             },
         }),

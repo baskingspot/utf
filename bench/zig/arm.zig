@@ -29,6 +29,7 @@ const std = @import("std");
 const mem = std.mem;
 const Io = std.Io;
 
+const compat = @import("compat");
 const testingx = @import("testingx");
 const utf = @import("utf");
 const impl = @import("build_options").impl;
@@ -275,15 +276,15 @@ const Utf = struct {
     /// `(src) usize` validates or counts; `(src, dst) Result` or
     /// `(src, dst) usize` converts; `(dst, src, options)` is base64.
     fn wrap(comptime f: anytype, comptime options: Options) Fn {
-        const params = @typeInfo(@TypeOf(f)).@"fn".params;
+        const params = comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn");
         return struct {
             fn run(in: []align(4) const u8, out: []align(4) u8) Out {
                 if (params.len == 3) {
-                    return written(u8, f(out, in, comptime optionsValue(params[2].type.?, options)));
+                    return written(u8, f(out, in, comptime optionsValue(params[2].?, options)));
                 }
-                const src = cast(params[0].type.?, in);
+                const src = cast(params[0].?, in);
                 if (params.len == 2) {
-                    const Dst = params[1].type.?;
+                    const Dst = params[1].?;
                     return written(@typeInfo(Dst).pointer.child, f(src, cast(Dst, out)));
                 }
                 const r = f(src);
@@ -614,7 +615,7 @@ pub fn main(init: std.process.Init) !u8 {
         try serve(io, gpa, ops, defaults, w);
         return 0;
     }
-    var flag_args: testingx.bench.SliceArgs = .{ .args = flags.items };
+    var flag_args: testingx.bench.SliceArgs = .init(flags.items);
     var suite: testingx.B = .init(gpa, io, try .parse(gpa, &flag_args, defaults));
     defer suite.deinit();
 
