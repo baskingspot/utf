@@ -68,12 +68,12 @@ check-windows:
     just check-target x86_64-windows-gnu
     just check-target aarch64-windows-gnu
 
-[doc("Compile-only gate for 32-bit targets, where `usize` is narrower than the `u64` sums and masks the kernels use")]
+[doc("Gate for 32-bit targets, where `usize` is narrower than the `u64` sums and masks the kernels use: the x86 tests run on an x86-64 Linux host and compile elsewhere, and the arm ones compile")]
 [group("test")]
 check-32:
     just check-target arm-linux-gnueabihf
     just check-target arm-linux-androideabi
-    just check-target x86-linux
+    {{ if os() + "-" + arch() == "linux-x86_64" { "zig build test -Dtarget=x86-linux --summary all" } else { "just check-target x86-linux" } }}
 
 [doc("The per-version gate: the unit tests and the guide's examples, and the Windows and 32-bit compile gates")]
 [group("ci")]
