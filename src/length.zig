@@ -537,7 +537,7 @@ inline fn sumVectors(
         if (p > 0) {
             const head = std.simd.iota(A, n) < @as(W, @splat(@intCast(p)));
             const first = @select(A, head, @as(W, @splat(base)) +% f(loadUnits(V, A, src)), @as(W, @splat(0)));
-            if (fold) acc = first else sum += @reduce(.Add, @as(S, first));
+            if (fold) acc = first else sum += @intCast(@reduce(.Add, @as(S, first)));
         }
     }
     while (src.len - p >= n) {
@@ -550,7 +550,7 @@ inline fn sumVectors(
         }
         if (base != 0) acc +%= @splat(@intCast(base * blocks));
         if (!fold or src.len - p >= n) {
-            sum += @reduce(.Add, @as(S, acc));
+            sum += @intCast(@reduce(.Add, @as(S, acc)));
             acc = @splat(0);
         }
     }
@@ -561,7 +561,7 @@ inline fn sumVectors(
         } else {
             const fresh = std.simd.iota(A, n) >= @as(W, @splat(@intCast(n - (src.len - p))));
             const last = @as(W, @splat(base)) +% f(@as(V, src[src.len - n ..][0..n].*));
-            sum += @reduce(.Add, @as(S, @select(A, fresh, last, @as(W, @splat(0)))));
+            sum += @intCast(@reduce(.Add, @as(S, @select(A, fresh, last, @as(W, @splat(0))))));
         }
     }
     if (fold) sum += sumLanes(acc, std.math.maxInt(A));
