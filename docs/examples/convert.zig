@@ -14,13 +14,15 @@ test "size the output, then convert" {
     try std.testing.expectEqual(@as(u16, 'H'), buffer[0]);
 }
 
-test "a checked conversion names the character that failed" {
+test "a checked conversion names the character that failed, and what it wrote before it" {
     var buffer: [8]u8 = undefined;
-    const units = [_]u16{ 0x41, 0xD800, 0x42 };
+    const units = [_]u16{ 'A', 0xE9, 0xD800, 'B' };
 
     const result = utf.convert.utf16leToUtf8(&units, &buffer);
     try std.testing.expectEqual(utf.Error.surrogate, result.err);
-    try std.testing.expectEqual(@as(usize, 1), result.count);
+    try std.testing.expectEqual(@as(usize, 2), result.count);
+    try std.testing.expectEqual(@as(usize, 3), result.written);
+    try std.testing.expectEqualStrings("Aé", buffer[0..result.written]);
 }
 
 test "UTF-8 to Latin-1 rejects a code point above U+00FF" {

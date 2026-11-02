@@ -15,10 +15,12 @@
 // OTHER is 11, also sent for a request it cannot run, such as UTF-16 input
 // of odd length) and either the error's position in input code units or the
 // output code units written. The output is the converted text on success and
-// empty otherwise. `op` numbers are in the table below; `option` is used
-// only by base64: base64_options in the low nibble and
-// last_chunk_handling_options in bits 4 and 5 for decode, base64_options for
-// encode.
+// empty otherwise, except for the `_details` ops, simdutf's `full_result`
+// functions, where it is what was written either way: `output_count` code
+// units, the conversion of the input before the error on failure. `op`
+// numbers are in the table below; `option` is used only by base64:
+// base64_options in the low nibble and last_chunk_handling_options in bits 4
+// and 5 for decode, base64_options for encode.
 //
 // `utf-oracle --implementation` prints the simdutf kernel in use. simdutf
 // honors SIMDUTF_FORCE_IMPLEMENTATION, so `fallback` gives its scalar code.
@@ -58,6 +60,9 @@ enum Op : uint8_t {
   latin1_to_utf32 = 23,
   base64_decode = 24,
   base64_encode = 25,
+  // convert_utf16_to_utf8_safe_with_details, whose UTF-16 is native: little
+  // endian on every machine the harness runs on.
+  utf16le_to_utf8_details = 26,
 };
 
 // Input and output code unit sizes, in bytes, per op; 0 marks an unknown op.
@@ -90,6 +95,7 @@ Shape shape(uint8_t op) {
     return {1, 1};
   case utf16le_to_utf8:
   case utf16be_to_utf8:
+  case utf16le_to_utf8_details:
   case utf16le_to_latin1:
   case utf16be_to_latin1:
     return {2, 1};
@@ -109,8 +115,9 @@ Shape shape(uint8_t op) {
 
 simdutf::result ok(size_t count) { return {simdutf::SUCCESS, count}; }
 
+// Sets `written` for the `_details` ops, whose output is kept on failure.
 simdutf::result run(uint8_t op, uint8_t option, const void *in, size_t n,
-                    void *out) {
+                    void *out, size_t out_bytes, size_t &written) {
   auto c8 = static_cast<const char *>(in);
   auto c16 = static_cast<const char16_t *>(in);
   auto c32 = static_cast<const char32_t *>(in);
@@ -171,6 +178,15 @@ simdutf::result run(uint8_t op, uint8_t option, const void *in, size_t n,
         static_cast<last_chunk_handling_options>((option >> 4) & 0x03));
   case base64_encode:
     return ok(binary_to_base64(c8, n, o8, static_cast<base64_options>(option)));
+  case utf16le_to_utf8_details: {
+    // The whole buffer, which holds any conversion: a smaller one puts
+    // simdutf's output check ahead of its surrogate check, and an empty one
+    // fails even on empty input.
+    full_result r =
+        convert_utf16_to_utf8_safe_with_details(c16, n, o8, out_bytes);
+    written = r.output_count;
+    return r;
+  }
   default:
     return {OTHER, 0};
   }
@@ -231,8 +247,12 @@ int main(int argc, char **argv) {
       // The largest output any op writes is four bytes per input byte
       // (Latin-1 to UTF-32), plus base64's rounding.
       out.assign(len + 16, 0);
-      r = run(op, option, in.data(), len / s.in, out.data());
-      if (r.error == simdutf::SUCCESS && s.out != 0)
+      size_t written = SIZE_MAX;
+      r = run(op, option, in.data(), len / s.in, out.data(),
+              out.size() * sizeof(char32_t), written);
+      if (written != SIZE_MAX)
+        out_bytes = written * s.out;
+      else if (r.error == simdutf::SUCCESS && s.out != 0)
         out_bytes = r.count * s.out;
     }
     at += len;

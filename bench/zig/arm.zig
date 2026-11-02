@@ -273,7 +273,7 @@ const Utf = struct {
     }
 
     /// `f` as a `Fn`, by its signature: `(src) bool`, `(src) Result`, or
-    /// `(src) usize` validates or counts; `(src, dst) Result` or
+    /// `(src) usize` validates or counts; `(src, dst) ConvertResult` or
     /// `(src, dst) usize` converts; `(dst, src, options)` is base64.
     fn wrap(comptime f: anytype, comptime options: Options) Fn {
         const params = comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn");
@@ -300,6 +300,9 @@ const Utf = struct {
                 return switch (@TypeOf(r)) {
                     usize => .checked(.len, true, r * @sizeOf(Unit)),
                     utf.Result => .checked(.len, r.err == .none, r.count * @sizeOf(Unit)),
+                    // What a caller that resumes after an error reads, which
+                    // an inlined kernel cannot leave uncomputed.
+                    utf.ConvertResult => .checked(.len, r.err == .none, r.written * @sizeOf(Unit)),
                     else => @compileError("unexpected return type"),
                 };
             }

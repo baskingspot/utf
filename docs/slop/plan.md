@@ -15,9 +15,11 @@ memory, as simdutf's `char16_t` functions do. UTF-32 is `[]const u32`.
 - `validate`: `utf8(bytes) bool` and `utf8WithErrors(bytes) Result`; the same
   pair for `ascii`, `utf16le`, `utf16be`, `utf32`.
 - `convert`, for each pair of UTF-8, UTF-16LE, UTF-16BE, UTF-32, and Latin-1:
-  a checked form (`utf8ToUtf16le(src, dst) Result`: validates while it
-  converts, and reports the error kind and position) and a valid form
-  (`validUtf8ToUtf16le(src, dst) usize`: assumes valid input, fastest).
+  a checked form (`utf8ToUtf16le(src, dst) ConvertResult`: validates while
+  it converts, and reports the error kind and position, and the output
+  written, which on failure holds the input before the error, as simdutf's
+  `full_result` does) and a valid form (`validUtf8ToUtf16le(src, dst)
+usize`: assumes valid input, fastest).
 - `length`: the output size each conversion needs (`utf16FromUtf8(src)`, and so
   on) and `countUtf8`/`countUtf16le`/`countUtf16be` for code points.
 - `base64`: `encode(dst, src, options) usize`, `encodedLen(n, options)`,
@@ -28,8 +30,8 @@ memory, as simdutf's `char16_t` functions do. UTF-32 is `[]const u32`.
   place (`dst` starting at `src.ptr`), as simdutf's does: any path that
   reads `src` again after writing `dst` checks first that its stores end
   before what it reads (`untouched` in `src/base64.zig`).
-- `Result` and `Error` (`src/result.zig`): simdutf's error kinds and positions,
-  so simdutf is a differential oracle.
+- `Result`, `ConvertResult`, and `Error` (`src/result.zig`): simdutf's error
+  kinds and positions, so simdutf is a differential oracle.
 
 ## Algorithms
 
@@ -104,7 +106,12 @@ standard, not from simdutf's source.
      and structs of those whose fields fit in one word (such as
      `base64.DecodeOptions`) travel as words, other types by pointer, up to
      six words (a slice is two). Results: `void`, `bool`,
-     `usize`, enums, and structs of up to two scalar fields, such as `Result`.
+     `usize`, enums, structs of up to two scalar fields, such as `Result`,
+     and structs of an enum of a byte and two `usize` that are equal when
+     the enum is `none`, such as `ConvertResult`, which cross in two words:
+     zero and `count` on success, as a `Result` does, else the enum with
+     `written` in the 56 bits above it and `count`
+     ([convert-written-20261102.md](results/convert-written-20261102.md)).
      Anything else is a compile error in `dispatch.zig`; ask its owner.
    - Comptime choices inside the kernels keep working unchanged: each object
      is compiled for its tier, so `simd.isa`, `simd.has_vbmi`, and

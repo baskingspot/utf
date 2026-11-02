@@ -57,6 +57,10 @@ pub const Op = enum(u8) {
     base64_decode = 24,
     /// `binary_to_base64`; the option is a `Base64Format`.
     base64_encode = 25,
+    /// `convert_utf16_to_utf8_safe_with_details`, whose `full_result` also
+    /// says what was written on failure: the response's output is that,
+    /// either way.
+    utf16le_to_utf8_details = 26,
 };
 
 /// simdutf's `error_code`, named as this package's `Error` names the same
@@ -114,8 +118,9 @@ pub const Response = struct {
     /// The error's position in input code units, or the output code units
     /// written.
     count: u64,
-    /// The output, on success; empty on failure. It points into the batch's
-    /// memory, which `free` releases.
+    /// The output, on success; empty on failure, except for the `_details`
+    /// ops, where it is what simdutf wrote before the error. It points into
+    /// the batch's memory, which `free` releases.
     output: []const u8,
 };
 

@@ -132,7 +132,7 @@ UTF-32 is native order. There is no `utf32be`.
 
 `convert` has two forms for every pair of encodings.
 
-- The checked form, `utf8ToUtf16le`, validates as it converts and returns a `Result`.
+- The checked form, `utf8ToUtf16le`, validates as it converts and returns a `ConvertResult`.
 - The valid form, `validUtf8ToUtf16le`, assumes well-formed input and a destination the length function sized, and returns the number of code units written.
 
 The names read source, then destination. Every pair among UTF-8, UTF-16LE,
@@ -161,15 +161,25 @@ destination holds everything before it.
 ## The checked form names what failed
 
 ```zig
-const units = [_]u16{ 0x41, 0xD800, 0x42 };
+const units = [_]u16{ 'A', 0xE9, 0xD800, 'B' };
 var buffer: [8]u8 = undefined;
 
 const result = utf.convert.utf16leToUtf8(&units, &buffer);
-// result.err is .surrogate, and result.count is 1.
+// result.err is .surrogate, result.count is 2, and result.written is 3.
 ```
 
 The error kinds and positions are the validators' own. One difference: a
 conversion can also fail because the output ran out.
+
+## Pick up where it stopped
+
+`ConvertResult` has the `err` and `count` of a `Result`, and `written`: the
+code units of output written. On success that is `count` again. On failure
+the destination holds the conversion of everything before the error, and
+`written` says how long it is, so a decoder that replaces a bad character and
+carries on starts again at input `count` and output `written`, with no second
+pass to measure the part that converted. In the example above, `buffer[0..3]`
+is "Aé" in UTF-8.
 
 ## The valid form skips the checks
 

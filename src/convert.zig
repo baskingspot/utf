@@ -2,13 +2,15 @@
 //! SIMD. Callers own every buffer; nothing allocates.
 //!
 //! Each conversion has two forms. The checked form (`utf8ToUtf16le`)
-//! validates as it converts and returns a `Result`: on success the number of
-//! code units written, on failure simdutf's error kind and the index in the
-//! input of the first ill-formed character. When the output runs out it
-//! fails with `output_buffer_too_small` at the first character that does not
-//! fit; a buffer sized by the matching `length` function always fits. The
-//! valid form (`validUtf8ToUtf16le`) assumes well-formed input and a buffer
-//! the `length` function sized, and returns the number of code units written.
+//! validates as it converts and returns a `ConvertResult`: on success the
+//! number of code units written, on failure simdutf's error kind and the
+//! index in the input of the first ill-formed character, and either way the
+//! code units written, which on failure hold the input before the error.
+//! When the output runs out it fails with `output_buffer_too_small` at the
+//! first character that does not fit; a buffer sized by the matching
+//! `length` function always fits. The valid form (`validUtf8ToUtf16le`)
+//! assumes well-formed input and a buffer the `length` function sized, and
+//! returns the number of code units written.
 //! Results equal those of `scalar_convert.zig` on every input.
 //!
 //! UTF-16LE and UTF-16BE name the byte order of the code units in memory, as
@@ -31,7 +33,7 @@ const compat = @import("compat.zig");
 const builtin = @import("builtin");
 const Endian = std.builtin.Endian;
 const result = @import("result.zig");
-const Result = result.Result;
+const ConvertResult = result.ConvertResult;
 const scalar = @import("scalar_convert.zig");
 const simd = @import("simd.zig");
 const dispatch = @import("dispatch.zig");
@@ -50,28 +52,28 @@ const use_simd = native == .little;
 
 // UTF-8 source.
 
-pub fn utf8ToUtf16le(src: []const u8, dst: []u16) Result {
+pub fn utf8ToUtf16le(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf16leKernel, .{ src, dst });
 }
-fn utf8ToUtf16leKernel(src: []const u8, dst: []u16) Result {
+fn utf8ToUtf16leKernel(src: []const u8, dst: []u16) ConvertResult {
     return utf8ToUnits(u16, .little, true, src, dst);
 }
-pub fn utf8ToUtf16be(src: []const u8, dst: []u16) Result {
+pub fn utf8ToUtf16be(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf16beKernel, .{ src, dst });
 }
-fn utf8ToUtf16beKernel(src: []const u8, dst: []u16) Result {
+fn utf8ToUtf16beKernel(src: []const u8, dst: []u16) ConvertResult {
     return utf8ToUnits(u16, .big, true, src, dst);
 }
-pub fn utf8ToUtf32(src: []const u8, dst: []u32) Result {
+pub fn utf8ToUtf32(src: []const u8, dst: []u32) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf32Kernel, .{ src, dst });
 }
-fn utf8ToUtf32Kernel(src: []const u8, dst: []u32) Result {
+fn utf8ToUtf32Kernel(src: []const u8, dst: []u32) ConvertResult {
     return utf8ToUnits(u32, native, true, src, dst);
 }
-pub fn utf8ToLatin1(src: []const u8, dst: []u8) Result {
+pub fn utf8ToLatin1(src: []const u8, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf8ToLatin1Kernel, .{ src, dst });
 }
-fn utf8ToLatin1Kernel(src: []const u8, dst: []u8) Result {
+fn utf8ToLatin1Kernel(src: []const u8, dst: []u8) ConvertResult {
     return utf8ToLatin1Impl(true, src, dst);
 }
 pub fn validUtf8ToUtf16le(src: []const u8, dst: []u16) usize {
@@ -101,54 +103,54 @@ fn validUtf8ToLatin1Kernel(src: []const u8, dst: []u8) usize {
 
 // UTF-16 source.
 
-pub fn utf16leToUtf8(src: []const u16, dst: []u8) Result {
+pub fn utf16leToUtf8(src: []const u16, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf16leToUtf8Kernel, .{ src, dst });
 }
-fn utf16leToUtf8Kernel(src: []const u16, dst: []u8) Result {
+fn utf16leToUtf8Kernel(src: []const u16, dst: []u8) ConvertResult {
     return utf16ToUtf8Impl(.little, true, src, dst);
 }
-pub fn utf16beToUtf8(src: []const u16, dst: []u8) Result {
+pub fn utf16beToUtf8(src: []const u16, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf16beToUtf8Kernel, .{ src, dst });
 }
-fn utf16beToUtf8Kernel(src: []const u16, dst: []u8) Result {
+fn utf16beToUtf8Kernel(src: []const u16, dst: []u8) ConvertResult {
     return utf16ToUtf8Impl(.big, true, src, dst);
 }
-pub fn utf16leToUtf32(src: []const u16, dst: []u32) Result {
+pub fn utf16leToUtf32(src: []const u16, dst: []u32) ConvertResult {
     return dispatch.call(@src(), utf16leToUtf32Kernel, .{ src, dst });
 }
-fn utf16leToUtf32Kernel(src: []const u16, dst: []u32) Result {
+fn utf16leToUtf32Kernel(src: []const u16, dst: []u32) ConvertResult {
     return utf16ToUtf32Impl(.little, true, src, dst);
 }
-pub fn utf16beToUtf32(src: []const u16, dst: []u32) Result {
+pub fn utf16beToUtf32(src: []const u16, dst: []u32) ConvertResult {
     return dispatch.call(@src(), utf16beToUtf32Kernel, .{ src, dst });
 }
-fn utf16beToUtf32Kernel(src: []const u16, dst: []u32) Result {
+fn utf16beToUtf32Kernel(src: []const u16, dst: []u32) ConvertResult {
     return utf16ToUtf32Impl(.big, true, src, dst);
 }
-pub fn utf16leToLatin1(src: []const u16, dst: []u8) Result {
+pub fn utf16leToLatin1(src: []const u16, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf16leToLatin1Kernel, .{ src, dst });
 }
-fn utf16leToLatin1Kernel(src: []const u16, dst: []u8) Result {
+fn utf16leToLatin1Kernel(src: []const u16, dst: []u8) ConvertResult {
     return utf16ToLatin1Impl(.little, true, src, dst);
 }
-pub fn utf16beToLatin1(src: []const u16, dst: []u8) Result {
+pub fn utf16beToLatin1(src: []const u16, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf16beToLatin1Kernel, .{ src, dst });
 }
-fn utf16beToLatin1Kernel(src: []const u16, dst: []u8) Result {
+fn utf16beToLatin1Kernel(src: []const u16, dst: []u8) ConvertResult {
     return utf16ToLatin1Impl(.big, true, src, dst);
 }
 /// Swaps the byte order, failing on an unpaired surrogate.
-pub fn utf16leToUtf16be(src: []const u16, dst: []u16) Result {
+pub fn utf16leToUtf16be(src: []const u16, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf16leToUtf16beKernel, .{ src, dst });
 }
-fn utf16leToUtf16beKernel(src: []const u16, dst: []u16) Result {
+fn utf16leToUtf16beKernel(src: []const u16, dst: []u16) ConvertResult {
     return utf16SwapImpl(.little, true, src, dst);
 }
 /// Swaps the byte order, failing on an unpaired surrogate.
-pub fn utf16beToUtf16le(src: []const u16, dst: []u16) Result {
+pub fn utf16beToUtf16le(src: []const u16, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf16beToUtf16leKernel, .{ src, dst });
 }
-fn utf16beToUtf16leKernel(src: []const u16, dst: []u16) Result {
+fn utf16beToUtf16leKernel(src: []const u16, dst: []u16) ConvertResult {
     return utf16SwapImpl(.big, true, src, dst);
 }
 pub fn validUtf16leToUtf8(src: []const u16, dst: []u8) usize {
@@ -202,28 +204,28 @@ fn validUtf16beToUtf16leKernel(src: []const u16, dst: []u16) usize {
 
 // UTF-32 source.
 
-pub fn utf32ToUtf8(src: []const u32, dst: []u8) Result {
+pub fn utf32ToUtf8(src: []const u32, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf32ToUtf8Kernel, .{ src, dst });
 }
-fn utf32ToUtf8Kernel(src: []const u32, dst: []u8) Result {
+fn utf32ToUtf8Kernel(src: []const u32, dst: []u8) ConvertResult {
     return utf32ToUtf8Impl(true, src, dst);
 }
-pub fn utf32ToUtf16le(src: []const u32, dst: []u16) Result {
+pub fn utf32ToUtf16le(src: []const u32, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf32ToUtf16leKernel, .{ src, dst });
 }
-fn utf32ToUtf16leKernel(src: []const u32, dst: []u16) Result {
+fn utf32ToUtf16leKernel(src: []const u32, dst: []u16) ConvertResult {
     return utf32ToUtf16Impl(.little, true, src, dst);
 }
-pub fn utf32ToUtf16be(src: []const u32, dst: []u16) Result {
+pub fn utf32ToUtf16be(src: []const u32, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf32ToUtf16beKernel, .{ src, dst });
 }
-fn utf32ToUtf16beKernel(src: []const u32, dst: []u16) Result {
+fn utf32ToUtf16beKernel(src: []const u32, dst: []u16) ConvertResult {
     return utf32ToUtf16Impl(.big, true, src, dst);
 }
-pub fn utf32ToLatin1(src: []const u32, dst: []u8) Result {
+pub fn utf32ToLatin1(src: []const u32, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf32ToLatin1Kernel, .{ src, dst });
 }
-fn utf32ToLatin1Kernel(src: []const u32, dst: []u8) Result {
+fn utf32ToLatin1Kernel(src: []const u32, dst: []u8) ConvertResult {
     return utf32ToLatin1Impl(true, src, dst);
 }
 pub fn validUtf32ToUtf8(src: []const u32, dst: []u8) usize {
@@ -254,28 +256,28 @@ fn validUtf32ToLatin1Kernel(src: []const u32, dst: []u8) usize {
 // Latin-1 source. Every byte is a character, so the checked forms fail only
 // when the output runs out, and the valid forms only assume it does not.
 
-pub fn latin1ToUtf8(src: []const u8, dst: []u8) Result {
+pub fn latin1ToUtf8(src: []const u8, dst: []u8) ConvertResult {
     return dispatch.call(@src(), latin1ToUtf8Kernel, .{ src, dst });
 }
-fn latin1ToUtf8Kernel(src: []const u8, dst: []u8) Result {
+fn latin1ToUtf8Kernel(src: []const u8, dst: []u8) ConvertResult {
     return latin1ToUtf8Impl(true, src, dst);
 }
-pub fn latin1ToUtf16le(src: []const u8, dst: []u16) Result {
+pub fn latin1ToUtf16le(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), latin1ToUtf16leKernel, .{ src, dst });
 }
-fn latin1ToUtf16leKernel(src: []const u8, dst: []u16) Result {
+fn latin1ToUtf16leKernel(src: []const u8, dst: []u16) ConvertResult {
     return latin1ToUnits(u16, .little, true, src, dst);
 }
-pub fn latin1ToUtf16be(src: []const u8, dst: []u16) Result {
+pub fn latin1ToUtf16be(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), latin1ToUtf16beKernel, .{ src, dst });
 }
-fn latin1ToUtf16beKernel(src: []const u8, dst: []u16) Result {
+fn latin1ToUtf16beKernel(src: []const u8, dst: []u16) ConvertResult {
     return latin1ToUnits(u16, .big, true, src, dst);
 }
-pub fn latin1ToUtf32(src: []const u8, dst: []u32) Result {
+pub fn latin1ToUtf32(src: []const u8, dst: []u32) ConvertResult {
     return dispatch.call(@src(), latin1ToUtf32Kernel, .{ src, dst });
 }
-fn latin1ToUtf32Kernel(src: []const u8, dst: []u32) Result {
+fn latin1ToUtf32Kernel(src: []const u8, dst: []u32) ConvertResult {
     return latin1ToUnits(u32, native, true, src, dst);
 }
 pub fn validLatin1ToUtf8(src: []const u8, dst: []u8) usize {
@@ -512,28 +514,34 @@ inline fn widenLoad(s: []const u8) V16 {
 /// `f(ct ++ .{ src, dst })`, a kernel's long path: out of line when
 /// `apart`, so that the registers its loops save cost the short path before
 /// it nothing (LLVM saves them on entry, before any length test), with its
-/// `Result` back through `dispatch.pack`, in registers. Apart only in the
-/// tier objects (`dispatch.exported`), whose kernels are called out of line
+/// `ConvertResult` back through `dispatch.pack`, in registers. Apart only in
+/// the tier objects (`dispatch.exported`), whose kernels are called out of line
 /// anyway, and only for kernels that saved three registers or more: the
 /// call costs 64-256-byte inputs about 3 TSC ticks, more than one or two
 /// saved registers (docs/slop/results/short-20261101.md).
-inline fn longPath(comptime apart: bool, comptime f: anytype, comptime ct: anytype, src: anytype, dst: anytype) Result {
+inline fn longPath(
+    comptime apart: bool,
+    comptime f: anytype,
+    comptime ct: anytype,
+    src: anytype,
+    dst: anytype,
+) ConvertResult {
     if (!(apart and dispatch.exported)) return @call(.always_inline, f, ct ++ .{ src, dst });
     const Long = struct {
-        fn run(s: @TypeOf(src), d: @TypeOf(dst)) dispatch.Packed(Result) {
+        fn run(s: @TypeOf(src), d: @TypeOf(dst)) dispatch.Packed(ConvertResult) {
             return dispatch.pack(@call(.always_inline, f, ct ++ .{ s, d }));
         }
     };
-    return dispatch.unpack(Result, @call(.never_inline, Long.run, .{ src, dst }));
+    return dispatch.unpack(ConvertResult, @call(.never_inline, Long.run, .{ src, dst }));
 }
 
 /// Combines a checked scalar tail at input `p` and output `o` with the
 /// work before it.
-inline fn tail(r: Result, p: usize, o: usize) Result {
+inline fn tail(r: ConvertResult, p: usize, o: usize) ConvertResult {
     // One result built from scalars: choosing between two built ones made
     // LLVM write both fields to the stack and copy the pair with one 16-byte
     // load, which stalls store forwarding (6 ns on a 16-byte input).
-    return .{ .err = r.err, .count = r.count + if (r.err == .none) o else p };
+    return .{ .err = r.err, .count = r.count + if (r.err == .none) o else p, .written = r.written + o };
 }
 
 /// How many code units the next scalar step takes: 16 when the SIMD loop
@@ -568,7 +576,7 @@ inline fn scalarStep(
     p: *usize,
     o: *usize,
     steps: *Steps,
-) ?Result {
+) ?ConvertResult {
     const r = @call(.never_inline, run, .{ src[p.*..end], dst[o.*..] });
     if (r.err != .none) return tail(r, p.*, o.*);
     p.* = end;
@@ -1459,7 +1467,13 @@ inline fn utf8BlocksApple(
     return .{ p, o };
 }
 
-fn utf8ToUnitsLong(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
+fn utf8ToUnitsLong(
+    comptime T: type,
+    comptime e: Endian,
+    comptime checked: bool,
+    src: []const u8,
+    dst: []T,
+) ConvertResult {
     const p, const o = utf8ToUnitsAvx512(T, e, checked, src, dst);
     if (T == u16) {
         if (checked) return tail(scalar.utf8ToUtf16(e, src[p..], dst[o..]), p, o);
@@ -1469,9 +1483,9 @@ fn utf8ToUnitsLong(comptime T: type, comptime e: Endian, comptime checked: bool,
     return .ok(o + scalar.validUtf8ToUtf32(src[p..], dst[o..]));
 }
 
-fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
+fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) ConvertResult {
     const run = struct {
-        fn f(s: []const u8, d: []T) Result {
+        fn f(s: []const u8, d: []T) ConvertResult {
             if (T == u16) {
                 if (checked) return scalar.utf8ToUtf16(e, s, d);
                 return .ok(scalar.validUtf8ToUtf16(e, s, d));
@@ -1725,15 +1739,15 @@ inline fn utf8ToLatin1Step(
     return true;
 }
 
-fn utf8ToLatin1Long(comptime checked: bool, src: []const u8, dst: []u8) Result {
+fn utf8ToLatin1Long(comptime checked: bool, src: []const u8, dst: []u8) ConvertResult {
     const p, const o = utf8ToLatin1Avx512(checked, src, dst);
     if (checked) return tail(scalar.utf8ToLatin1(src[p..], dst[o..]), p, o);
     return .ok(o + scalar.validUtf8ToLatin1(src[p..], dst[o..]));
 }
 
-fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
+fn utf8ToLatin1Impl(comptime checked: bool, src: []const u8, dst: []u8) ConvertResult {
     const run = struct {
-        fn f(s: []const u8, d: []u8) Result {
+        fn f(s: []const u8, d: []u8) ConvertResult {
             if (checked) return scalar.utf8ToLatin1(s, d);
             return .ok(scalar.validUtf8ToLatin1(s, d));
         }
@@ -2479,16 +2493,16 @@ inline fn utf32Invalid(v: @Vector(16, u32)) bool {
     return simd.bitmask(too_big) | simd.bitmask(surrogates) != 0;
 }
 
-fn utf16ToUtf8Long(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) Result {
+fn utf16ToUtf8Long(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) ConvertResult {
     const p, const o = utf16ToUtf8Avx512(e, checked, src, dst);
     if (checked) return tail(scalar.utf16ToUtf8(e, src[p..], dst[o..]), p, o);
     return .ok(o + scalar.validUtf16ToUtf8(e, src[p..], dst[o..]));
 }
 
-fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) Result {
+fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) ConvertResult {
     const U = @Vector(16, u16);
     const run = struct {
-        fn f(s: []const u16, d: []u8) Result {
+        fn f(s: []const u16, d: []u8) ConvertResult {
             if (checked) return scalar.utf16ToUtf8(e, s, d);
             return .ok(scalar.validUtf16ToUtf8(e, s, d));
         }
@@ -2562,15 +2576,15 @@ fn utf16ToUtf8Impl(comptime e: Endian, comptime checked: bool, src: []const u16,
     return tail(run(src[p..], dst[o..]), p, o);
 }
 
-fn utf32ToUtf8Long(comptime checked: bool, src: []const u32, dst: []u8) Result {
+fn utf32ToUtf8Long(comptime checked: bool, src: []const u32, dst: []u8) ConvertResult {
     const p, const o = utf32ToUtf8Avx512(checked, src, dst);
     if (checked) return tail(scalar.utf32ToUtf8(src[p..], dst[o..]), p, o);
     return .ok(o + scalar.validUtf32ToUtf8(src[p..], dst[o..]));
 }
 
-fn utf32ToUtf8Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
+fn utf32ToUtf8Impl(comptime checked: bool, src: []const u32, dst: []u8) ConvertResult {
     const run = struct {
-        fn f(s: []const u32, d: []u8) Result {
+        fn f(s: []const u32, d: []u8) ConvertResult {
             if (checked) return scalar.utf32ToUtf8(s, d);
             return .ok(scalar.validUtf32ToUtf8(s, d));
         }
@@ -2714,10 +2728,10 @@ fn utf16ToUtf32Avx512(
     return .{ p, o };
 }
 
-fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u32) Result {
+fn utf16ToUtf32Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u32) ConvertResult {
     const U = @Vector(16, u16);
     const run = struct {
-        fn f(s: []const u16, d: []u32) Result {
+        fn f(s: []const u16, d: []u32) ConvertResult {
             if (checked) return scalar.utf16ToUtf32(e, s, d);
             return .ok(scalar.validUtf16ToUtf32(e, s, d));
         }
@@ -2848,15 +2862,15 @@ inline fn utf32ToUtf16Step(comptime e: Endian, v: @Vector(16, u32), n: usize, ds
     return count;
 }
 
-fn utf32ToUtf16Long(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) Result {
+fn utf32ToUtf16Long(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) ConvertResult {
     const p, const o = utf32ToUtf16Avx512(e, checked, src, dst);
     if (checked) return tail(scalar.utf32ToUtf16(e, src[p..], dst[o..]), p, o);
     return .ok(o + scalar.validUtf32ToUtf16(e, src[p..], dst[o..]));
 }
 
-fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) Result {
+fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32, dst: []u16) ConvertResult {
     const run = struct {
-        fn f(s: []const u32, d: []u16) Result {
+        fn f(s: []const u32, d: []u16) ConvertResult {
             if (checked) return scalar.utf32ToUtf16(e, s, d);
             return .ok(scalar.validUtf32ToUtf16(e, s, d));
         }
@@ -2930,7 +2944,7 @@ fn utf32ToUtf16Impl(comptime e: Endian, comptime checked: bool, src: []const u32
 
 // To Latin-1 from UTF-16 and UTF-32: narrowing, once no unit is above 0xFF.
 
-fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) Result {
+fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u8) ConvertResult {
     var p: usize = 0;
     if (use_simd) {
         // One bound for both: two compares made LLVM build flags with
@@ -2991,7 +3005,7 @@ fn utf16ToLatin1Impl(comptime e: Endian, comptime checked: bool, src: []const u1
     return .ok(p + scalar.validUtf16ToLatin1(e, src[p..], dst[p..]));
 }
 
-fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) Result {
+fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) ConvertResult {
     // The checked form saved six registers on every call; the valid one
     // none, and its loops take 16 values without a mask.
     if (v512 and checked) {
@@ -3016,7 +3030,7 @@ fn utf32ToLatin1Impl(comptime checked: bool, src: []const u32, dst: []u8) Result
     return utf32ToLatin1Rest(checked, src, dst);
 }
 
-fn utf32ToLatin1Rest(comptime checked: bool, src: []const u32, dst: []u8) Result {
+fn utf32ToLatin1Rest(comptime checked: bool, src: []const u32, dst: []u8) ConvertResult {
     var p: usize = 0;
     if (use_simd) {
         const lim = @min(src.len, dst.len);
@@ -3048,7 +3062,7 @@ fn utf32ToLatin1Rest(comptime checked: bool, src: []const u32, dst: []u8) Result
 
 // UTF-16 byte-order swap: a copy, validated like UTF-16 to UTF-8.
 
-fn utf16SwapImpl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u16) Result {
+fn utf16SwapImpl(comptime e: Endian, comptime checked: bool, src: []const u16, dst: []u16) ConvertResult {
     var p: usize = 0;
     // A low surrogate first has no high one before it; after that, each
     // block checks that a unit is a high surrogate exactly when the next
@@ -3307,9 +3321,9 @@ inline fn latin1ToUtf8Avx512(src: []const u8, dst: []u8) struct { usize, usize }
     return .{ p, o };
 }
 
-fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
+fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) ConvertResult {
     const run = struct {
-        fn f(s: []const u8, d: []u8) Result {
+        fn f(s: []const u8, d: []u8) ConvertResult {
             if (checked) return scalar.latin1ToUtf8(s, d);
             return .ok(scalar.validLatin1ToUtf8(s, d));
         }
@@ -3358,13 +3372,19 @@ fn latin1ToUtf8Impl(comptime checked: bool, src: []const u8, dst: []u8) Result {
     return tail(run(src[p..], dst[o..]), p, o);
 }
 
-fn latin1ToUtf8Long(comptime checked: bool, src: []const u8, dst: []u8) Result {
+fn latin1ToUtf8Long(comptime checked: bool, src: []const u8, dst: []u8) ConvertResult {
     const p, const o = if (src.len <= 64) latin1ToUtf8Short(src, dst) else latin1ToUtf8Avx512(src, dst);
     if (checked) return tail(scalar.latin1ToUtf8(src[p..], dst[o..]), p, o);
     return .ok(o + scalar.validLatin1ToUtf8(src[p..], dst[o..]));
 }
 
-fn latin1ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) Result {
+fn latin1ToUnits(
+    comptime T: type,
+    comptime e: Endian,
+    comptime checked: bool,
+    src: []const u8,
+    dst: []T,
+) ConvertResult {
     // With room for all of it, blocks and one masked tail, and none of the
     // checks on the output's room: 64 bytes took 8.4 ns, simdutf 6.2.
     if (v512 and dst.len >= src.len) {
@@ -3450,7 +3470,7 @@ fn simdConvert(
     comptime checked: bool,
     src: []const from.Unit(),
     dst: []to.Unit(),
-) Result {
+) ConvertResult {
     if (checked) return @field(Self, @tagName(from) ++ "To" ++ to.title())(src, dst);
     return .ok(@field(Self, "valid" ++ from.title() ++ "To" ++ to.title())(src, dst));
 }
@@ -3462,7 +3482,7 @@ fn refConvert(
     comptime checked: bool,
     src: []const from.Unit(),
     dst: []to.Unit(),
-) Result {
+) ConvertResult {
     const s = scalar;
     const e: Endian = if (from == .utf16be or to == .utf16be) .big else .little;
     if (checked) return switch (from) {
@@ -3616,17 +3636,18 @@ fn expectSame(
     var got_buf: [8192]T = undefined;
     const want = refConvert(from, to, checked, src, want_buf[0..size]);
     const got = simdConvert(from, to, checked, src, got_buf[0..size]);
-    errdefer std.debug.print("{t} to {t} ({s}), {d} units into {d}: want {t}@{d}, got {t}@{d}\n", .{
-        from, to, if (checked) "checked" else "valid", src.len, size, want.err, want.count, got.err, got.count,
+    errdefer std.debug.print("{t} to {t} ({s}), {d} units into {d}: want {t}@{d} wrote {d}, got {t}@{d} wrote {d}\n", .{
+        from,        to,         if (checked) "checked" else "valid", src.len, size,
+        want.err,    want.count, want.written,                        got.err, got.count,
+        got.written,
     });
     try testing.expectEqual(want, got);
     // On failure the output holds the conversion of the input before the
-    // error.
-    const written = if (want.err == .none)
-        want.count
-    else
-        refConvert(from, to, true, src[0..want.count], &want_buf).count;
-    try testing.expectEqualSlices(T, want_buf[0..written], got_buf[0..written]);
+    // error, and `written` counts it.
+    if (want.err != .none) {
+        try testing.expectEqual(refConvert(from, to, true, src[0..want.count], &want_buf).count, want.written);
+    }
+    try testing.expectEqualSlices(T, want_buf[0..want.written], got_buf[0..want.written]);
 }
 
 test "every conversion matches the scalar reference on valid text" {

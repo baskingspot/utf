@@ -72,7 +72,8 @@ const Got = struct {
     /// function that says only whether the input is valid.
     result: ?utf.Result = null,
     valid: bool,
-    /// The output, compared when both sides succeed.
+    /// The output, compared when both sides succeed, and for a check
+    /// against a `_details` op on failure too: what was written.
     out: ?[]const u8 = null,
 };
 
@@ -87,6 +88,10 @@ const Def = struct {
     /// swapped, not the oracle's: simdutf's checked byte swap is validation,
     /// which the oracle runs, then `change_endianness_utf16`.
     swapped: bool = false,
+    /// The oracle's op is one of simdutf's `full_result` functions, which
+    /// report what they wrote on failure: compare the output, and so what a
+    /// `ConvertResult` says it wrote, on failure too.
+    details: bool = false,
     /// Null when the function does not exist yet.
     run: ?RunFn,
 };
@@ -113,6 +118,7 @@ const Base64 = struct {
 const Extra = struct {
     base64: Base64 = .{},
     swapped: bool = false,
+    details: bool = false,
 };
 
 /// The options type `T` with the fields `o` sets.
@@ -148,12 +154,13 @@ fn base64Label(comptime o: Base64) []const u8 {
 }
 
 /// `utf.<ns>.<name>` against simdutf's `op`, compared by its signature:
-/// `(src) bool` on validity; `(src) Result`, `(src, dst) Result`, and
+/// `(src) bool` on validity; `(src) Result`, `(src, dst) ConvertResult`, and
 /// `(dst, src, options)` on kind, position, and output; `(src) usize`, a
 /// length, and `(src, dst) usize`, a valid form, only where simdutf
 /// accepts.
 fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comptime extra: Extra) Def {
-    const label = ns ++ "." ++ name ++ comptime base64Label(extra.base64);
+    const suffix = if (extra.details) " (full_result)" else "";
+    const label = ns ++ "." ++ name ++ comptime base64Label(extra.base64) ++ suffix;
     if (!has(ns, name)) return .{ .name = label, .op = op, .run = null };
     const f = @field(@field(utf, ns), name);
     const params = comptime compat.paramTypes(@typeInfo(@TypeOf(f)).@"fn");
@@ -177,6 +184,12 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
         }
 
         fn written(comptime Unit: type, r: anytype, out: []u8) Got {
+            if (@TypeOf(r) == utf.ConvertResult) {
+                const ok = r.err == .none;
+                const kept = ok or extra.details;
+                const out_bytes = if (kept) out[0 .. r.written * @sizeOf(Unit)] else null;
+                return .{ .result = r.result(), .valid = ok, .out = out_bytes };
+            }
             const res: utf.Result = if (@TypeOf(r) == usize) .ok(r) else r;
             const ok = res.err == .none;
             return .{ .result = res, .valid = ok, .out = if (ok) out[0 .. res.count * @sizeOf(Unit)] else null };
@@ -192,6 +205,7 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
             else => .checked,
         },
         .swapped = extra.swapped,
+        .details = extra.details,
         .run = run,
     };
 }
@@ -267,6 +281,7 @@ fn utf16Defs(comptime e: []const u8) [14]Def {
 }
 
 const utf16le_defs = utf16Defs("le") ++ [_]Def{
+    check("convert", "utf16leToUtf8", .utf16le_to_utf8_details, .{ .details = true }),
     .{
         .name = "std.unicode.utf16LeToUtf8",
         .op = .utf16le_to_utf8,
@@ -369,6 +384,7 @@ fn judge(def: Def, in: []const u8, resp: Oracle.Response, got: Got, scratch: []u
         .validity => got.valid == (resp.err == .none),
         .ours_accepts => resp.err == .none,
     };
+    if (ok and def.details) return if (mem.eql(u8, got.out orelse "", resp.output)) .agree else .disagree;
     if (ok and resp.err == .none and got.valid) {
         if (got.out) |out| {
             const want = if (def.swapped) swapUnits(in, scratch) else resp.output;
@@ -494,7 +510,12 @@ const Runner = struct {
         } else {
             try w.print("\n  ours:    {s}\n", .{if (got.valid) "valid" else "invalid"});
         }
-        if (resp.err == .none and got.valid) {
+        if (def.details) {
+            const out = got.out orelse "";
+            try w.print("  wrote: ours {d} bytes, simdutf's {d}", .{ out.len, resp.output.len });
+            if (mem.findDiff(u8, out, resp.output)) |at| try w.print(", first differing at byte {d}", .{at});
+            try w.writeAll("\n");
+        } else if (resp.err == .none and got.valid) {
             if (got.out) |out| {
                 const want = if (def.swapped) swapUnits(in, try r.arena.allocator().alloc(u8, in.len)) else resp.output;
                 if (mem.findDiff(u8, out, want)) |at| try w.print(

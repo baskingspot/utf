@@ -49,7 +49,8 @@ const linked = if (role == .main) above(simd.isa) else &[_]Tier{};
 /// integers, enums, bools, and structs of those that fit in a word, which
 /// travel as words, and other types, which travel by pointer, up to six
 /// words in all; results
-/// are void, a word, or a struct of up to two word fields, like `Result`.
+/// are void, a word, a struct of up to two word fields, like `Result`, or
+/// one of three, like `ConvertResult` (`Ret`).
 pub inline fn call(
     comptime src: std.builtin.SourceLocation,
     comptime f: anytype,
@@ -133,7 +134,32 @@ const Words = @Int(.unsigned, 2 * @bitSizeOf(usize));
 /// What an entry returns for a function returning `R`: `R` itself where the
 /// C calling convention has it, so the call can be a tail call, else words.
 fn Ret(comptime R: type) type {
-    return if (R == void or R == bool or R == usize) R else Words;
+    return RetAs(R, tight);
+}
+
+/// Whether a struct of three fields crosses in two words: where results
+/// cross into a tier's object, which is only on x86-64. Its first field is
+/// an enum of a byte and the other two are words, equal where the enum is
+/// its first value, as `ConvertResult`'s `count` and `written` are on
+/// success. The second word is the first word field. The first word is zero
+/// for the first enum value, as a `Result`'s is on success, and otherwise
+/// the enum in its low byte and the third field in the 56 bits above, which
+/// hold it because it counts code units in memory, and x86-64 user
+/// addresses are below 2^56 (2^47 without 5-level paging). Three words would
+/// come back through memory under the C calling convention, a store and a
+/// load a call; packing every result cost the dispatched checked
+/// conversions 0.8 TSC ticks a call (docs/slop/results/convert-written-20261102.md).
+/// Elsewhere, where no result crosses (and on 32-bit targets, which do not
+/// dispatch), it is three words, which LLVM keeps in registers within the
+/// function.
+const tight = role != .off;
+
+fn RetAs(comptime R: type, comptime t: bool) type {
+    if (R == void or R == bool or R == usize) return R;
+    if (@typeInfo(R) == .@"struct" and compat.fieldCount(@typeInfo(R).@"struct") == 3 and !t) {
+        return @Int(.unsigned, 3 * @bitSizeOf(usize));
+    }
+    return Words;
 }
 
 fn EntryFn(comptime R: type) type {
@@ -283,16 +309,41 @@ pub const pack = toResult;
 pub const unpack = fromWords;
 
 inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
+    return toResultAs(tight, r);
+}
+
+inline fn fromWords(comptime R: type, w: Ret(R)) R {
+    return fromWordsAs(R, tight, w);
+}
+
+inline fn toResultAs(comptime t: bool, r: anytype) RetAs(@TypeOf(r), t) {
     const R = @TypeOf(r);
-    if (Ret(R) == R) return r;
+    const W = RetAs(R, t);
+    if (W == R) return r;
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
             const count = comptime compat.fieldCount(s);
-            if (count > 2) @compileError("dispatch: more than two fields in " ++ @typeName(R));
-            var w: Words = 0;
+            if (count > 3) @compileError("dispatch: more than three fields in " ++ @typeName(R));
+            if (count == 3 and @bitSizeOf(W) < 3 * @bitSizeOf(usize)) {
+                comptime checkTight(s);
+                const tag = toWord(@field(r, compat.fieldName(s, 0)));
+                const first = @field(r, compat.fieldName(s, 1));
+                const second = @field(r, compat.fieldName(s, 2));
+                const high = @as(W, first) << @bitSizeOf(usize);
+                // The first enum value (`none`) says the two words are
+                // equal: the low word is zero, as a two-field result's tag
+                // is, with no shifts on the path every success takes.
+                if (tag == 0) {
+                    std.debug.assert(second == first);
+                    break :blk high;
+                }
+                std.debug.assert(second >> (@bitSizeOf(usize) - 8) == 0);
+                break :blk @as(W, tag | second << 8) | high;
+            }
+            var w: W = 0;
             inline for (0..count) |k| {
                 const name = comptime compat.fieldName(s, k);
-                w |= @as(Words, toWord(@field(r, name))) << (@bitSizeOf(usize) * k);
+                w |= @as(W, toWord(@field(r, name))) << (@bitSizeOf(usize) * k);
             }
             break :blk w;
         },
@@ -300,12 +351,22 @@ inline fn toResult(r: anytype) Ret(@TypeOf(r)) {
     };
 }
 
-inline fn fromWords(comptime R: type, w: Ret(R)) R {
-    if (Ret(R) == R) return w;
+inline fn fromWordsAs(comptime R: type, comptime t: bool, w: RetAs(R, t)) R {
+    const W = RetAs(R, t);
+    if (W == R) return w;
     return switch (@typeInfo(R)) {
         .@"struct" => |s| blk: {
             var r: R = undefined;
             const count = comptime compat.fieldCount(s);
+            if (count == 3 and @bitSizeOf(W) < 3 * @bitSizeOf(usize)) {
+                comptime checkTight(s);
+                const low: usize = @truncate(w);
+                const first: usize = @truncate(w >> @bitSizeOf(usize));
+                @field(r, compat.fieldName(s, 0)) = fromWord(compat.FieldType(s, 0), low & 0xFF);
+                @field(r, compat.fieldName(s, 1)) = first;
+                @field(r, compat.fieldName(s, 2)) = if (low & 0xFF == 0) first else low >> 8;
+                break :blk r;
+            }
             inline for (0..count) |k| {
                 const name = comptime compat.fieldName(s, k);
                 const field_t = comptime compat.FieldType(s, k);
@@ -315,6 +376,16 @@ inline fn fromWords(comptime R: type, w: Ret(R)) R {
         },
         else => fromWord(R, @truncate(w)),
     };
+}
+
+/// A struct that crosses in two words with three fields: an enum of a byte,
+/// then two words that are equal where the enum is its first value, on a
+/// 64-bit target (`tight`).
+fn checkTight(comptime s: std.builtin.Type.Struct) void {
+    const ok = @bitSizeOf(usize) == 64 and
+        @typeInfo(compat.FieldType(s, 0)) == .@"enum" and @bitSizeOf(compat.FieldType(s, 0)) <= 8 and
+        compat.FieldType(s, 1) == usize and compat.FieldType(s, 2) == usize;
+    if (!ok) @compileError("dispatch: three fields cross only as an enum of a byte and two usize, on 64-bit targets");
 }
 
 /// The export for `src`'s function in `isa`'s object, such as
@@ -529,6 +600,7 @@ const testing = std.testing;
 const scalar = @import("scalar.zig");
 const validate = @import("validate.zig");
 const Result = @import("result.zig").Result;
+const ConvertResult = @import("result.zig").ConvertResult;
 
 test "arguments and results cross as words unchanged" {
     const Opts = struct { a: u8, b: bool };
@@ -551,6 +623,18 @@ test "arguments and results cross as words unchanged" {
     try testing.expectEqual(n, argFromWords(i32, w[4..]));
     const r = Result.fail(.surrogate, 1 << (@bitSizeOf(usize) - 24));
     try testing.expectEqual(r, fromWords(Result, toResult(r)));
+    // In three words, and in two where results cross into a tier's object,
+    // whichever this build is, with each field at its largest.
+    const big = std.math.maxInt(usize);
+    const c = ConvertResult.fail(.output_buffer_too_small, big, big - 1);
+    try testing.expectEqual(c, fromWordsAs(ConvertResult, false, toResultAs(false, c)));
+    if (@bitSizeOf(usize) == 64) {
+        const t = ConvertResult.fail(.output_buffer_too_small, big, (1 << 56) - 1);
+        try testing.expectEqual(t, fromWordsAs(ConvertResult, true, toResultAs(true, t)));
+        const ok = ConvertResult.ok(big);
+        try testing.expectEqual(ok, fromWordsAs(ConvertResult, true, toResultAs(true, ok)));
+        try testing.expectEqual(2 * @bitSizeOf(usize), @bitSizeOf(RetAs(ConvertResult, true)));
+    }
     try testing.expectEqual(E.two, fromWords(E, toResult(E.two)));
     try testing.expectEqual(true, fromWords(bool, toResult(true)));
 }

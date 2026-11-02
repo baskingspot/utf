@@ -1,6 +1,8 @@
 //! What a checked operation reports: an error kind and a position. On
 //! success `count` is the number of code units written or validated; on
 //! failure it is the index, in input code units, where the error starts.
+//! A checked conversion also reports what it wrote either way
+//! (`ConvertResult.written`).
 
 /// Why an input was rejected. The UTF kinds and their positions match
 /// simdutf's `error_code` and `result`, so simdutf is a differential oracle.
@@ -43,5 +45,34 @@ pub const Result = struct {
 
     pub fn fail(err: Error, position: usize) Result {
         return .{ .err = err, .count = position };
+    }
+};
+
+/// What a checked conversion reports: `err` and `count` as in `Result`,
+/// simdutf's `result`, and the output code units written, which on failure
+/// are the conversion of the input before `count`, as simdutf's
+/// `full_result` has them in `output_count`. A caller that resumes after an
+/// error, or stops at one, reads both: `count` input units are done and
+/// `written` output units hold them.
+pub const ConvertResult = struct {
+    err: Error,
+    /// The output code units written on success, the error's index in input
+    /// code units on failure.
+    count: usize,
+    /// The output code units written: `count` on success, the conversion of
+    /// the input before the error on failure.
+    written: usize,
+
+    pub fn ok(written: usize) ConvertResult {
+        return .{ .err = .none, .count = written, .written = written };
+    }
+
+    pub fn fail(err: Error, position: usize, written: usize) ConvertResult {
+        return .{ .err = err, .count = position, .written = written };
+    }
+
+    /// The `Result` simdutf's `_with_errors` conversion returns.
+    pub fn result(r: ConvertResult) Result {
+        return .{ .err = r.err, .count = r.count };
     }
 };

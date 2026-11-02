@@ -1,0 +1,5 @@
+utf: ReleaseFast, cpu baseline, dispatch default, abbacf7
+base: c858d53 (c858d53), built as utf
+std: ReleaseFast, cpu baseline; rust: target-cpu=x86-64, run-time detection detect; go: GOAMD64=v1
+buffers: input 0 bytes past a page, output 2048; 50 ms a sample, 10 rounds
+bench-simdutf: simdutf 9.2.1, kernel icelake

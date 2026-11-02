@@ -5,6 +5,7 @@ const result = @import("result.zig");
 
 pub const Error = result.Error;
 pub const Result = result.Result;
+pub const ConvertResult = result.ConvertResult;
 pub const scalar = @import("scalar.zig");
 pub const scalar_convert = @import("scalar_convert.zig");
 pub const convert = @import("convert.zig");
