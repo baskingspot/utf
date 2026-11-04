@@ -5,6 +5,8 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-04
+
 ### Changed
 
 - Builds that pick kernels at run time (`-Ddispatch`, the default for a generic x86-64 CPU) are smaller. On ELF targets they link only the AVX-512, AVX2, and SSE constants of the functions a program calls, where they used to link every AVX-512 kernel's constants; and they link one copy of `bmpToUtf8`'s and `utf8ToBmp`'s shuffle tables, not one per tier. In ReleaseSmall, a program that calls both BMP converters is 38.9 KB instead of 78.2 KB at baseline, and 26.3 KB instead of 52.2 KB for x86-64-v3. One that calls only `convert.utf8ToUtf16le` saves 25 KB. Building such a program now also compiles a small host tool (`build/pools.zig`), which splits each tier object's constants by function.
