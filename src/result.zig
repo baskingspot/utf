@@ -76,3 +76,13 @@ pub const ConvertResult = struct {
         return .{ .err = r.err, .count = r.count };
     }
 };
+
+/// What `convert.bmpToUtf8` and `convert.utf8ToBmp` report: the input code
+/// units they read, which end on a character boundary, and the output code
+/// units they wrote, which hold those characters. They stop where the input
+/// does, where the next character does not fit, and, from UTF-8, at the
+/// first character they do not take; the caller goes on from `read`.
+pub const BmpResult = struct {
+    read: usize,
+    written: usize,
+};

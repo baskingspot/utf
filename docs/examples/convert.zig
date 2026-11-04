@@ -40,3 +40,17 @@ test "the valid form assumes well-formed input and a sized buffer" {
     const written = utf.convert.validUtf8ToUtf16le(source, buffer[0..units]);
     try std.testing.expectEqual(units, written);
 }
+
+test "UTF-16 of the BMP alone converts both ways, and from UTF-8 stops at a four-byte character" {
+    // Code points below U+10000, no surrogates, in the machine's byte order.
+    const units = [_]u16{ 'A', 0xE9, 0x0E01, 'B' };
+    var bytes: [16]u8 = undefined;
+    const to = utf.convert.bmpToUtf8(&units, &bytes);
+    try std.testing.expectEqual(utf.BmpResult{ .read = 4, .written = 7 }, to);
+    try std.testing.expectEqualStrings("AéกB", bytes[0..to.written]);
+
+    var back: [8]u16 = undefined;
+    const from = utf.convert.utf8ToBmp("Aé😀B", &back);
+    try std.testing.expectEqual(utf.BmpResult{ .read = 3, .written = 2 }, from);
+    try std.testing.expectEqualSlices(u16, &.{ 'A', 0xE9 }, back[0..from.written]);
+}

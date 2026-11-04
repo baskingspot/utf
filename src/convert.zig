@@ -34,6 +34,8 @@ const builtin = @import("builtin");
 const Endian = std.builtin.Endian;
 const result = @import("result.zig");
 const ConvertResult = result.ConvertResult;
+const BmpResult = result.BmpResult;
+const bmp = @import("bmp.zig");
 const scalar = @import("scalar_convert.zig");
 const simd = @import("simd.zig");
 const dispatch = @import("dispatch.zig");
@@ -303,6 +305,33 @@ pub fn validLatin1ToUtf32(src: []const u8, dst: []u32) usize {
 }
 fn validLatin1ToUtf32Kernel(src: []const u8, dst: []u32) usize {
     return latin1ToUnits(u32, native, false, src, dst).count;
+}
+
+// The Basic Multilingual Plane: UTF-16 in the machine's byte order whose
+// code units are each a character, U+0000 to U+FFFF without the surrogates,
+// for a caller that stages text through UTF-16, such as a single-byte
+// decoder. Neither direction has a surrogate path, so their kernels are
+// smaller than the general converters' (src/bmp.zig).
+
+/// Converts `src`, UTF-16 in the machine's byte order with no surrogates,
+/// to UTF-8 at the start of `dst`: as many characters as fit whole, all of
+/// them when `dst` has three bytes for each code unit, or the
+/// `length.utf8FromUtf16le` of `src` (`utf8FromUtf16be` on a big-endian
+/// machine). A surrogate, which the caller must not pass, comes out as the
+/// three bytes it would take as a code point, which are not UTF-8.
+pub fn bmpToUtf8(src: []const u16, dst: []u8) BmpResult {
+    return dispatch.call(@src(), bmp.bmpToUtf8, .{ src, dst });
+}
+
+/// Converts UTF-8 at the start of `src` to UTF-16 in the machine's byte
+/// order at the start of `dst` while each character is ASCII or a
+/// well-formed two- or three-byte sequence, so every unit it writes is a
+/// character below U+10000 and not a surrogate. Stops at the first
+/// four-byte sequence, at the first ill-formed one (a sequence the input
+/// cuts off included), and where `dst` is full; `read` is where the caller
+/// goes on, with its own decoding for what stopped it.
+pub fn utf8ToBmp(src: []const u8, dst: []u16) BmpResult {
+    return dispatch.call(@src(), bmp.utf8ToBmp, .{ src, dst });
 }
 
 // Vector helpers.

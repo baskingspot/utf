@@ -208,6 +208,26 @@ bytes as `[]u16` and pick the name for the order they are in. UTF-32 is native
 order, and a big-endian UTF-32 stream needs its values swapped before it gets
 here.
 
+## Text staged through UTF-16
+
+`bmpToUtf8` and `utf8ToBmp` are for UTF-16 that holds only characters below
+U+10000, with no surrogates, in the machine's byte order: a single-byte
+decoder that looks bytes up as UTF-16 and then wants UTF-8, or an encoder that
+reads UTF-8 into UTF-16 to look characters up. With no surrogate pairs, their
+kernels are smaller than the general converters'.
+
+Both return a `BmpResult`: the input code units `read` and the output code
+units `written`. `bmpToUtf8` writes as many whole characters as fit, and
+trusts the caller that there is no surrogate. `utf8ToBmp` stops at the first
+four-byte sequence, at the first ill-formed one, and where the output is full,
+so the caller decodes what stopped it its own way and goes on from `read`:
+
+```zig
+var units: [8]u16 = undefined;
+const result = utf.convert.utf8ToBmp("Aé😀B", &units);
+// result.read is 3 and result.written is 2: the emoji is four bytes.
+```
+
 # Counting and sizing
 
 `length` answers two questions without writing anything: how many code units a

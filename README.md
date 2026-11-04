@@ -31,7 +31,7 @@ Releases are tagged, from v0.1.0. Before 1.0 a minor release can change the API;
 ## What is in it
 
 - [Validating text](https://baskingspot.dev/utf/#validating-text): `validate.utf8`, `validate.ascii`, `validate.utf16le`, `validate.utf16be`, and `validate.utf32` return a `bool`; the `WithErrors` forms return a `Result` with the error kind and its position.
-- [Transcoding](https://baskingspot.dev/utf/#transcoding): `convert` has a checked form that validates as it writes and a `valid` form for input already known to be well-formed, for every pair of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1.
+- [Transcoding](https://baskingspot.dev/utf/#transcoding): `convert` has a checked form that validates as it writes and a `valid` form for input already known to be well-formed, for every pair of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1; `bmpToUtf8` and `utf8ToBmp` convert UTF-16 that holds only characters below U+10000, for text staged through UTF-16.
 - [Counting and sizing](https://baskingspot.dev/utf/#counting-and-sizing): `length` gives the output size each conversion needs and the code points in an input, without writing anything.
 - [Base64](https://baskingspot.dev/utf/#base64): `base64.encode` and `decode` with the standard or URL alphabet, optional padding, three last-chunk rules, and ASCII whitespace skipped on decode.
 
