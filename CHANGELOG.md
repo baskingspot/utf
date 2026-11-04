@@ -5,6 +5,8 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
 ### Added
 
 - `convert.bmpToUtf8` and `convert.utf8ToBmp`, which return the new `BmpResult` (`read`, `written`): conversion between UTF-8 and UTF-16 in the machine's byte order that holds only characters below U+10000, for text staged through UTF-16 such as a single-byte decoder's. Their kernels (AVX-512 VBMI2, AVX2, SSSE3, NEON, and a store a character elsewhere) are smaller than the general converters' and are picked at run time in generic x86-64 builds. `bmpToUtf8` writes as many whole characters as fit; `utf8ToBmp` stops at the first four-byte or ill-formed sequence, or where the output is full.
