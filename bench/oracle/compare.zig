@@ -64,6 +64,13 @@ const Mode = enum {
     /// Only on inputs ours accepts: simdutf must accept too, with the same
     /// output. For std's base64 decoder, which is stricter than simdutf's.
     ours_accepts,
+    /// The BMP conversions, which report what they read and wrote. From
+    /// UTF-8: where it stops, the first error simdutf reports or the first
+    /// four-byte character before it, and the output up to there, which is
+    /// simdutf's when that is the whole input and std's conversion of the
+    /// part read otherwise. From UTF-16: only on input with no surrogates,
+    /// which it reads whole, with simdutf's output.
+    bmp,
 };
 
 /// What one of our functions returned for one input.
@@ -190,6 +197,9 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
                 const out_bytes = if (kept) out[0 .. r.written * @sizeOf(Unit)] else null;
                 return .{ .result = r.result(), .valid = ok, .out = out_bytes };
             }
+            if (@TypeOf(r) == utf.BmpResult) {
+                return .{ .result = .ok(r.read), .valid = true, .out = out[0 .. r.written * @sizeOf(Unit)] };
+            }
             const res: utf.Result = if (@TypeOf(r) == usize) .ok(r) else r;
             const ok = res.err == .none;
             return .{ .result = res, .valid = ok, .out = if (ok) out[0 .. res.count * @sizeOf(Unit)] else null };
@@ -202,6 +212,7 @@ fn check(comptime ns: []const u8, comptime name: []const u8, op: Oracle.Op, comp
         .mode = switch (@typeInfo(@TypeOf(f)).@"fn".return_type.?) {
             bool => .validity,
             usize => if (params.len < 3) .simdutf_accepts else .checked,
+            utf.BmpResult => .bmp,
             else => .checked,
         },
         .swapped = extra.swapped,
@@ -235,6 +246,7 @@ const utf8_defs = [_]Def{
     check("length", "utf32FromUtf8", .utf8_to_utf32, .{}),
     check("length", "countUtf8", .utf8_to_utf32, .{}),
     check("length", "latin1FromUtf8", .utf8_to_latin1, .{}),
+    check("convert", "utf8ToBmp", .utf8_to_utf16le, .{}),
     .{
         .name = "std.unicode.utf8ToUtf16Le",
         .op = .utf8_to_utf16le,
@@ -282,6 +294,7 @@ fn utf16Defs(comptime e: []const u8) [14]Def {
 
 const utf16le_defs = utf16Defs("le") ++ [_]Def{
     check("convert", "utf16leToUtf8", .utf16le_to_utf8_details, .{ .details = true }),
+    check("convert", "bmpToUtf8", .utf16le_to_utf8, .{}),
     .{
         .name = "std.unicode.utf16LeToUtf8",
         .op = .utf16le_to_utf8,
@@ -372,17 +385,20 @@ const Stats = struct {
 const Verdict = enum { agree, disagree, skipped };
 
 /// Holds what `def`'s function returned for `in` against simdutf's answer.
-/// `scratch` holds the expected output of a byte swap.
+/// `scratch`, twice the input's size, holds the expected output of a byte
+/// swap or of a BMP conversion.
 fn judge(def: Def, in: []const u8, resp: Oracle.Response, got: Got, scratch: []u8) Verdict {
+    if (def.mode == .bmp) return judgeBmp(def, in, resp, got, scratch);
     switch (def.mode) {
         .simdutf_accepts => if (resp.err != .none) return .skipped,
         .ours_accepts => if (!got.valid) return .skipped,
-        .checked, .validity => {},
+        .checked, .validity, .bmp => {},
     }
     var ok = switch (def.mode) {
         .checked, .simdutf_accepts => Oracle.same(resp, got.result.?),
         .validity => got.valid == (resp.err == .none),
         .ours_accepts => resp.err == .none,
+        .bmp => unreachable,
     };
     if (ok and def.details) return if (mem.eql(u8, got.out orelse "", resp.output)) .agree else .disagree;
     if (ok and resp.err == .none and got.valid) {
@@ -392,6 +408,29 @@ fn judge(def: Def, in: []const u8, resp: Oracle.Response, got: Got, scratch: []u
         }
     }
     return if (ok) .agree else .disagree;
+}
+
+/// `judge` for the BMP conversions (`Mode.bmp`).
+fn judgeBmp(def: Def, in: []const u8, resp: Oracle.Response, got: Got, scratch: []u8) Verdict {
+    const read = got.result.?.count;
+    const out = got.out.?;
+    if (def.op != .utf8_to_utf16le) {
+        // UTF-16LE: no surrogate, so simdutf accepts and the whole input
+        // converts, or it is left out.
+        for (0..in.len / 2) |i| {
+            const u = mem.readInt(u16, in[2 * i ..][0..2], .little);
+            if (u >= 0xD800 and u <= 0xDFFF) return .skipped;
+        }
+        const ok = resp.err == .none and read == in.len / 2 and mem.eql(u8, out, resp.output);
+        return if (ok) .agree else .disagree;
+    }
+    var stop = if (resp.err == .none) in.len else resp.count;
+    if (mem.findAny(u8, in[0..stop], &.{ 0xF0, 0xF1, 0xF2, 0xF3, 0xF4 })) |i| stop = i;
+    if (read != stop) return .disagree;
+    if (stop == in.len and resp.err == .none) return if (mem.eql(u8, out, resp.output)) .agree else .disagree;
+    const units = cast([]u16, @as([]align(2) u8, @alignCast(scratch[0 .. 2 * stop])));
+    const n = std.unicode.utf8ToUtf16Le(units, in[0..stop]) catch return .disagree;
+    return if (mem.eql(u8, out, scratch[0 .. 2 * n])) .agree else .disagree;
 }
 
 /// `in` with the two bytes of each UTF-16 code unit swapped, in `buf`.
@@ -448,7 +487,7 @@ const Runner = struct {
         const a = r.arena.allocator();
         const out = try a.alignedAlloc(u8, .@"16", 4 * in.len + 64);
         const got = def.run.?(in, out);
-        return .{ judge(def, in, resp, got, try a.alloc(u8, in.len)), got };
+        return .{ judge(def, in, resp, got, try a.alignedAlloc(u8, .@"16", 2 * in.len)), got };
     }
 
     fn flush(r: *Runner) !void {
@@ -563,7 +602,8 @@ const Runner = struct {
             defer r.oracle.free(responses);
             const found = for (candidates.items, responses) |c, resp| {
                 const out = try a.alignedAlloc(u8, .@"16", 4 * c.len + 64);
-                if (judge(def, c, resp, def.run.?(c, out), try a.alloc(u8, c.len)) == .disagree) break c;
+                const scratch = try a.alignedAlloc(u8, .@"16", 2 * c.len);
+                if (judge(def, c, resp, def.run.?(c, out), scratch) == .disagree) break c;
             } else null;
             if (found) |c| {
                 const keep = try r.arena.allocator().alignedAlloc(u8, .@"16", c.len);
@@ -596,8 +636,13 @@ const Runner = struct {
             try w.print("{s:<8} {s:<40} {d:>9} compared, {d} mismatches", .{
                 kind, def.name, st.compared, st.mismatches,
             });
-            if (st.skipped != 0) try w.print(", {d} not compared: {s} rejected them", .{
-                st.skipped, if (def.mode == .ours_accepts) "ours" else "simdutf",
+            if (st.skipped != 0) try w.print(", {d} not compared: {s}", .{
+                st.skipped,
+                switch (def.mode) {
+                    .ours_accepts => "ours rejected them",
+                    .bmp => "they hold surrogates",
+                    else => "simdutf rejected them",
+                },
             });
             try w.writeAll("\n         simdutf said:");
             for (st.kinds, 0..) |count, i| {
