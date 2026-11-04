@@ -1,0 +1,8 @@
+validate-utf8 ascii-256
+utf8-to-utf16le hindi-16
+utf32-to-utf8 ascii-16
+utf32-to-utf8 ascii-64
+utf32-to-utf8 korean
+latin1-to-utf8 ascii-16
+latin1-to-utf8 ascii-256
+latin1-to-utf8 latin1-65536

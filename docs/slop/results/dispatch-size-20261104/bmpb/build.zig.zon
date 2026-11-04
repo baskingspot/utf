@@ -1,0 +1,10 @@
+.{
+    .name = .bmpb,
+    .version = "0.0.0",
+    .fingerprint = 0x7ce7c165c714c27c,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .utf = .{ .path = "../../home/user/workspace/repo" },
+    },
+    .paths = .{ "build.zig", "build.zig.zon", "bench.zig", "size.zig", "enc_codec.zig" },
+}

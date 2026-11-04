@@ -1,0 +1,17 @@
+                         │   before    │               after                │
+                         │   sec/op    │   sec/op     vs base               │
+Utf8ToUtf16le/hindi-16     13.20n ± 4%   13.80n ± 4%  +4.59% (p=0.000 n=20)
+ValidateUtf8/korean        3.720µ ± 4%   3.699µ ± 5%       ~ (p=0.758 n=20)
+Latin1ToUtf8/latin1-4096   423.1n ± 3%   432.7n ± 4%  +2.25% (p=0.021 n=20)
+Utf8ToUtf16le/chinese-16   10.90n ± 5%   10.93n ± 5%       ~ (p=0.533 n=20)
+Utf8ToUtf16le/russian-16   13.54n ± 4%   13.47n ± 5%       ~ (p=0.723 n=20)
+geomean                    78.93n        79.86n       +1.19%
+
+                         │    before    │                after                │
+                         │     B/s      │     B/s       vs base               │
+Utf8ToUtf16le/hindi-16     1.129Gi ± 4%   1.080Gi ± 4%  -4.38% (p=0.000 n=20)
+ValidateUtf8/korean        16.68Gi ± 4%   16.77Gi ± 4%       ~ (p=0.758 n=20)
+Latin1ToUtf8/latin1-4096   9.015Gi ± 3%   8.818Gi ± 4%  -2.19% (p=0.021 n=20)
+Utf8ToUtf16le/chinese-16   1.368Gi ± 5%   1.364Gi ± 5%       ~ (p=0.597 n=20)
+Utf8ToUtf16le/russian-16   1.101Gi ± 4%   1.107Gi ± 5%       ~ (p=0.758 n=20)
+geomean                    3.031Gi        2.995Gi       -1.17%

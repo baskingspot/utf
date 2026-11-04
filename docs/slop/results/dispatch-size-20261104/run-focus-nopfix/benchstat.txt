@@ -1,0 +1,23 @@
+                          │   before    │               after                │
+                          │   sec/op    │   sec/op     vs base               │
+ValidateUtf8/ascii-256      5.775n ± 1%   5.840n ± 1%       ~ (p=0.082 n=20)
+Utf8ToUtf16le/hindi-16      13.06n ± 3%   13.66n ± 1%  +4.59% (p=0.000 n=20)
+Utf32ToUtf8/ascii-16        6.000n ± 1%   6.270n ± 1%  +4.50% (p=0.000 n=20)
+Utf32ToUtf8/ascii-64        8.490n ± 0%   8.750n ± 0%  +3.06% (p=0.000 n=20)
+Utf32ToUtf8/korean          9.426µ ± 3%   9.608µ ± 3%       ~ (p=0.301 n=20)
+Latin1ToUtf8/ascii-16       5.250n ± 1%   5.505n ± 0%  +4.86% (p=0.000 n=20)
+Latin1ToUtf8/ascii-256      7.745n ± 1%   7.890n ± 2%  +1.87% (p=0.000 n=20)
+Latin1ToUtf8/latin1-65536   6.672µ ± 1%   6.767µ ± 0%  +1.42% (p=0.013 n=20)
+geomean                     42.08n        43.30n       +2.91%
+
+                          │    before    │                after                │
+                          │     B/s      │     B/s       vs base               │
+ValidateUtf8/ascii-256      41.28Gi ± 1%   40.84Gi ± 1%       ~ (p=0.098 n=20)
+Utf8ToUtf16le/hindi-16      1.141Gi ± 3%   1.091Gi ± 1%  -4.39% (p=0.000 n=20)
+Utf32ToUtf8/ascii-16        9.935Gi ± 0%   9.508Gi ± 1%  -4.30% (p=0.000 n=20)
+Utf32ToUtf8/ascii-64        28.09Gi ± 0%   27.26Gi ± 0%  -2.95% (p=0.000 n=20)
+Utf32ToUtf8/korean          10.73Gi ± 3%   10.52Gi ± 3%       ~ (p=0.301 n=20)
+Latin1ToUtf8/ascii-16       2.837Gi ± 1%   2.707Gi ± 0%  -4.58% (p=0.000 n=20)
+Latin1ToUtf8/ascii-256      30.78Gi ± 1%   30.21Gi ± 2%  -1.86% (p=0.000 n=20)
+Latin1ToUtf8/latin1-65536   9.148Gi ± 1%   9.019Gi ± 0%  -1.40% (p=0.013 n=20)
+geomean                     10.15Gi        9.864Gi       -2.82%

@@ -1,0 +1,6 @@
+latin1-to-utf8 ascii-256
+latin1-to-utf8 ascii-4096
+utf8-to-latin1 latin1-16
+utf8-to-latin1 ascii-256
+validate-utf8 ascii-64
+utf8-to-utf16le hindi-16

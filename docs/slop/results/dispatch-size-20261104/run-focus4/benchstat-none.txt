@@ -1,0 +1,19 @@
+                        │    before    │              aligned               │              noalign               │
+                        │    sec/op    │   sec/op     vs base               │   sec/op     vs base               │
+Latin1ToUtf8/ascii-256    7.350n ±  3%   7.225n ± 3%       ~ (p=0.164 n=12)   7.280n ± 2%       ~ (p=0.417 n=12)
+Latin1ToUtf8/ascii-4096   33.91n ±  5%   35.47n ± 5%  +4.60% (p=0.028 n=12)   33.76n ± 7%       ~ (p=0.580 n=12)
+Utf8ToLatin1/latin1-16    6.170n ±  4%   6.135n ± 2%       ~ (p=0.284 n=12)   6.120n ± 2%       ~ (p=0.369 n=12)
+Utf8ToLatin1/ascii-256    8.065n ±  3%   8.800n ± 3%  +9.11% (p=0.000 n=12)   8.085n ± 1%       ~ (p=0.701 n=12)
+ValidateUtf8/ascii-64     4.055n ± 11%   4.435n ± 1%  +9.37% (p=0.032 n=12)   4.020n ± 5%       ~ (p=0.202 n=12)
+Utf8ToUtf16le/hindi-16    13.35n ±  6%   13.53n ± 5%       ~ (p=0.486 n=12)   13.38n ± 1%       ~ (p=0.966 n=12)
+geomean                   9.358n         9.694n       +3.60%                  9.316n       -0.44%
+
+                        │    before     │               aligned               │               noalign               │
+                        │      B/s      │     B/s       vs base               │     B/s       vs base               │
+Latin1ToUtf8/ascii-256    32.44Gi ±  3%   33.01Gi ± 2%       ~ (p=0.178 n=12)   32.77Gi ± 2%       ~ (p=0.443 n=12)
+Latin1ToUtf8/ascii-4096   112.5Gi ±  5%   107.6Gi ± 4%  -4.39% (p=0.028 n=12)   113.0Gi ± 6%       ~ (p=0.630 n=12)
+Utf8ToLatin1/latin1-16    2.870Gi ±  3%   2.884Gi ± 2%       ~ (p=0.347 n=12)   2.891Gi ± 2%       ~ (p=0.347 n=12)
+Utf8ToLatin1/ascii-256    29.56Gi ±  3%   27.09Gi ± 3%  -8.37% (p=0.000 n=12)   29.49Gi ± 1%       ~ (p=0.671 n=12)
+ValidateUtf8/ascii-64     14.71Gi ± 10%   13.44Gi ± 1%  -8.65% (p=0.033 n=12)   14.82Gi ± 5%       ~ (p=0.219 n=12)
+Utf8ToUtf16le/hindi-16    1.116Gi ±  6%   1.102Gi ± 5%       ~ (p=0.551 n=12)   1.114Gi ± 1%       ~ (p=0.932 n=12)
+geomean                   13.11Gi         12.65Gi       -3.49%                  13.17Gi       +0.41%

@@ -1,0 +1,5 @@
+utf8-to-utf16le hindi-16
+validate-utf8 korean
+latin1-to-utf8 latin1-4096
+utf8-to-utf16le chinese-16
+utf8-to-utf16le russian-16

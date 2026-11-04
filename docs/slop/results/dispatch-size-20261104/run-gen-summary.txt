@@ -1,0 +1,225 @@
+== after-bd-none / before-bd-none: ratio of times, before-bd-none over after-bd-none (above 1: after-bd-none faster)
+  Latin1ToUtf8 corpus                 0.985  min  0.985  max  0.985  rows 1
+  Latin1ToUtf8                        0.996  min  0.973  max  1.021  rows 11
+  Latin1ToUtf8 size 16                1.001  min  0.998  max  1.005  rows 2
+  Latin1ToUtf8 size 64                0.984  min  0.973  max  0.996  rows 2
+  Latin1ToUtf8 size 256               1.007  min  0.994  max  1.021  rows 2
+  Latin1ToUtf8 size 4096              0.997  min  0.994  max  1.000  rows 2
+  Latin1ToUtf8 size 65536             0.997  min  0.996  max  0.999  rows 2
+  Utf16leToUtf8 corpus                0.999  min  0.986  max  1.024  rows 9
+  Utf16leToUtf8                       0.998  min  0.979  max  1.024  rows 14
+  Utf16leToUtf8 size 16               1.004  min  1.004  max  1.004  rows 1
+  Utf16leToUtf8 size 64               0.999  min  0.999  max  0.999  rows 1
+  Utf16leToUtf8 size 256              0.979  min  0.979  max  0.979  rows 1
+  Utf16leToUtf8 size 4096             1.005  min  1.005  max  1.005  rows 1
+  Utf16leToUtf8 size 65536            0.991  min  0.991  max  0.991  rows 1
+  Utf32ToUtf8 corpus                  1.002  min  0.995  max  1.010  rows 9
+  Utf32ToUtf8                         1.001  min  0.994  max  1.010  rows 14
+  Utf32ToUtf8 size 16                 0.999  min  0.999  max  0.999  rows 1
+  Utf32ToUtf8 size 64                 1.002  min  1.002  max  1.002  rows 1
+  Utf32ToUtf8 size 256                0.994  min  0.994  max  0.994  rows 1
+  Utf32ToUtf8 size 4096               0.996  min  0.996  max  0.996  rows 1
+  Utf32ToUtf8 size 65536              0.996  min  0.996  max  0.996  rows 1
+  Utf8ToLatin1 corpus                 0.993  min  0.993  max  0.993  rows 1
+  Utf8ToLatin1                        0.996  min  0.977  max  1.015  rows 11
+  Utf8ToLatin1 size 16                1.006  min  0.998  max  1.015  rows 2
+  Utf8ToLatin1 size 64                0.996  min  0.994  max  0.999  rows 2
+  Utf8ToLatin1 size 256               0.999  min  0.996  max  1.002  rows 2
+  Utf8ToLatin1 size 4096              0.993  min  0.985  max  1.001  rows 2
+  Utf8ToLatin1 size 65536             0.990  min  0.977  max  1.003  rows 2
+  Utf8ToUtf16le corpus                1.002  min  0.994  max  1.013  rows 9
+  Utf8ToUtf16le                       0.999  min  0.989  max  1.013  rows 21
+  Utf8ToUtf16le size 16               0.995  min  0.989  max  1.002  rows 8
+  Utf8ToUtf16le size 64               0.997  min  0.997  max  0.997  rows 1
+  Utf8ToUtf16le size 256              0.995  min  0.995  max  0.995  rows 1
+  Utf8ToUtf16le size 4096             1.013  min  1.013  max  1.013  rows 1
+  Utf8ToUtf16le size 65536            0.995  min  0.995  max  0.995  rows 1
+  ValidateUtf8 corpus                 1.001  min  0.978  max  1.031  rows 9
+  ValidateUtf8                        0.999  min  0.976  max  1.031  rows 21
+  ValidateUtf8 size 16                0.999  min  0.991  max  1.006  rows 8
+  ValidateUtf8 size 64                0.999  min  0.999  max  0.999  rows 1
+  ValidateUtf8 size 256               1.000  min  1.000  max  1.000  rows 1
+  ValidateUtf8 size 4096              0.976  min  0.976  max  0.976  rows 1
+  ValidateUtf8 size 65536             1.005  min  1.005  max  1.005  rows 1
+  all                                 0.998  min  0.973  max  1.031  rows 92
+  lowest rows: Latin1ToUtf8/latin1-64 0.973, ValidateUtf8/ascii-4096 0.976, Utf8ToLatin1/latin1-65536 0.977
+== after-bd-avx2 / before-bd-avx2: ratio of times, before-bd-avx2 over after-bd-avx2 (above 1: after-bd-avx2 faster)
+  Latin1ToUtf8 corpus                 0.994  min  0.994  max  0.994  rows 1
+  Latin1ToUtf8                        0.995  min  0.984  max  1.006  rows 11
+  Latin1ToUtf8 size 16                0.996  min  0.995  max  0.996  rows 2
+  Latin1ToUtf8 size 64                1.003  min  1.003  max  1.003  rows 2
+  Latin1ToUtf8 size 256               1.003  min  1.001  max  1.006  rows 2
+  Latin1ToUtf8 size 4096              0.987  min  0.984  max  0.990  rows 2
+  Latin1ToUtf8 size 65536             0.989  min  0.988  max  0.991  rows 2
+  Utf16leToUtf8 corpus                0.995  min  0.979  max  1.007  rows 9
+  Utf16leToUtf8                       0.997  min  0.979  max  1.011  rows 14
+  Utf16leToUtf8 size 16               0.995  min  0.995  max  0.995  rows 1
+  Utf16leToUtf8 size 64               1.002  min  1.002  max  1.002  rows 1
+  Utf16leToUtf8 size 256              1.000  min  1.000  max  1.000  rows 1
+  Utf16leToUtf8 size 4096             1.011  min  1.011  max  1.011  rows 1
+  Utf16leToUtf8 size 65536            0.987  min  0.987  max  0.987  rows 1
+  Utf32ToUtf8 corpus                  1.002  min  0.953  max  1.053  rows 9
+  Utf32ToUtf8                         1.001  min  0.953  max  1.053  rows 14
+  Utf32ToUtf8 size 16                 1.003  min  1.003  max  1.003  rows 1
+  Utf32ToUtf8 size 64                 1.004  min  1.004  max  1.004  rows 1
+  Utf32ToUtf8 size 256                1.002  min  1.002  max  1.002  rows 1
+  Utf32ToUtf8 size 4096               0.987  min  0.987  max  0.987  rows 1
+  Utf32ToUtf8 size 65536              1.003  min  1.003  max  1.003  rows 1
+  Utf8ToLatin1 corpus                 1.001  min  1.001  max  1.001  rows 1
+  Utf8ToLatin1                        1.000  min  0.991  max  1.007  rows 11
+  Utf8ToLatin1 size 16                1.004  min  1.004  max  1.005  rows 2
+  Utf8ToLatin1 size 64                0.997  min  0.991  max  1.003  rows 2
+  Utf8ToLatin1 size 256               0.999  min  0.998  max  0.999  rows 2
+  Utf8ToLatin1 size 4096              1.002  min  0.997  max  1.007  rows 2
+  Utf8ToLatin1 size 65536             0.998  min  0.996  max  1.001  rows 2
+  Utf8ToUtf16le corpus                0.998  min  0.990  max  1.005  rows 9
+  Utf8ToUtf16le                       0.995  min  0.956  max  1.006  rows 21
+  Utf8ToUtf16le size 16               0.990  min  0.956  max  1.006  rows 8
+  Utf8ToUtf16le size 64               0.996  min  0.996  max  0.996  rows 1
+  Utf8ToUtf16le size 256              1.002  min  1.002  max  1.002  rows 1
+  Utf8ToUtf16le size 4096             1.003  min  1.003  max  1.003  rows 1
+  Utf8ToUtf16le size 65536            0.999  min  0.999  max  0.999  rows 1
+  ValidateUtf8 corpus                 1.004  min  0.979  max  1.024  rows 9
+  ValidateUtf8                        1.000  min  0.979  max  1.024  rows 21
+  ValidateUtf8 size 16                0.998  min  0.989  max  1.005  rows 8
+  ValidateUtf8 size 64                0.994  min  0.994  max  0.994  rows 1
+  ValidateUtf8 size 256               0.991  min  0.991  max  0.991  rows 1
+  ValidateUtf8 size 4096              1.004  min  1.004  max  1.004  rows 1
+  ValidateUtf8 size 65536             0.994  min  0.994  max  0.994  rows 1
+  all                                 0.998  min  0.953  max  1.053  rows 92
+  lowest rows: Utf32ToUtf8/korean 0.953, Utf8ToUtf16le/hindi-16 0.956, Utf16leToUtf8/japanese 0.979
+== after-bd-sse / before-bd-sse: ratio of times, before-bd-sse over after-bd-sse (above 1: after-bd-sse faster)
+  Latin1ToUtf8 corpus                 0.994  min  0.994  max  0.994  rows 1
+  Latin1ToUtf8                        1.001  min  0.992  max  1.015  rows 11
+  Latin1ToUtf8 size 16                0.993  min  0.992  max  0.993  rows 2
+  Latin1ToUtf8 size 64                1.000  min  0.997  max  1.002  rows 2
+  Latin1ToUtf8 size 256               1.002  min  1.000  max  1.004  rows 2
+  Latin1ToUtf8 size 4096              1.007  min  0.999  max  1.015  rows 2
+  Latin1ToUtf8 size 65536             1.008  min  1.006  max  1.011  rows 2
+  Utf16leToUtf8 corpus                1.023  min  0.989  max  1.117  rows 9
+  Utf16leToUtf8                       1.014  min  0.988  max  1.117  rows 14
+  Utf16leToUtf8 size 16               1.005  min  1.005  max  1.005  rows 1
+  Utf16leToUtf8 size 64               1.002  min  1.002  max  1.002  rows 1
+  Utf16leToUtf8 size 256              0.988  min  0.988  max  0.988  rows 1
+  Utf16leToUtf8 size 4096             0.999  min  0.999  max  0.999  rows 1
+  Utf16leToUtf8 size 65536            0.999  min  0.999  max  0.999  rows 1
+  Utf32ToUtf8 corpus                  1.011  min  0.960  max  1.034  rows 9
+  Utf32ToUtf8                         1.007  min  0.960  max  1.034  rows 14
+  Utf32ToUtf8 size 16                 0.998  min  0.998  max  0.998  rows 1
+  Utf32ToUtf8 size 64                 0.995  min  0.995  max  0.995  rows 1
+  Utf32ToUtf8 size 256                1.001  min  1.001  max  1.001  rows 1
+  Utf32ToUtf8 size 4096               0.993  min  0.993  max  0.993  rows 1
+  Utf32ToUtf8 size 65536              1.006  min  1.006  max  1.006  rows 1
+  Utf8ToLatin1 corpus                 0.999  min  0.999  max  0.999  rows 1
+  Utf8ToLatin1                        0.998  min  0.985  max  1.010  rows 11
+  Utf8ToLatin1 size 16                0.995  min  0.989  max  1.000  rows 2
+  Utf8ToLatin1 size 64                0.999  min  0.998  max  0.999  rows 2
+  Utf8ToLatin1 size 256               0.991  min  0.985  max  0.997  rows 2
+  Utf8ToLatin1 size 4096              1.005  min  1.000  max  1.010  rows 2
+  Utf8ToLatin1 size 65536             1.002  min  0.998  max  1.007  rows 2
+  Utf8ToUtf16le corpus                0.996  min  0.988  max  1.002  rows 9
+  Utf8ToUtf16le                       0.998  min  0.985  max  1.011  rows 21
+  Utf8ToUtf16le size 16               0.999  min  0.985  max  1.007  rows 8
+  Utf8ToUtf16le size 64               1.000  min  1.000  max  1.000  rows 1
+  Utf8ToUtf16le size 256              1.005  min  1.005  max  1.005  rows 1
+  Utf8ToUtf16le size 4096             1.011  min  1.011  max  1.011  rows 1
+  Utf8ToUtf16le size 65536            0.988  min  0.988  max  0.988  rows 1
+  ValidateUtf8 corpus                 0.995  min  0.976  max  1.007  rows 9
+  ValidateUtf8                        0.995  min  0.970  max  1.007  rows 21
+  ValidateUtf8 size 16                0.993  min  0.970  max  1.002  rows 8
+  ValidateUtf8 size 64                0.993  min  0.993  max  0.993  rows 1
+  ValidateUtf8 size 256               0.995  min  0.995  max  0.995  rows 1
+  ValidateUtf8 size 4096              1.000  min  1.000  max  1.000  rows 1
+  ValidateUtf8 size 65536             1.005  min  1.005  max  1.005  rows 1
+  all                                 1.002  min  0.960  max  1.117  rows 92
+  lowest rows: Utf32ToUtf8/japanese 0.960, ValidateUtf8/ascii-16 0.970, ValidateUtf8/korean 0.976
+== after-v3d / before-v3d: ratio of times, before-v3d over after-v3d (above 1: after-v3d faster)
+  Latin1ToUtf8 corpus                 1.010  min  1.010  max  1.010  rows 1
+  Latin1ToUtf8                        1.000  min  0.978  max  1.023  rows 11
+  Latin1ToUtf8 size 16                0.986  min  0.983  max  0.989  rows 2
+  Latin1ToUtf8 size 64                0.998  min  0.993  max  1.004  rows 2
+  Latin1ToUtf8 size 256               1.012  min  1.001  max  1.023  rows 2
+  Latin1ToUtf8 size 4096              1.007  min  1.005  max  1.008  rows 2
+  Latin1ToUtf8 size 65536             0.994  min  0.978  max  1.010  rows 2
+  Utf16leToUtf8 corpus                0.999  min  0.980  max  1.019  rows 9
+  Utf16leToUtf8                       0.998  min  0.977  max  1.019  rows 14
+  Utf16leToUtf8 size 16               1.004  min  1.004  max  1.004  rows 1
+  Utf16leToUtf8 size 64               0.977  min  0.977  max  0.977  rows 1
+  Utf16leToUtf8 size 256              1.000  min  1.000  max  1.000  rows 1
+  Utf16leToUtf8 size 4096             1.006  min  1.006  max  1.006  rows 1
+  Utf16leToUtf8 size 65536            0.991  min  0.991  max  0.991  rows 1
+  Utf32ToUtf8 corpus                  1.004  min  0.991  max  1.010  rows 9
+  Utf32ToUtf8                         1.003  min  0.986  max  1.024  rows 14
+  Utf32ToUtf8 size 16                 1.024  min  1.024  max  1.024  rows 1
+  Utf32ToUtf8 size 64                 0.997  min  0.997  max  0.997  rows 1
+  Utf32ToUtf8 size 256                0.999  min  0.999  max  0.999  rows 1
+  Utf32ToUtf8 size 4096               0.986  min  0.986  max  0.986  rows 1
+  Utf32ToUtf8 size 65536              0.999  min  0.999  max  0.999  rows 1
+  Utf8ToLatin1 corpus                 1.001  min  1.001  max  1.001  rows 1
+  Utf8ToLatin1                        1.004  min  0.989  max  1.026  rows 11
+  Utf8ToLatin1 size 16                1.003  min  0.994  max  1.013  rows 2
+  Utf8ToLatin1 size 64                1.001  min  1.001  max  1.002  rows 2
+  Utf8ToLatin1 size 256               1.006  min  0.999  max  1.012  rows 2
+  Utf8ToLatin1 size 4096              1.018  min  1.010  max  1.026  rows 2
+  Utf8ToLatin1 size 65536             0.994  min  0.989  max  1.000  rows 2
+  Utf8ToUtf16le corpus                1.001  min  0.992  max  1.011  rows 9
+  Utf8ToUtf16le                       0.999  min  0.982  max  1.011  rows 21
+  Utf8ToUtf16le size 16               0.998  min  0.993  max  1.006  rows 8
+  Utf8ToUtf16le size 64               0.995  min  0.995  max  0.995  rows 1
+  Utf8ToUtf16le size 256              1.009  min  1.009  max  1.009  rows 1
+  Utf8ToUtf16le size 4096             0.982  min  0.982  max  0.982  rows 1
+  Utf8ToUtf16le size 65536            1.000  min  1.000  max  1.000  rows 1
+  ValidateUtf8 corpus                 0.997  min  0.989  max  1.004  rows 9
+  ValidateUtf8                        1.000  min  0.989  max  1.019  rows 21
+  ValidateUtf8 size 16                1.005  min  0.993  max  1.019  rows 8
+  ValidateUtf8 size 64                1.006  min  1.006  max  1.006  rows 1
+  ValidateUtf8 size 256               0.991  min  0.991  max  0.991  rows 1
+  ValidateUtf8 size 4096              1.001  min  1.001  max  1.001  rows 1
+  ValidateUtf8 size 65536             1.000  min  1.000  max  1.000  rows 1
+  all                                 1.001  min  0.977  max  1.026  rows 92
+  lowest rows: Utf16leToUtf8/ascii-64 0.977, Latin1ToUtf8/latin1-65536 0.978, Utf16leToUtf8/arabic 0.980
+== after-nat / before-nat: ratio of times, before-nat over after-nat (above 1: after-nat faster)
+  Latin1ToUtf8 corpus                 1.013  min  1.013  max  1.013  rows 1
+  Latin1ToUtf8                        1.012  min  0.995  max  1.059  rows 11
+  Latin1ToUtf8 size 16                1.002  min  0.995  max  1.010  rows 2
+  Latin1ToUtf8 size 64                1.049  min  1.038  max  1.059  rows 2
+  Latin1ToUtf8 size 256               1.000  min  0.998  max  1.001  rows 2
+  Latin1ToUtf8 size 4096              1.005  min  1.002  max  1.008  rows 2
+  Latin1ToUtf8 size 65536             1.006  min  1.000  max  1.011  rows 2
+  Utf16leToUtf8 corpus                1.002  min  0.977  max  1.028  rows 9
+  Utf16leToUtf8                       1.001  min  0.977  max  1.028  rows 14
+  Utf16leToUtf8 size 16               1.001  min  1.001  max  1.001  rows 1
+  Utf16leToUtf8 size 64               0.984  min  0.984  max  0.984  rows 1
+  Utf16leToUtf8 size 256              1.007  min  1.007  max  1.007  rows 1
+  Utf16leToUtf8 size 4096             0.996  min  0.996  max  0.996  rows 1
+  Utf16leToUtf8 size 65536            1.009  min  1.009  max  1.009  rows 1
+  Utf32ToUtf8 corpus                  1.001  min  0.991  max  1.010  rows 9
+  Utf32ToUtf8                         1.001  min  0.991  max  1.010  rows 14
+  Utf32ToUtf8 size 16                 0.999  min  0.999  max  0.999  rows 1
+  Utf32ToUtf8 size 64                 0.996  min  0.996  max  0.996  rows 1
+  Utf32ToUtf8 size 256                0.999  min  0.999  max  0.999  rows 1
+  Utf32ToUtf8 size 4096               0.998  min  0.998  max  0.998  rows 1
+  Utf32ToUtf8 size 65536              1.007  min  1.007  max  1.007  rows 1
+  Utf8ToLatin1 corpus                 0.994  min  0.994  max  0.994  rows 1
+  Utf8ToLatin1                        1.001  min  0.982  max  1.022  rows 11
+  Utf8ToLatin1 size 16                0.996  min  0.982  max  1.010  rows 2
+  Utf8ToLatin1 size 64                1.005  min  0.996  max  1.015  rows 2
+  Utf8ToLatin1 size 256               0.997  min  0.994  max  1.000  rows 2
+  Utf8ToLatin1 size 4096              1.013  min  1.005  max  1.022  rows 2
+  Utf8ToLatin1 size 65536             0.997  min  0.992  max  1.003  rows 2
+  Utf8ToUtf16le corpus                0.999  min  0.990  max  1.006  rows 9
+  Utf8ToUtf16le                       0.999  min  0.987  max  1.013  rows 21
+  Utf8ToUtf16le size 16               0.997  min  0.987  max  1.006  rows 8
+  Utf8ToUtf16le size 64               1.003  min  1.003  max  1.003  rows 1
+  Utf8ToUtf16le size 256              1.013  min  1.013  max  1.013  rows 1
+  Utf8ToUtf16le size 4096             1.006  min  1.006  max  1.006  rows 1
+  Utf8ToUtf16le size 65536            1.002  min  1.002  max  1.002  rows 1
+  ValidateUtf8 corpus                 0.997  min  0.973  max  1.007  rows 9
+  ValidateUtf8                        0.999  min  0.973  max  1.022  rows 21
+  ValidateUtf8 size 16                1.006  min  0.996  max  1.022  rows 8
+  ValidateUtf8 size 64                0.995  min  0.995  max  0.995  rows 1
+  ValidateUtf8 size 256               0.977  min  0.977  max  0.977  rows 1
+  ValidateUtf8 size 4096              0.995  min  0.995  max  0.995  rows 1
+  ValidateUtf8 size 65536             0.996  min  0.996  max  0.996  rows 1
+  all                                 1.001  min  0.973  max  1.059  rows 92
+  lowest rows: ValidateUtf8/hebrew 0.973, Utf16leToUtf8/emoji 0.977, ValidateUtf8/ascii-256 0.977

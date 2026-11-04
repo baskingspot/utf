@@ -1,0 +1,19 @@
+                        │   before    │               aligned               │              noalign               │
+                        │   sec/op    │   sec/op     vs base                │   sec/op     vs base               │
+Latin1ToUtf8/ascii-256    7.785n ± 2%   9.855n ± 2%  +26.59% (p=0.000 n=12)   7.915n ± 2%       ~ (p=0.223 n=12)
+Latin1ToUtf8/ascii-4096   64.08n ± 2%   73.30n ± 3%  +14.39% (p=0.000 n=12)   65.23n ± 4%  +1.79% (p=0.040 n=12)
+Utf8ToLatin1/latin1-16    8.450n ± 1%   9.520n ± 1%  +12.66% (p=0.000 n=12)   8.370n ± 1%       ~ (p=0.057 n=12)
+Utf8ToLatin1/ascii-256    7.275n ± 5%   7.295n ± 7%        ~ (p=0.181 n=12)   7.305n ± 3%       ~ (p=0.809 n=12)
+ValidateUtf8/ascii-64     4.085n ± 3%   4.435n ± 2%   +8.57% (p=0.000 n=12)   4.075n ± 2%       ~ (p=0.560 n=12)
+Utf8ToUtf16le/hindi-16    13.08n ± 0%   13.04n ± 1%        ~ (p=0.173 n=12)   13.68n ± 2%  +4.63% (p=0.000 n=12)
+geomean                   10.86n        11.94n       +10.00%                  10.99n       +1.20%
+
+                        │    before    │               aligned                │               noalign               │
+                        │     B/s      │     B/s       vs base                │     B/s       vs base               │
+Latin1ToUtf8/ascii-256    30.62Gi ± 2%   24.19Gi ± 2%  -21.00% (p=0.000 n=12)   30.12Gi ± 2%       ~ (p=0.242 n=12)
+Latin1ToUtf8/ascii-4096   59.53Gi ± 3%   52.04Gi ± 3%  -12.59% (p=0.000 n=12)   58.48Gi ± 4%  -1.76% (p=0.045 n=12)
+Utf8ToLatin1/latin1-16    2.094Gi ± 1%   1.859Gi ± 1%  -11.25% (p=0.000 n=12)   2.114Gi ± 1%       ~ (p=0.060 n=12)
+Utf8ToLatin1/ascii-256    32.76Gi ± 4%   32.69Gi ± 7%        ~ (p=0.198 n=12)   32.63Gi ± 3%       ~ (p=0.887 n=12)
+ValidateUtf8/ascii-64     14.58Gi ± 2%   13.43Gi ± 2%   -7.87% (p=0.000 n=12)   14.62Gi ± 2%       ~ (p=0.478 n=12)
+Utf8ToUtf16le/hindi-16    1.139Gi ± 0%   1.142Gi ± 1%        ~ (p=0.178 n=12)   1.089Gi ± 2%  -4.38% (p=0.000 n=12)
+geomean                   11.30Gi        10.27Gi        -9.07%                  11.16Gi       -1.16%
