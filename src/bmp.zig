@@ -17,6 +17,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 const simd = @import("simd.zig");
 const BmpResult = @import("result.zig").BmpResult;
+const dispatch = @import("dispatch.zig");
 
 const native = builtin.cpu.arch.endian();
 const llvm = builtin.zig_backend == .stage2_llvm;
@@ -45,10 +46,11 @@ inline fn shufflePair(v: @Vector(32, u8), lo: B16, hi: B16) [2]B16 {
 
 /// Shuffle indices for each group of eight 16-bit lanes: entry `n` lists
 /// the bytes to keep, in order, then zeros; `keep(n, b)` says whether byte
-/// `b` (0 to 15) of the group is kept.
-fn packTable(comptime keep: fn (u8, u4) bool) [256]B16 {
+/// `b` (0 to 15) of the group is kept. Arrays, not vectors, so that
+/// `dispatch.shared` can export them.
+fn packTable(comptime keep: fn (u8, u4) bool) [256][16]u8 {
     @setEvalBranchQuota(10_000);
-    var t: [256]B16 = undefined;
+    var t: [256][16]u8 = undefined;
     for (&t, 0..) |*e, n| {
         var idx: [16]u8 = @splat(0);
         var k: usize = 0;
@@ -65,26 +67,26 @@ fn packTable(comptime keep: fn (u8, u4) bool) [256]B16 {
 
 /// Eight code points below U+0800 as two bytes each, lead then trail: bit
 /// `i` of `n` is set for each that is ASCII and keeps only its lead.
-const pack_narrow = packTable(struct {
+const pack_narrow = dispatch.shared("bmp_pack_narrow", packTable(struct {
     fn keep(n: u8, b: u4) bool {
         return b % 2 == 0 or n >> (b / 2) & 1 == 0;
     }
-}.keep);
+}.keep));
 
 /// Eight UTF-16 units: bit `i` of `n` is set for each to keep.
-const pack_units = packTable(struct {
+const pack_units = dispatch.shared("bmp_pack_units", packTable(struct {
     fn keep(n: u8, b: u4) bool {
         return n >> (b / 2) & 1 == 1;
     }
-}.keep);
+}.keep));
 
 /// Four code points as four bytes each, of which they take one to three:
 /// entry `n` for code points `j` taking `1 + (n >> 2 * j & 1) + (n >> 2 *
 /// j + 1 & 1)` bytes (the second bit set only with the first), and in
 /// `lens` the bytes all four take.
-const pack_quads: struct { shuffles: [256]B16, lens: [256]u8 } = blk: {
+const quads: extern struct { shuffles: [256][16]u8, lens: [256]u8 } = blk: {
     @setEvalBranchQuota(10_000);
-    var t: [256]B16 = undefined;
+    var t: [256][16]u8 = undefined;
     var l: [256]u8 = undefined;
     for (&t, &l, 0..) |*e, *len, n| {
         var idx: [16]u8 = @splat(0);
@@ -100,6 +102,7 @@ const pack_quads: struct { shuffles: [256]B16, lens: [256]u8 } = blk: {
     }
     break :blk .{ .shuffles = t, .lens = l };
 };
+const pack_quads = dispatch.shared("bmp_pack_quads", quads);
 
 /// Packs `words`, two bytes for each of `16 * n` code points below U+0800,
 /// where bit `i` of `a` is set for each that is ASCII, to `d` with the byte
@@ -125,6 +128,11 @@ const pack_room = 4 * block;
 /// fit whole: 32 code points at a time while they are all below U+0800,
 /// else 16, then one at a time.
 pub fn bmpToUtf8(src: []const u16, dst: []u8) BmpResult {
+    // For the tier objects' shuffles, whatever this build's `pack`.
+    comptime {
+        _ = pack_narrow;
+        _ = pack_quads;
+    }
     const N = @Vector(2 * block, u16);
     var i: usize = 0;
     var o: usize = 0;
@@ -296,7 +304,7 @@ inline fn blockToUtf8(u: @Vector(block, u16), d: *[pack_room]u8) usize {
                 // way (Thai 1.16x with SSSE3, 1.27x with AVX2).
                 const qa: @Vector(32, u8) = @bitCast(@shuffle(u16, three, trail, interleave(0)));
                 const qb: @Vector(32, u8) = @bitCast(@shuffle(u16, three, trail, interleave(4)));
-                const s = comptime pack_quads.shuffles[0xFF];
+                const s = comptime quads.shuffles[0xFF];
                 const pa = shufflePair(qa, s, s);
                 const pb = shufflePair(qb, s, s);
                 inline for (.{ pa[0], pb[0], pa[1], pb[1] }, 0..) |q, g| d[12 * g ..][0..16].* = q;
@@ -442,6 +450,10 @@ inline fn carryAt(src: []const u8, at: usize) u32 {
 /// whose units as fit are copied out: one loop for all of it, so the body
 /// is there once.
 pub fn utf8ToBmp(src: []const u8, dst: []u16) BmpResult {
+    // For the tier objects' shuffles, whatever this build's `pack`.
+    comptime {
+        _ = pack_units;
+    }
     const B = @Vector(window, u8);
     var r: usize = 0;
     var w: usize = 0;
@@ -510,7 +522,6 @@ inline fn lanesUp(m: @Vector(window, u8), comptime n: usize) @Vector(window, u8)
 const testing = std.testing;
 const convert = @import("convert.zig");
 const scalar = @import("scalar_convert.zig");
-const dispatch = @import("dispatch.zig");
 const ConvertResult = @import("result.zig").ConvertResult;
 
 /// The UTF-8 of `u` as `bmpToUtf8` writes it: a surrogate as the three

@@ -298,6 +298,30 @@ inline fn scalarFromWord(comptime T: type, w: usize) T {
     };
 }
 
+/// `value`, a table the kernels of more than one tier read, once in a
+/// program: in a dispatching build the main object exports it as `name`
+/// under this build's prefix, and the tier objects link to that copy,
+/// where the SSE and AVX2 objects had one each. The main object exports it
+/// when its kernel names it, so each kernel whose tier versions read a
+/// table names it (`_ = table`) whatever its own ISA reads. The tier
+/// objects' references are weak: unoptimized builds keep every tier
+/// kernel, the calls' unreached ones too, and those reference tables the
+/// main object never exported. `value` holds no vectors, which 0.17 does
+/// not export, and is 16-byte aligned for the kernels' loads. Elsewhere it
+/// is `value`.
+pub fn shared(comptime name: []const u8, comptime value: anytype) *align(16) const @TypeOf(value) {
+    const T = @TypeOf(value);
+    const S = struct {
+        const v: T align(16) = value;
+    };
+    if (role == .off) return &S.v;
+    const global = options.prefix ++ "_" ++ name;
+    const weak: std.builtin.ExternOptions = .{ .name = global, .linkage = .weak, .visibility = .hidden };
+    if (role == .kernel) return @extern(?*align(16) const T, weak).?;
+    @export(&S.v, .{ .name = global, .visibility = .hidden });
+    return &S.v;
+}
+
 /// For a kernel's own out-of-line parts, as for `call`: `pack` turns a
 /// result into what an entry returns, a scalar that comes back in
 /// registers, and `unpack` builds the result from it. A `Result` returned
