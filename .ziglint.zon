@@ -1,3 +1,3 @@
 .{
-    .paths = .{ "build.zig", "src", "bench/build.zig", "bench/compat.zig", "bench/zig", "bench/oracle" },
+    .paths = .{ "build.zig", "build", "src", "bench/build.zig", "bench/compat.zig", "bench/zig", "bench/oracle" },
 }

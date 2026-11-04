@@ -90,11 +90,18 @@ fn addDispatch(
     // This repository's own tests pin each call to the `-Dcpu` level.
     options.addOption(bool, "pin", b.pkg_hash.len == 0);
     mod.addImport("dispatch_options", options.createModule());
+    // ELF objects put their constant pools in sections of their own, through
+    // their assembly (build/pools.zig).
+    const pools = if (tiers.len > 0 and target.result.ofmt == .elf) b.addExecutable(.{
+        .name = "utf-pools",
+        .root_module = b.createModule(.{ .root_source_file = b.path("build/pools.zig"), .target = b.graph.host }),
+    }) else null;
     for (tiers) |t| {
         var query = target.query;
         query.cpu_model = .{ .explicit = t.model };
         query.cpu_features_add = std.Target.x86.featureSet(t.add);
         query.cpu_features_sub = .empty;
+        const tier_target = b.resolveTargetQuery(query);
         const kernel_options = b.addOptions();
         kernel_options.addOption(Role, "role", .kernel);
         kernel_options.addOption([]const u8, "prefix", prefix);
@@ -103,7 +110,7 @@ fn addDispatch(
             .name = b.fmt("utf-{t}", .{t.isa}),
             .root_module = b.createModule(.{
                 .root_source_file = b.path("src/dispatch.zig"),
-                .target = b.resolveTargetQuery(query),
+                .target = tier_target,
                 .optimize = optimize,
                 .pic = true,
                 // Every call into an object is a call more than the kernel
@@ -121,6 +128,29 @@ fn addDispatch(
         // own, the linker keeps only those the program's calls reach.
         obj.link_function_sections = true;
         obj.link_data_sections = true;
-        mod.addObject(obj);
+        const tool = pools orelse {
+            mod.addObject(obj);
+            continue;
+        };
+        // LLVM puts every function's pool entries that fit no mergeable
+        // section, such as 64-byte AVX-512 vectors, in one `.rodata`, which
+        // the linker keeps whole for any kernel's sake: 26 KB of AVX-512
+        // constants in a program that calls one function. Split, each goes
+        // with the function that uses it.
+        const split = b.addRunArtifact(tool);
+        split.addFileArg(obj.getEmittedAsm());
+        const source = split.addOutputFileArg(b.fmt("utf-{t}.s", .{t.isa}));
+        const assembled = b.addObject(.{
+            .name = b.fmt("utf-{t}", .{t.isa}),
+            .root_module = b.createModule(.{ .target = tier_target, .optimize = optimize }),
+        });
+        // Zig names no CPU to the assembler, which then pads loops with
+        // 10-byte NOPs where the object had the tier's 15-byte ones: 4-5%
+        // on 16-byte conversions in the AVX2 tier.
+        assembled.root_module.addCSourceFile(.{
+            .file = source,
+            .flags = &.{b.fmt("-march={s}", .{t.model.llvm_name.?})},
+        });
+        mod.addObject(assembled);
     }
 }

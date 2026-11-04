@@ -40,7 +40,7 @@ test:
 [group("lint")]
 lint:
     ziglint-0-16
-    zig fmt --check src docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/compat.zig bench/zig bench/oracle
+    zig fmt --check src build docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/compat.zig bench/zig bench/oracle
     test -z "$(gofmt -l bench/go)"
     nix fmt -- --ci
     oxfmt --check {{ markdown }}
@@ -51,7 +51,7 @@ lint:
 [doc("Format everything lint checks")]
 [group("lint")]
 fmt:
-    zig fmt src docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/compat.zig bench/zig bench/oracle
+    zig fmt src build docs/examples build.zig build.zig.zon bench/build.zig bench/build.zig.zon bench/compat.zig bench/zig bench/oracle
     gofmt -w bench/go
     nix fmt
     oxfmt {{ markdown }}
