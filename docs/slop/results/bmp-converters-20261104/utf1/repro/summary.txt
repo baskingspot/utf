@@ -1,0 +1,8 @@
+zig/arm, geomean              rows  zig GB/s     rust     ±   <1    ~   slowest vs rust
+DecodeUtf8/UTF-8                 8      1.19     1.14    1%    0    5   1.00 [0.98, 1.04] mail-16
+DecodeUtf16/UTF-8                8      1.17     1.24    2%    0    0   1.09 [1.06, 1.10] nonascii-16
+all                             16      1.18     1.19          0    5
+
+ns/call, median      bytes       zig      rust  zig/rust
+DecodeUtf8              16       9.9      10.0      1.01
+DecodeUtf16             16       9.5      11.4      1.21

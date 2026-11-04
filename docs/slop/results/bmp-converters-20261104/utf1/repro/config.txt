@@ -1,0 +1,5 @@
+zig: ReleaseFast, native, c45639d
+rust: encoding_rs 0.8.44; icu 78.3; go: x/text v0.43.0
+buffers: input 0 bytes past a page, output 2048; 50 ms a sample, 10 rounds
+CPU(s):                                  4
+Model name:                              Intel(R) Xeon(R) Processor @ 2.60GHz

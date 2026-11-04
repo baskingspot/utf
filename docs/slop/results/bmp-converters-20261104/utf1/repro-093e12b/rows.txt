@@ -1,0 +1,16 @@
+decode-utf16 UTF-8 ascii-16
+decode-utf16 UTF-8 csv-16
+decode-utf16 UTF-8 invalid-16
+decode-utf16 UTF-8 mail-16
+decode-utf16 UTF-8 mixed-16
+decode-utf16 UTF-8 nonascii-16
+decode-utf16 UTF-8 subtitles-16
+decode-utf16 UTF-8 web-16
+decode-utf8 UTF-8 ascii-16
+decode-utf8 UTF-8 csv-16
+decode-utf8 UTF-8 invalid-16
+decode-utf8 UTF-8 mail-16
+decode-utf8 UTF-8 mixed-16
+decode-utf8 UTF-8 nonascii-16
+decode-utf8 UTF-8 subtitles-16
+decode-utf8 UTF-8 web-16

@@ -1,0 +1,5 @@
+--- utf-0.1.0/src/convert.zig
++++ utf-split/src/convert.zig
+@@ -529 +529 @@
+-    if (!(apart and dispatch.exported)) return @call(.always_inline, f, ct ++ .{ src, dst });
++    if (!apart) return @call(.always_inline, f, ct ++ .{ src, dst });

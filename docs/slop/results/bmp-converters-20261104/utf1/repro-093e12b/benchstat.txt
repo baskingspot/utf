@@ -1,0 +1,41 @@
+                               │   base.txt    │               nat.txt                │               v3.txt                │
+                               │    sec/op     │    sec/op      vs base               │    sec/op      vs base              │
+DecodeUtf16/UTF-8/ascii-16        8.790n ± ∞ ¹    9.910n ± ∞ ¹  +12.74% (p=0.008 n=5)    9.320n ± ∞ ¹  +6.03% (p=0.008 n=5)
+DecodeUtf16/UTF-8/csv-16          8.770n ± ∞ ¹   10.130n ± ∞ ¹  +15.51% (p=0.008 n=5)    9.090n ± ∞ ¹  +3.65% (p=0.008 n=5)
+DecodeUtf16/UTF-8/invalid-16      83.66n ± ∞ ¹    86.55n ± ∞ ¹        ~ (p=0.056 n=5)    85.49n ± ∞ ¹       ~ (p=0.222 n=5)
+DecodeUtf16/UTF-8/mail-16         8.900n ± ∞ ¹    9.910n ± ∞ ¹  +11.35% (p=0.016 n=5)    9.210n ± ∞ ¹       ~ (p=0.286 n=5)
+DecodeUtf16/UTF-8/mixed-16        17.23n ± ∞ ¹    17.09n ± ∞ ¹        ~ (p=0.421 n=5)    17.98n ± ∞ ¹  +4.35% (p=0.032 n=5)
+DecodeUtf16/UTF-8/nonascii-16     17.22n ± ∞ ¹    16.71n ± ∞ ¹        ~ (p=0.222 n=5)    18.26n ± ∞ ¹  +6.04% (p=0.016 n=5)
+DecodeUtf16/UTF-8/subtitles-16    9.200n ± ∞ ¹   10.090n ± ∞ ¹   +9.67% (p=0.008 n=5)    9.060n ± ∞ ¹       ~ (p=0.881 n=5)
+DecodeUtf16/UTF-8/web-16          8.930n ± ∞ ¹    9.870n ± ∞ ¹  +10.53% (p=0.008 n=5)    9.210n ± ∞ ¹  +3.14% (p=0.016 n=5)
+DecodeUtf8/UTF-8/ascii-16         10.68n ± ∞ ¹    10.17n ± ∞ ¹        ~ (p=0.095 n=5)    10.02n ± ∞ ¹       ~ (p=0.087 n=5)
+DecodeUtf8/UTF-8/csv-16          10.530n ± ∞ ¹    9.960n ± ∞ ¹   -5.41% (p=0.008 n=5)   10.200n ± ∞ ¹       ~ (p=0.095 n=5)
+DecodeUtf8/UTF-8/invalid-16       85.35n ± ∞ ¹    70.90n ± ∞ ¹  -16.93% (p=0.008 n=5)    80.84n ± ∞ ¹  -5.28% (p=0.008 n=5)
+DecodeUtf8/UTF-8/mail-16         10.660n ± ∞ ¹    9.820n ± ∞ ¹        ~ (p=0.222 n=5)   10.370n ± ∞ ¹       ~ (p=0.690 n=5)
+DecodeUtf8/UTF-8/mixed-16         13.09n ± ∞ ¹    11.96n ± ∞ ¹   -8.63% (p=0.008 n=5)    12.67n ± ∞ ¹       ~ (p=0.579 n=5)
+DecodeUtf8/UTF-8/nonascii-16      12.86n ± ∞ ¹    11.85n ± ∞ ¹   -7.85% (p=0.016 n=5)    12.78n ± ∞ ¹       ~ (p=0.413 n=5)
+DecodeUtf8/UTF-8/subtitles-16     10.78n ± ∞ ¹    10.06n ± ∞ ¹   -6.68% (p=0.032 n=5)    10.24n ± ∞ ¹       ~ (p=0.056 n=5)
+DecodeUtf8/UTF-8/web-16           10.59n ± ∞ ¹    10.04n ± ∞ ¹   -5.19% (p=0.008 n=5)    10.01n ± ∞ ¹       ~ (p=0.079 n=5)
+geomean                           14.21n          14.11n         -0.67%                  14.16n        -0.36%
+¹ need >= 6 samples for confidence interval at level 0.95
+
+                               │   base.txt    │               nat.txt                │               v3.txt                │
+                               │      B/s      │      B/s       vs base               │      B/s       vs base              │
+DecodeUtf16/UTF-8/ascii-16       1.695Gi ± ∞ ¹   1.504Gi ± ∞ ¹  -11.26% (p=0.008 n=5)   1.599Gi ± ∞ ¹  -5.64% (p=0.008 n=5)
+DecodeUtf16/UTF-8/csv-16         1.698Gi ± ∞ ¹   1.471Gi ± ∞ ¹  -13.41% (p=0.008 n=5)   1.640Gi ± ∞ ¹  -3.43% (p=0.008 n=5)
+DecodeUtf16/UTF-8/invalid-16     182.4Mi ± ∞ ¹   176.3Mi ± ∞ ¹        ~ (p=0.056 n=5)   178.5Mi ± ∞ ¹       ~ (p=0.222 n=5)
+DecodeUtf16/UTF-8/mail-16        1.674Gi ± ∞ ¹   1.503Gi ± ∞ ¹  -10.22% (p=0.016 n=5)   1.619Gi ± ∞ ¹       ~ (p=0.310 n=5)
+DecodeUtf16/UTF-8/mixed-16       885.8Mi ± ∞ ¹   893.0Mi ± ∞ ¹        ~ (p=0.421 n=5)   848.6Mi ± ∞ ¹  -4.20% (p=0.032 n=5)
+DecodeUtf16/UTF-8/nonascii-16    830.6Mi ± ∞ ¹   856.1Mi ± ∞ ¹        ~ (p=0.222 n=5)   783.3Mi ± ∞ ¹  -5.70% (p=0.016 n=5)
+DecodeUtf16/UTF-8/subtitles-16   1.620Gi ± ∞ ¹   1.476Gi ± ∞ ¹   -8.84% (p=0.008 n=5)   1.645Gi ± ∞ ¹       ~ (p=0.841 n=5)
+DecodeUtf16/UTF-8/web-16         1.669Gi ± ∞ ¹   1.510Gi ± ∞ ¹   -9.52% (p=0.008 n=5)   1.618Gi ± ∞ ¹  -3.03% (p=0.016 n=5)
+DecodeUtf8/UTF-8/ascii-16        1.395Gi ± ∞ ¹   1.466Gi ± ∞ ¹        ~ (p=0.095 n=5)   1.486Gi ± ∞ ¹       ~ (p=0.095 n=5)
+DecodeUtf8/UTF-8/csv-16          1.415Gi ± ∞ ¹   1.496Gi ± ∞ ¹   +5.75% (p=0.008 n=5)   1.461Gi ± ∞ ¹       ~ (p=0.095 n=5)
+DecodeUtf8/UTF-8/invalid-16      178.8Mi ± ∞ ¹   215.2Mi ± ∞ ¹  +20.38% (p=0.008 n=5)   188.8Mi ± ∞ ¹  +5.58% (p=0.008 n=5)
+DecodeUtf8/UTF-8/mail-16         1.398Gi ± ∞ ¹   1.517Gi ± ∞ ¹        ~ (p=0.222 n=5)   1.437Gi ± ∞ ¹       ~ (p=0.690 n=5)
+DecodeUtf8/UTF-8/mixed-16        1.138Gi ± ∞ ¹   1.246Gi ± ∞ ¹   +9.48% (p=0.008 n=5)   1.177Gi ± ∞ ¹       ~ (p=0.690 n=5)
+DecodeUtf8/UTF-8/nonascii-16     1.086Gi ± ∞ ¹   1.179Gi ± ∞ ¹   +8.53% (p=0.016 n=5)   1.093Gi ± ∞ ¹       ~ (p=0.310 n=5)
+DecodeUtf8/UTF-8/subtitles-16    1.382Gi ± ∞ ¹   1.481Gi ± ∞ ¹   +7.15% (p=0.032 n=5)   1.455Gi ± ∞ ¹       ~ (p=0.056 n=5)
+DecodeUtf8/UTF-8/web-16          1.407Gi ± ∞ ¹   1.485Gi ± ∞ ¹   +5.55% (p=0.008 n=5)   1.489Gi ± ∞ ¹       ~ (p=0.095 n=5)
+geomean                          1.040Gi         1.047Gi         +0.68%                 1.044Gi        +0.38%
+¹ need >= 6 samples for confidence interval at level 0.95

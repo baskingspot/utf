@@ -1,0 +1,4 @@
+rust       6688 rows match the reference,    0 differ (zig-out/bench-compare/check-diff-rust.txt), 12 skipped
+zig        7040 rows match the reference,    0 differ (zig-out/bench-compare/check-diff-zig.txt), 4 skipped
+zigv3      7040 rows match the reference,    0 differ (zig-out/bench-compare/check-diff-zigv3.txt), 4 skipped
+zigbase    7040 rows match the reference,    0 differ (zig-out/bench-compare/check-diff-zigbase.txt), 4 skipped

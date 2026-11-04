@@ -1,0 +1,216 @@
+== nat-utf / nat-enc: ratio of times, nat-enc over nat-utf (above 1: nat-utf faster)
+  From8                               1.629  min  0.869  max  4.830  rows 35
+  From8 windows-1251/mixed            1.385  min  0.869  max  2.554  rows 5
+  From8 windows-1251/nonascii         1.492  min  0.927  max  2.957  rows 5
+  From8 windows-1252/nonascii         1.661  min  1.053  max  2.965  rows 5
+  From8 windows-1252/web              1.648  min  0.906  max  4.830  rows 5
+  From8 windows-874/mixed             1.826  min  1.099  max  3.296  rows 5
+  From8 windows-874/nonascii          1.731  min  1.076  max  3.692  rows 5
+  From8 x-user-defined/nonascii       1.703  min  1.087  max  3.509  rows 5
+  From8 size 16                       2.749  min  1.744  max  3.692  rows 7
+  From8 size 64                       2.912  min  2.217  max  4.830  rows 7
+  From8 size 256                      1.315  min  0.869  max  1.699  rows 7
+  From8 size 4096                     1.041  min  0.906  max  1.135  rows 7
+  From8 size 65536                    1.047  min  0.938  max  1.099  rows 7
+  To8                                 1.003  min  0.981  max  1.033  rows 35
+  To8 windows-1251/mixed              1.004  min  0.985  max  1.033  rows 5
+  To8 windows-1251/nonascii           1.005  min  0.995  max  1.016  rows 5
+  To8 windows-1252/nonascii           1.009  min  0.981  max  1.032  rows 5
+  To8 windows-1252/web                1.000  min  0.995  max  1.003  rows 5
+  To8 windows-874/mixed               1.003  min  0.993  max  1.008  rows 5
+  To8 windows-874/nonascii            1.001  min  0.991  max  1.008  rows 5
+  To8 x-user-defined/nonascii         1.002  min  0.996  max  1.013  rows 5
+  To8 size 16                         1.006  min  1.000  max  1.016  rows 7
+  To8 size 64                         1.000  min  0.981  max  1.013  rows 7
+  To8 size 256                        1.002  min  0.985  max  1.032  rows 7
+  To8 size 4096                       1.009  min  0.996  max  1.033  rows 7
+  To8 size 65536                      1.000  min  0.993  max  1.010  rows 7
+== v3-utf / v3-enc: ratio of times, v3-enc over v3-utf (above 1: v3-utf faster)
+  From8                               1.412  min  1.052  max  2.953  rows 35
+  From8 windows-1251/mixed            1.407  min  1.077  max  2.045  rows 5
+  From8 windows-1251/nonascii         1.446  min  1.089  max  2.582  rows 5
+  From8 windows-1252/nonascii         1.516  min  1.164  max  2.575  rows 5
+  From8 windows-1252/web              1.365  min  1.052  max  2.271  rows 5
+  From8 windows-874/mixed             1.588  min  1.205  max  2.953  rows 5
+  From8 windows-874/nonascii          1.302  min  1.203  max  1.575  rows 5
+  From8 x-user-defined/nonascii       1.288  min  1.202  max  1.548  rows 5
+  From8 size 16                       1.928  min  1.239  max  2.953  rows 7
+  From8 size 64                       1.766  min  1.548  max  2.271  rows 7
+  From8 size 256                      1.218  min  1.077  max  1.316  rows 7
+  From8 size 4096                     1.165  min  1.055  max  1.208  rows 7
+  From8 size 65536                    1.163  min  1.052  max  1.212  rows 7
+  To8                                 1.068  min  0.959  max  1.296  rows 35
+  To8 windows-1251/mixed              0.995  min  0.980  max  1.001  rows 5
+  To8 windows-1251/nonascii           0.989  min  0.980  max  0.998  rows 5
+  To8 windows-1252/nonascii           0.995  min  0.988  max  1.005  rows 5
+  To8 windows-1252/web                1.023  min  0.999  max  1.046  rows 5
+  To8 windows-874/mixed               0.995  min  0.959  max  1.013  rows 5
+  To8 windows-874/nonascii            1.260  min  1.214  max  1.296  rows 5
+  To8 x-user-defined/nonascii         1.262  min  1.205  max  1.295  rows 5
+  To8 size 16                         1.047  min  0.959  max  1.214  rows 7
+  To8 size 64                         1.077  min  0.989  max  1.278  rows 7
+  To8 size 256                        1.072  min  0.980  max  1.262  rows 7
+  To8 size 4096                       1.071  min  0.988  max  1.277  rows 7
+  To8 size 65536                      1.075  min  0.980  max  1.296  rows 7
+== v2-utf / v2-enc: ratio of times, v2-enc over v2-utf (above 1: v2-utf faster)
+  From8                               1.148  min  0.803  max  2.160  rows 35
+  From8 windows-1251/mixed            1.168  min  0.865  max  1.875  rows 5
+  From8 windows-1251/nonascii         1.160  min  0.803  max  2.140  rows 5
+  From8 windows-1252/nonascii         1.247  min  0.970  max  2.158  rows 5
+  From8 windows-1252/web              1.098  min  0.876  max  1.691  rows 5
+  From8 windows-874/mixed             1.270  min  0.994  max  2.160  rows 5
+  From8 windows-874/nonascii          1.064  min  1.011  max  1.199  rows 5
+  From8 x-user-defined/nonascii       1.052  min  1.013  max  1.172  rows 5
+  From8 size 16                       1.587  min  1.016  max  2.160  rows 7
+  From8 size 64                       1.350  min  1.172  max  1.691  rows 7
+  From8 size 256                      0.985  min  0.803  max  1.108  rows 7
+  From8 size 4096                     0.974  min  0.881  max  1.015  rows 7
+  From8 size 65536                    0.971  min  0.876  max  1.013  rows 7
+  To8                                 1.042  min  0.958  max  1.199  rows 35
+  To8 windows-1251/mixed              0.995  min  0.958  max  1.027  rows 5
+  To8 windows-1251/nonascii           0.998  min  0.970  max  1.037  rows 5
+  To8 windows-1252/nonascii           1.021  min  0.959  max  1.066  rows 5
+  To8 windows-1252/web                0.977  min  0.963  max  0.987  rows 5
+  To8 windows-874/mixed               0.984  min  0.964  max  1.004  rows 5
+  To8 windows-874/nonascii            1.169  min  1.149  max  1.199  rows 5
+  To8 x-user-defined/nonascii         1.169  min  1.143  max  1.195  rows 5
+  To8 size 16                         1.027  min  0.964  max  1.167  rows 7
+  To8 size 64                         1.030  min  0.958  max  1.195  rows 7
+  To8 size 256                        1.034  min  0.967  max  1.149  rows 7
+  To8 size 4096                       1.054  min  0.987  max  1.153  rows 7
+  To8 size 65536                      1.064  min  0.984  max  1.199  rows 7
+== bnd-utf / bnd-enc: ratio of times, bnd-enc over bnd-utf (above 1: bnd-utf faster)
+  From8                               1.048  min  0.758  max  1.429  rows 35
+  From8 windows-1251/mixed            1.045  min  0.954  max  1.169  rows 5
+  From8 windows-1251/nonascii         1.086  min  0.969  max  1.373  rows 5
+  From8 windows-1252/nonascii         1.111  min  1.003  max  1.372  rows 5
+  From8 windows-1252/web              0.987  min  0.924  max  1.244  rows 5
+  From8 windows-874/mixed             1.135  min  1.033  max  1.429  rows 5
+  From8 windows-874/nonascii          0.990  min  0.771  max  1.092  rows 5
+  From8 x-user-defined/nonascii       0.989  min  0.758  max  1.097  rows 5
+  From8 size 16                       1.071  min  0.758  max  1.429  rows 7
+  From8 size 64                       1.141  min  1.092  max  1.244  rows 7
+  From8 size 256                      1.013  min  0.947  max  1.072  rows 7
+  From8 size 4096                     1.009  min  0.926  max  1.048  rows 7
+  From8 size 65536                    1.011  min  0.931  max  1.042  rows 7
+  To8                                 1.004  min  0.991  max  1.039  rows 35
+  To8 windows-1251/mixed              1.006  min  1.001  max  1.011  rows 5
+  To8 windows-1251/nonascii           1.007  min  1.001  max  1.019  rows 5
+  To8 windows-1252/nonascii           1.008  min  1.000  max  1.039  rows 5
+  To8 windows-1252/web                1.007  min  1.000  max  1.025  rows 5
+  To8 windows-874/mixed               1.002  min  0.999  max  1.005  rows 5
+  To8 windows-874/nonascii            0.999  min  0.992  max  1.002  rows 5
+  To8 x-user-defined/nonascii         1.000  min  0.991  max  1.006  rows 5
+  To8 size 16                         1.000  min  0.991  max  1.003  rows 7
+  To8 size 64                         1.002  min  1.000  max  1.006  rows 7
+  To8 size 256                        1.001  min  0.992  max  1.006  rows 7
+  To8 size 4096                       1.015  min  0.999  max  1.039  rows 7
+  To8 size 65536                      1.003  min  0.999  max  1.008  rows 7
+== bd-utf / nat-utf: ratio of times, nat-utf over bd-utf (above 1: bd-utf faster)
+  From8                               0.950  min  0.905  max  1.008  rows 35
+  From8 windows-1251/mixed            0.953  min  0.909  max  1.008  rows 5
+  From8 windows-1251/nonascii         0.947  min  0.917  max  0.974  rows 5
+  From8 windows-1252/nonascii         0.952  min  0.909  max  0.978  rows 5
+  From8 windows-1252/web              0.944  min  0.905  max  1.002  rows 5
+  From8 windows-874/mixed             0.958  min  0.911  max  0.996  rows 5
+  From8 windows-874/nonascii          0.950  min  0.912  max  0.978  rows 5
+  From8 x-user-defined/nonascii       0.947  min  0.915  max  0.967  rows 5
+  From8 size 16                       0.911  min  0.905  max  0.917  rows 7
+  From8 size 64                       0.955  min  0.935  max  0.974  rows 7
+  From8 size 256                      0.976  min  0.945  max  1.008  rows 7
+  From8 size 4096                     0.951  min  0.932  max  0.968  rows 7
+  From8 size 65536                    0.960  min  0.939  max  0.978  rows 7
+  To8                                 0.915  min  0.848  max  0.995  rows 35
+  To8 windows-1251/mixed              0.895  min  0.848  max  0.961  rows 5
+  To8 windows-1251/nonascii           0.904  min  0.859  max  0.967  rows 5
+  To8 windows-1252/nonascii           0.890  min  0.855  max  0.944  rows 5
+  To8 windows-1252/web                0.909  min  0.856  max  0.961  rows 5
+  To8 windows-874/mixed               0.937  min  0.860  max  0.989  rows 5
+  To8 windows-874/nonascii            0.934  min  0.873  max  0.984  rows 5
+  To8 x-user-defined/nonascii         0.936  min  0.852  max  0.995  rows 5
+  To8 size 16                         0.860  min  0.852  max  0.873  rows 7
+  To8 size 64                         0.879  min  0.856  max  0.897  rows 7
+  To8 size 256                        0.965  min  0.934  max  0.980  rows 7
+  To8 size 4096                       0.926  min  0.848  max  0.995  rows 7
+  To8 size 65536                      0.949  min  0.918  max  0.989  rows 7
+== nat-utf / nat-gen: ratio of times, nat-gen over nat-utf (above 1: nat-utf faster)
+  From8                               0.776  min  0.210  max  1.210  rows 35
+  From8 windows-1251/mixed            0.884  min  0.812  max  0.931  rows 5
+  From8 windows-1251/nonascii         0.907  min  0.825  max  1.210  rows 5
+  From8 windows-1252/nonascii         0.834  min  0.811  max  0.884  rows 5
+  From8 windows-1252/web              0.334  min  0.210  max  0.570  rows 5
+  From8 windows-874/mixed             0.845  min  0.825  max  0.863  rows 5
+  From8 windows-874/nonascii          0.951  min  0.828  max  1.194  rows 5
+  From8 x-user-defined/nonascii       0.946  min  0.816  max  1.187  rows 5
+  From8 size 16                       0.676  min  0.210  max  0.828  rows 7
+  From8 size 64                       0.808  min  0.222  max  1.210  rows 7
+  From8 size 256                      0.787  min  0.316  max  0.981  rows 7
+  From8 size 4096                     0.803  min  0.490  max  0.904  rows 7
+  From8 size 65536                    0.818  min  0.570  max  0.931  rows 7
+  To8                                 1.240  min  0.886  max  1.830  rows 35
+  To8 windows-1251/mixed              1.421  min  1.223  max  1.709  rows 5
+  To8 windows-1251/nonascii           1.355  min  1.213  max  1.726  rows 5
+  To8 windows-1252/nonascii           1.476  min  1.342  max  1.705  rows 5
+  To8 windows-1252/web                1.067  min  0.886  max  1.255  rows 5
+  To8 windows-874/mixed               1.129  min  0.981  max  1.770  rows 5
+  To8 windows-874/nonascii            1.142  min  0.978  max  1.830  rows 5
+  To8 x-user-defined/nonascii         1.156  min  0.984  max  1.828  rows 5
+  To8 size 16                         1.612  min  0.951  max  1.830  rows 7
+  To8 size 64                         1.227  min  1.054  max  1.518  rows 7
+  To8 size 256                        1.091  min  0.886  max  1.478  rows 7
+  To8 size 4096                       1.148  min  1.006  max  1.342  rows 7
+  To8 size 65536                      1.185  min  0.995  max  1.391  rows 7
+== v3-utf / v3-gen: ratio of times, v3-gen over v3-utf (above 1: v3-utf faster)
+  From8                               0.755  min  0.181  max  2.027  rows 35
+  From8 windows-1251/mixed            0.921  min  0.696  max  1.264  rows 5
+  From8 windows-1251/nonascii         0.955  min  0.689  max  1.547  rows 5
+  From8 windows-1252/nonascii         0.953  min  0.684  max  1.546  rows 5
+  From8 windows-1252/web              0.289  min  0.181  max  0.442  rows 5
+  From8 windows-874/mixed             1.107  min  0.714  max  2.027  rows 5
+  From8 windows-874/nonascii          0.726  min  0.560  max  1.141  rows 5
+  From8 x-user-defined/nonascii       0.721  min  0.558  max  1.129  rows 5
+  From8 size 16                       1.132  min  0.302  max  2.027  rows 7
+  From8 size 64                       0.889  min  0.181  max  1.679  rows 7
+  From8 size 256                      0.653  min  0.209  max  0.942  rows 7
+  From8 size 4096                     0.611  min  0.398  max  0.728  rows 7
+  From8 size 65536                    0.612  min  0.442  max  0.714  rows 7
+  To8                                 0.976  min  0.810  max  1.153  rows 35
+  To8 windows-1251/mixed              0.976  min  0.933  max  1.021  rows 5
+  To8 windows-1251/nonascii           0.968  min  0.901  max  1.007  rows 5
+  To8 windows-1252/nonascii           1.028  min  0.977  max  1.108  rows 5
+  To8 windows-1252/web                0.925  min  0.810  max  1.123  rows 5
+  To8 windows-874/mixed               1.048  min  1.013  max  1.070  rows 5
+  To8 windows-874/nonascii            0.948  min  0.883  max  1.153  rows 5
+  To8 x-user-defined/nonascii         0.948  min  0.881  max  1.149  rows 5
+  To8 size 16                         1.013  min  0.810  max  1.153  rows 7
+  To8 size 64                         0.989  min  0.901  max  1.123  rows 7
+  To8 size 256                        0.978  min  0.915  max  1.108  rows 7
+  To8 size 4096                       0.963  min  0.884  max  1.057  rows 7
+  To8 size 65536                      0.940  min  0.873  max  1.055  rows 7
+== v2-utf / v2-gen: ratio of times, v2-gen over v2-utf (above 1: v2-utf faster)
+  From8                               0.671  min  0.135  max  1.575  rows 35
+  From8 windows-1251/mixed            0.836  min  0.663  max  1.208  rows 5
+  From8 windows-1251/nonascii         0.814  min  0.646  max  1.209  rows 5
+  From8 windows-1252/nonascii         0.832  min  0.659  max  1.204  rows 5
+  From8 windows-1252/web              0.253  min  0.135  max  0.450  rows 5
+  From8 windows-874/mixed             0.961  min  0.672  max  1.575  rows 5
+  From8 windows-874/nonascii          0.667  min  0.579  max  0.866  rows 5
+  From8 x-user-defined/nonascii       0.666  min  0.579  max  0.867  rows 5
+  From8 size 16                       0.891  min  0.214  max  1.575  rows 7
+  From8 size 64                       0.713  min  0.135  max  1.305  rows 7
+  From8 size 256                      0.589  min  0.197  max  0.863  rows 7
+  From8 size 4096                     0.598  min  0.402  max  0.689  rows 7
+  From8 size 65536                    0.607  min  0.450  max  0.679  rows 7
+  To8                                 0.950  min  0.747  max  1.136  rows 35
+  To8 windows-1251/mixed              0.983  min  0.932  max  1.033  rows 5
+  To8 windows-1251/nonascii           0.971  min  0.929  max  1.043  rows 5
+  To8 windows-1252/nonascii           1.038  min  0.942  max  1.134  rows 5
+  To8 windows-1252/web                0.850  min  0.747  max  1.050  rows 5
+  To8 windows-874/mixed               1.115  min  1.083  max  1.136  rows 5
+  To8 windows-874/nonascii            0.863  min  0.792  max  1.057  rows 5
+  To8 x-user-defined/nonascii         0.863  min  0.797  max  1.056  rows 5
+  To8 size 16                         0.965  min  0.747  max  1.136  rows 7
+  To8 size 64                         0.946  min  0.792  max  1.083  rows 7
+  To8 size 256                        0.947  min  0.841  max  1.134  rows 7
+  To8 size 4096                       0.951  min  0.814  max  1.116  rows 7
+  To8 size 65536                      0.943  min  0.799  max  1.121  rows 7
