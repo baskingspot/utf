@@ -61,6 +61,11 @@ pub const Op = enum(u8) {
     /// says what was written on failure: the response's output is that,
     /// either way.
     utf16le_to_utf8_details = 26,
+    /// UTF-8 to UTF-32 with U+FFFD for each maximal subpart: not simdutf's,
+    /// which has no such function, but Ghostty's loop around
+    /// `convert_utf8_to_utf32_with_errors`, which skips the maximal subpart
+    /// at each error. Always succeeds.
+    utf8_to_utf32_replacing = 27,
 };
 
 /// simdutf's `error_code`, named as this package's `Error` names the same

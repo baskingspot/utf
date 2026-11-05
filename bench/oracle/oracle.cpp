@@ -63,6 +63,13 @@ enum Op : uint8_t {
   // convert_utf16_to_utf8_safe_with_details, whose UTF-16 is native: little
   // endian on every machine the harness runs on.
   utf16le_to_utf8_details = 26,
+  // UTF-8 to UTF-32 with U+FFFD for each maximal subpart, as Ghostty's
+  // decoder (src/simd/vt.cpp) builds it from simdutf: convert to the first
+  // error, write U+FFFD, skip the maximal subpart there, and go on. Always
+  // succeeds, with the code points written as the count. The prefix before
+  // an error is converted again as valid input, since the icelake kernel
+  // leaves other values there.
+  utf8_to_utf32_replacing = 27,
 };
 
 // Input and output code unit sizes, in bytes, per op; 0 marks an unknown op.
@@ -86,6 +93,7 @@ Shape shape(uint8_t op) {
   case latin1_to_utf16be:
     return {1, 2};
   case utf8_to_utf32:
+  case utf8_to_utf32_replacing:
   case latin1_to_utf32:
     return {1, 4};
   case utf8_to_latin1:
@@ -115,6 +123,41 @@ Shape shape(uint8_t op) {
 
 simdutf::result ok(size_t count) { return {simdutf::SUCCESS, count}; }
 
+// The length of the maximal subpart at p, which does not begin a
+// well-formed character: the lead and the bytes after it that Unicode's
+// Table 3-7 allows, or one byte. Ghostty's MaximalSubpart, restated.
+size_t maximal_subpart(const unsigned char *p, size_t len) {
+  unsigned char b0 = p[0];
+  if (b0 < 0xC2 || b0 > 0xF4)
+    return 1;
+  size_t seq = b0 < 0xE0 ? 2 : b0 < 0xF0 ? 3 : 4;
+  unsigned char lo = b0 == 0xE0 ? 0xA0 : b0 == 0xF0 ? 0x90 : 0x80;
+  unsigned char hi = b0 == 0xED ? 0x9F : b0 == 0xF4 ? 0x8F : 0xBF;
+  size_t n = 1;
+  while (n < seq && n < len && p[n] >= lo && p[n] <= hi) {
+    n++;
+    lo = 0x80;
+    hi = 0xBF;
+  }
+  return n;
+}
+
+size_t utf8_to_utf32_replacing_loop(const char *in, size_t n, char32_t *out) {
+  char32_t *start = out;
+  while (n > 0) {
+    simdutf::result r = simdutf::convert_utf8_to_utf32_with_errors(in, n, out);
+    if (r.error == simdutf::SUCCESS)
+      return out + r.count - start;
+    out += simdutf::convert_valid_utf8_to_utf32(in, r.count, out);
+    *out++ = 0xFFFD;
+    size_t skip = r.count + maximal_subpart(
+        reinterpret_cast<const unsigned char *>(in) + r.count, n - r.count);
+    in += skip;
+    n -= skip;
+  }
+  return out - start;
+}
+
 // Sets `written` for the `_details` ops, whose output is kept on failure.
 simdutf::result run(uint8_t op, uint8_t option, const void *in, size_t n,
                     void *out, size_t out_bytes, size_t &written) {
@@ -142,6 +185,8 @@ simdutf::result run(uint8_t op, uint8_t option, const void *in, size_t n,
     return convert_utf8_to_utf16be_with_errors(c8, n, o16);
   case utf8_to_utf32:
     return convert_utf8_to_utf32_with_errors(c8, n, o32);
+  case utf8_to_utf32_replacing:
+    return ok(utf8_to_utf32_replacing_loop(c8, n, o32));
   case utf8_to_latin1:
     return convert_utf8_to_latin1_with_errors(c8, n, o8);
   case utf16le_to_utf8:

@@ -238,6 +238,9 @@ const utf8_defs = [_]Def{
     check("convert", "utf8ToUtf16be", .utf8_to_utf16be, .{}),
     check("convert", "utf8ToUtf32", .utf8_to_utf32, .{}),
     check("convert", "utf8ToLatin1", .utf8_to_latin1, .{}),
+    // A `(src, dst) usize`, so compared only where the oracle succeeds,
+    // which is always: on the count and the output.
+    check("convert", "utf8ToUtf32Replacing", .utf8_to_utf32_replacing, .{}),
     check("convert", "validUtf8ToUtf16le", .utf8_to_utf16le, .{}),
     check("convert", "validUtf8ToUtf16be", .utf8_to_utf16be, .{}),
     check("convert", "validUtf8ToUtf32", .utf8_to_utf32, .{}),
