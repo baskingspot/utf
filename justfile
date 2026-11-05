@@ -66,6 +66,7 @@ check-target TARGET:
 [group("test")]
 check-windows:
     just check-target x86_64-windows-gnu
+    just check-target x86_64-windows-msvc
     just check-target aarch64-windows-gnu
 
 [doc("Gate for 32-bit targets, where `usize` is narrower than the `u64` sums and masks the kernels use: the x86 tests run on an x86-64 Linux host and compile elsewhere, and the arm ones compile")]
@@ -82,9 +83,20 @@ check-dispatch:
     zig build test -Dcpu=baseline -Doptimize=ReleaseSafe --summary all
     just cpu=baseline oracle
 
-[doc("The per-version gate: the unit tests and the guide's examples, and the Windows and 32-bit compile gates")]
+[doc("Link gate: a program that calls one function, built for a generic x86-64 CPU so it links every tier object, for macOS (Zig's own Mach-O linker on a Linux host), Windows (MinGW and MSVC), and Linux, in Debug, which keeps every tier kernel, and in ReleaseSmall")]
+[group("test")]
+check-link:
+    zig build link -Dtarget=x86_64-macos
+    zig build link -Dtarget=x86_64-macos -Doptimize=ReleaseSmall
+    zig build link -Dtarget=x86_64-windows-gnu
+    zig build link -Dtarget=x86_64-windows-gnu -Doptimize=ReleaseSmall
+    zig build link -Dtarget=x86_64-windows-msvc
+    zig build link -Dtarget=x86_64-linux
+    zig build link -Dtarget=x86_64-linux -Doptimize=ReleaseSmall
+
+[doc("The per-version gate: the unit tests and the guide's examples, the Windows and 32-bit compile gates, and the link gate")]
 [group("ci")]
-check: test check-windows check-32
+check: test check-windows check-32 check-link
 
 [doc("Everything CI runs: the gate, lint, and the docs build")]
 [group("ci")]

@@ -54,6 +54,22 @@ pub fn build(b: *std.Build) void {
     const check_step = b.step("check", "Compile the unit tests and the guide's examples without running them");
     check_step.dependOn(&mod_tests.step);
     check_step.dependOn(&example_tests.step);
+
+    // Link gate: a program that calls one function, linked, not run, for
+    // targets whose linkers resolve the tier objects' references
+    // differently, such as `zig build link -Dtarget=x86_64-macos`.
+    const link_exe = b.addExecutable(.{
+        .name = "utf-link",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("build/link.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "utf", .module = mod }},
+        }),
+    });
+    // Compile steps link only when something asks for the binary.
+    _ = link_exe.getEmittedBin();
+    b.step("link", "Link a program that calls one function without running it").dependOn(&link_exe.step);
 }
 
 const Role = enum { off, main, kernel, tables };
