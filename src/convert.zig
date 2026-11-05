@@ -714,6 +714,12 @@ const byte2_high = [16]u8{
 /// shifting in. Shifting `cur` itself instead leads LLVM to rebuild it from
 /// loads that overlap it.
 inline fn utf8Invalid(comptime n: usize, cur: @Vector(n, u8)) bool {
+    return utf8InvalidOf(n, true, cur);
+}
+
+/// `utf8Invalid`, for `cur` with no byte from 0xF0 when not `four`: no
+/// fourth byte to require, which saves three operations a register.
+inline fn utf8InvalidOf(comptime n: usize, comptime four: bool, cur: @Vector(n, u8)) bool {
     const V = @Vector(n, u8);
     const zero = splat(V, 0);
     const first = simd.lookup16(byte1_high, cur >> splat(V, 4)) & simd.lookup16(byte1_low, cur & splat(V, 0x0F));
@@ -721,7 +727,7 @@ inline fn utf8Invalid(comptime n: usize, cur: @Vector(n, u8)) bool {
     const special = simd.prev(1, first, ascii) & simd.lookup16(byte2_high, cur >> splat(V, 4));
     const third = @select(u8, cur >= splat(V, 0xE0), splat(V, 0x80), zero);
     const fourth = @select(u8, cur >= splat(V, 0xF0), splat(V, 0x80), zero);
-    const must23 = simd.prev(2, third, zero) | simd.prev(3, fourth, zero);
+    const must23 = if (four) simd.prev(2, third, zero) | simd.prev(3, fourth, zero) else simd.prev(2, third, zero);
     if (neon) return anySet(fold(special ^ must23));
     return @reduce(.Or, special ^ must23) != 0;
 }
@@ -1635,12 +1641,13 @@ inline fn utf8BlocksApple(
             p += n;
             continue;
         };
-        if (checked and utf8Invalid(64, block)) break;
         // Blocks with four-byte characters too: on these cores
         // `utf8DecodeBlock` decodes emoji text 1.9x as fast as
         // windows.
         const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
-        if (anyTrue(u8, block >= splat(@Vector(64, u8), 0xF0)))
+        const four = anyTrue(u8, block >= splat(@Vector(64, u8), 0xF0));
+        if (checked and if (four) utf8Invalid(64, block) else utf8InvalidOf(64, false, block)) break;
+        if (four)
             utf8DecodeBlock(T, e, true, block, ends, dst, &o)
         else
             utf8DecodeBlock(T, e, false, block, ends, dst, &o);
