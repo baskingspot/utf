@@ -1,0 +1,5 @@
+# Ghostty's vendored simdutf amalgamation (pkg/simdutf/vendor/), copied in
+# to build; not ours to commit.
+simdutf.cpp
+simdutf.h
+out-*/

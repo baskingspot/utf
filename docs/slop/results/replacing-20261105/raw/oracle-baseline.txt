@@ -1,0 +1,371 @@
+warning: Git tree '/home/user/workspace/repo' is dirty
+mkdir -p zig-out/bin
+c++ -O2 -std=c++20 -o zig-out/bin/utf-oracle bench/oracle/oracle.cpp $(pkg-config --cflags --libs simdutf) -Wl,-rpath,"$(pkg-config --variable=libdir simdutf)"
+cd bench && zig build -p ../zig-out -Dcpu=baseline
+zig-out/bin/oracle-compare 1000000 1
+simdutf kernel: icelake; 1000000 random UTF-8 inputs, seed 1
+utf8: 638976 swept and 1000000 random inputs
+utf8     scalar.validateUtf8                        1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     validate.utf8WithErrors                    1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     validate.utf8                              1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf16le                      1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf16be                      1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf32                        1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToLatin1                       1638976 compared, 0 mismatches
+         simdutf said: none=55930 header_bits=94493 too_short=95948 too_long=176443 overlong=15056 too_large=1201106
+utf8     convert.utf8ToUtf32Replacing               1638976 compared, 0 mismatches
+         simdutf said: none=1638976
+utf8     convert.validUtf8ToUtf16le                  206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToUtf16be                  206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToUtf32                    206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToLatin1                    55930 compared, 0 mismatches, 1583046 not compared: simdutf rejected them
+         simdutf said: none=55930
+utf8     length.utf16FromUtf8                        206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.utf32FromUtf8                        206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.countUtf8                            206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.latin1FromUtf8                        55930 compared, 0 mismatches, 1583046 not compared: simdutf rejected them
+         simdutf said: none=55930
+utf8     convert.utf8ToBmp                          1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     std.unicode.utf8ToUtf16Le                  1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+ascii: 250000 random inputs
+ascii    validate.asciiWithErrors                    250000 compared, 0 mismatches
+         simdutf said: none=62556 not_ascii=187444
+ascii    validate.ascii                              250000 compared, 0 mismatches
+         simdutf said: none=62556 not_ascii=187444
+utf16le: 250000 random inputs
+utf16le  validate.utf16leWithErrors                  250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  validate.utf16le                            250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToUtf8                       250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToUtf32                      250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToLatin1                     250000 compared, 0 mismatches
+         simdutf said: none=31416 too_large=218584
+utf16le  convert.utf16leToUtf16be                    250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.validUtf16leToUtf8                  113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  convert.validUtf16leToUtf32                 113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  convert.validUtf16leToLatin1                 31416 compared, 0 mismatches, 218584 not compared: simdutf rejected them
+         simdutf said: none=31416
+utf16le  convert.validUtf16leToUtf16be               113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.utf8FromUtf16le                      113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.utf32FromUtf16le                     113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.countUtf16le                         113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.latin1FromUtf16                       31416 compared, 0 mismatches, 218584 not compared: simdutf rejected them
+         simdutf said: none=31416
+utf16le  convert.utf16leToUtf8 (full_result)         250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.bmpToUtf8                            59054 compared, 0 mismatches, 190946 not compared: they hold surrogates
+         simdutf said: none=59054
+utf16le  std.unicode.utf16LeToUtf8                   250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16be: 250000 random inputs
+utf16be  validate.utf16beWithErrors                  250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  validate.utf16be                            250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToUtf8                       250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToUtf32                      250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToLatin1                     250000 compared, 0 mismatches
+         simdutf said: none=31258 too_large=218742
+utf16be  convert.utf16beToUtf16le                    250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.validUtf16beToUtf8                  113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  convert.validUtf16beToUtf32                 113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  convert.validUtf16beToLatin1                 31258 compared, 0 mismatches, 218742 not compared: simdutf rejected them
+         simdutf said: none=31258
+utf16be  convert.validUtf16beToUtf16le               113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.utf8FromUtf16be                      113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.utf32FromUtf16be                     113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.countUtf16be                         113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.latin1FromUtf16                       31258 compared, 0 mismatches, 218742 not compared: simdutf rejected them
+         simdutf said: none=31258
+utf32: 250000 random inputs
+utf32    validate.utf32WithErrors                    250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    validate.utf32                              250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf8                         250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf16le                      250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf16be                      250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToLatin1                       250000 compared, 0 mismatches
+         simdutf said: none=37220 too_large=212780
+utf32    convert.validUtf32ToUtf8                    137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToUtf16le                 137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToUtf16be                 137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToLatin1                   37220 compared, 0 mismatches, 212780 not compared: simdutf rejected them
+         simdutf said: none=37220
+utf32    length.utf8FromUtf32                        137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    length.utf16FromUtf32                       137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    length.latin1FromUtf32                       37220 compared, 0 mismatches, 212780 not compared: simdutf rejected them
+         simdutf said: none=37220
+latin1: 250000 random inputs
+latin1   convert.latin1ToUtf8                        250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf16le                     250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf16be                     250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf32                       250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf8                   250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf16le                250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf16be                250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf32                  250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf8FromLatin1                       250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf16FromLatin1                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf32FromLatin1                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+base64: 250000 random inputs
+base64   base64.decode                               250000 compared, 0 mismatches
+         simdutf said: none=90842 invalid_base64_character=149762 base64_input_remainder=9396
+base64   base64.decode strict                        250000 compared, 0 mismatches
+         simdutf said: none=56478 invalid_base64_character=146625 base64_input_remainder=46612 base64_extra_bits=285
+base64   base64.decode stop_before_partial           250000 compared, 0 mismatches
+         simdutf said: none=103297 invalid_base64_character=146625 base64_input_remainder=78
+base64   base64.decode url                           250000 compared, 0 mismatches
+         simdutf said: none=91413 invalid_base64_character=149010 base64_input_remainder=9577
+base64   base64.decode url strict                    250000 compared, 0 mismatches
+         simdutf said: none=57153 invalid_base64_character=145936 base64_input_remainder=46615 base64_extra_bits=296
+base64   base64.decode url stop_before_partial       250000 compared, 0 mismatches
+         simdutf said: none=103977 invalid_base64_character=145936 base64_input_remainder=87
+base64   std.base64.standard.Decoder                  46057 compared, 0 mismatches, 203943 not compared: ours rejected them
+         simdutf said: none=46057
+binary: 250000 random inputs
+binary   base64.encode                               250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode unpadded                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode url                           250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode url unpadded                  250000 compared, 0 mismatches
+         simdutf said: none=250000
+0 mismatches in all
+SIMDUTF_FORCE_IMPLEMENTATION=fallback zig-out/bin/oracle-compare 1000000 1
+simdutf kernel: fallback; 1000000 random UTF-8 inputs, seed 1
+utf8: 638976 swept and 1000000 random inputs
+utf8     scalar.validateUtf8                        1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     validate.utf8WithErrors                    1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     validate.utf8                              1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf16le                      1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf16be                      1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToUtf32                        1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     convert.utf8ToLatin1                       1638976 compared, 0 mismatches
+         simdutf said: none=55930 header_bits=94493 too_short=95948 too_long=176443 overlong=15056 too_large=1201106
+utf8     convert.utf8ToUtf32Replacing               1638976 compared, 0 mismatches
+         simdutf said: none=1638976
+utf8     convert.validUtf8ToUtf16le                  206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToUtf16be                  206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToUtf32                    206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     convert.validUtf8ToLatin1                    55930 compared, 0 mismatches, 1583046 not compared: simdutf rejected them
+         simdutf said: none=55930
+utf8     length.utf16FromUtf8                        206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.utf32FromUtf8                        206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.countUtf8                            206003 compared, 0 mismatches, 1432973 not compared: simdutf rejected them
+         simdutf said: none=206003
+utf8     length.latin1FromUtf8                        55930 compared, 0 mismatches, 1583046 not compared: simdutf rejected them
+         simdutf said: none=55930
+utf8     convert.utf8ToBmp                          1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+utf8     std.unicode.utf8ToUtf16Le                  1638976 compared, 0 mismatches
+         simdutf said: none=206003 header_bits=115931 too_short=935631 too_long=244704 overlong=61364 too_large=46554 surrogate=28789
+ascii: 250000 random inputs
+ascii    validate.asciiWithErrors                    250000 compared, 0 mismatches
+         simdutf said: none=62556 not_ascii=187444
+ascii    validate.ascii                              250000 compared, 0 mismatches
+         simdutf said: none=62556 not_ascii=187444
+utf16le: 250000 random inputs
+utf16le  validate.utf16leWithErrors                  250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  validate.utf16le                            250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToUtf8                       250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToUtf32                      250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.utf16leToLatin1                     250000 compared, 0 mismatches
+         simdutf said: none=31416 too_large=218584
+utf16le  convert.utf16leToUtf16be                    250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.validUtf16leToUtf8                  113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  convert.validUtf16leToUtf32                 113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  convert.validUtf16leToLatin1                 31416 compared, 0 mismatches, 218584 not compared: simdutf rejected them
+         simdutf said: none=31416
+utf16le  convert.validUtf16leToUtf16be               113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.utf8FromUtf16le                      113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.utf32FromUtf16le                     113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.countUtf16le                         113820 compared, 0 mismatches, 136180 not compared: simdutf rejected them
+         simdutf said: none=113820
+utf16le  length.latin1FromUtf16                       31416 compared, 0 mismatches, 218584 not compared: simdutf rejected them
+         simdutf said: none=31416
+utf16le  convert.utf16leToUtf8 (full_result)         250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16le  convert.bmpToUtf8                            59054 compared, 0 mismatches, 190946 not compared: they hold surrogates
+         simdutf said: none=59054
+utf16le  std.unicode.utf16LeToUtf8                   250000 compared, 0 mismatches
+         simdutf said: none=113820 surrogate=136180
+utf16be: 250000 random inputs
+utf16be  validate.utf16beWithErrors                  250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  validate.utf16be                            250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToUtf8                       250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToUtf32                      250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.utf16beToLatin1                     250000 compared, 0 mismatches
+         simdutf said: none=31258 too_large=218742
+utf16be  convert.utf16beToUtf16le                    250000 compared, 0 mismatches
+         simdutf said: none=113596 surrogate=136404
+utf16be  convert.validUtf16beToUtf8                  113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  convert.validUtf16beToUtf32                 113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  convert.validUtf16beToLatin1                 31258 compared, 0 mismatches, 218742 not compared: simdutf rejected them
+         simdutf said: none=31258
+utf16be  convert.validUtf16beToUtf16le               113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.utf8FromUtf16be                      113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.utf32FromUtf16be                     113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.countUtf16be                         113596 compared, 0 mismatches, 136404 not compared: simdutf rejected them
+         simdutf said: none=113596
+utf16be  length.latin1FromUtf16                       31258 compared, 0 mismatches, 218742 not compared: simdutf rejected them
+         simdutf said: none=31258
+utf32: 250000 random inputs
+utf32    validate.utf32WithErrors                    250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    validate.utf32                              250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf8                         250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf16le                      250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToUtf16be                      250000 compared, 0 mismatches
+         simdutf said: none=137407 too_large=62776 surrogate=49817
+utf32    convert.utf32ToLatin1                       250000 compared, 0 mismatches
+         simdutf said: none=37220 too_large=212780
+utf32    convert.validUtf32ToUtf8                    137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToUtf16le                 137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToUtf16be                 137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    convert.validUtf32ToLatin1                   37220 compared, 0 mismatches, 212780 not compared: simdutf rejected them
+         simdutf said: none=37220
+utf32    length.utf8FromUtf32                        137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    length.utf16FromUtf32                       137407 compared, 0 mismatches, 112593 not compared: simdutf rejected them
+         simdutf said: none=137407
+utf32    length.latin1FromUtf32                       37220 compared, 0 mismatches, 212780 not compared: simdutf rejected them
+         simdutf said: none=37220
+latin1: 250000 random inputs
+latin1   convert.latin1ToUtf8                        250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf16le                     250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf16be                     250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.latin1ToUtf32                       250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf8                   250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf16le                250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf16be                250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   convert.validLatin1ToUtf32                  250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf8FromLatin1                       250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf16FromLatin1                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+latin1   length.utf32FromLatin1                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+base64: 250000 random inputs
+base64   base64.decode                               250000 compared, 0 mismatches
+         simdutf said: none=90842 invalid_base64_character=149762 base64_input_remainder=9396
+base64   base64.decode strict                        250000 compared, 0 mismatches
+         simdutf said: none=56478 invalid_base64_character=146625 base64_input_remainder=46612 base64_extra_bits=285
+base64   base64.decode stop_before_partial           250000 compared, 0 mismatches
+         simdutf said: none=103297 invalid_base64_character=146625 base64_input_remainder=78
+base64   base64.decode url                           250000 compared, 0 mismatches
+         simdutf said: none=91413 invalid_base64_character=149010 base64_input_remainder=9577
+base64   base64.decode url strict                    250000 compared, 0 mismatches
+         simdutf said: none=57153 invalid_base64_character=145936 base64_input_remainder=46615 base64_extra_bits=296
+base64   base64.decode url stop_before_partial       250000 compared, 0 mismatches
+         simdutf said: none=103977 invalid_base64_character=145936 base64_input_remainder=87
+base64   std.base64.standard.Decoder                  46057 compared, 0 mismatches, 203943 not compared: ours rejected them
+         simdutf said: none=46057
+binary: 250000 random inputs
+binary   base64.encode                               250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode unpadded                      250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode url                           250000 compared, 0 mismatches
+         simdutf said: none=250000
+binary   base64.encode url unpadded                  250000 compared, 0 mismatches
+         simdutf said: none=250000
+0 mismatches in all
+exit 0

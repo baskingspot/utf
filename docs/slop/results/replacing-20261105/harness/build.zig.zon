@@ -1,0 +1,10 @@
+.{
+    .name = .utf_replacing_ab,
+    .version = "0.0.0",
+    .fingerprint = 0x8b00f3313cdea0ba,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .utf = .{ .path = "../../../../.." },
+    },
+    .paths = .{""},
+}

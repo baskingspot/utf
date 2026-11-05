@@ -15,7 +15,7 @@ time. A native or named CPU picks at compile time. On aarch64 the NEON kernels
 are picked at compile time.
 
 - [Validating text](#validating-text): `validate.utf8`, `ascii`, `utf16le`, `utf16be`, and `utf32` return a `bool`, and each `WithErrors` form returns a `Result` with the error kind and its position.
-- [Transcoding](#transcoding): `convert` has a checked form that validates as it writes and a `valid` form for input already known to be well-formed, for every pair of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1.
+- [Transcoding](#transcoding): `convert` has a checked form that validates as it writes and a `valid` form for input already known to be well-formed, for every pair of UTF-8, UTF-16LE/BE, UTF-32, and Latin-1, and UTF-8 to UTF-32 that writes U+FFFD for what is ill-formed.
 - [Counting and sizing](#counting-and-sizing): `length` gives the output size each conversion needs and the code points in an input, without writing anything.
 - [Base64](#base64): `base64.encode` and `decode` with the standard or URL alphabet, optional padding, three last-chunk rules, and ASCII whitespace skipped on decode.
 - [Limits](#limits): whole buffers, no C ABI, native-order UTF-32, and the base64 behaviors that are deliberate.
@@ -180,6 +180,23 @@ the destination holds the conversion of everything before the error, and
 carries on starts again at input `count` and output `written`, with no second
 pass to measure the part that converted. In the example above, `buffer[0..3]`
 is "Aé" in UTF-8.
+
+## Replace what is ill-formed
+
+For UTF-8 to UTF-32 that loop is one call: `utf8ToUtf32Replacing` writes
+U+FFFD for each maximal subpart of an ill-formed sequence and carries on, as
+Unicode's chapter 3, WHATWG's decoder, and ICU substitute. A maximal subpart
+is a lead byte and the bytes after it that could still continue it, or one
+byte that begins no character. It returns the number of code points written,
+and the destination must hold at least as many as the input has bytes.
+
+```zig
+const source = "a\xF1\x80\x80\xE1\x80\xC2b";
+var buffer: [source.len]u32 = undefined;
+
+const written = utf.convert.utf8ToUtf32Replacing(source, &buffer);
+// written is 5: 'a', three U+FFFD, and 'b'.
+```
 
 ## The valid form skips the checks
 

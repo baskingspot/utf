@@ -5,6 +5,10 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `convert.utf8ToUtf32Replacing(src, dst) usize`, which converts UTF-8 to UTF-32 in one call and writes U+FFFD for each maximal subpart of an ill-formed sequence, as Unicode, WHATWG, and ICU substitute, where a caller looped over `convert.utf8ToUtf32` and skipped each error itself. It returns the code points written; `dst` must hold `src.len`. It has the same SIMD kernels as `utf8ToUtf32`, picked at run time in generic x86-64 builds.
+
 ### Changed
 
 - On Apple Silicon, `convert.utf8ToUtf32` is faster on non-ASCII text from 64 bytes: on an M4 Pro 2.1x on four-byte characters such as emoji without spaces, 1.5x on CJK without ASCII, 1.2x on mixed scripts and emoji with spaces, and 1.1x on Latin, Cyrillic, Korean, and CJK with spaces; `utf8ToUtf16le` and `utf8ToUtf16be` 1.2-1.5x on CJK. Other CPUs run the same code as before.

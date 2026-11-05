@@ -32,6 +32,14 @@ test "UTF-8 to Latin-1 rejects a code point above U+00FF" {
     try std.testing.expectEqual(@as(usize, 0), result.count);
 }
 
+test "UTF-8 to UTF-32 replaces each maximal subpart with U+FFFD" {
+    const source = "a\xF1\x80\x80\xE1\x80\xC2b";
+    var buffer: [source.len]u32 = undefined;
+
+    const written = utf.convert.utf8ToUtf32Replacing(source, &buffer);
+    try std.testing.expectEqualSlices(u32, &.{ 'a', 0xFFFD, 0xFFFD, 0xFFFD, 'b' }, buffer[0..written]);
+}
+
 test "the valid form assumes well-formed input and a sized buffer" {
     const source = "plain ASCII";
     const units = utf.length.utf16FromUtf8(source);

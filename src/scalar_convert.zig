@@ -212,6 +212,49 @@ pub fn validUtf8ToUtf32(src: []const u8, dst: []u32) usize {
     return o;
 }
 
+/// Converts UTF-8 to UTF-32, writing U+FFFD for each maximal subpart of an
+/// ill-formed sequence, as Unicode's "U+FFFD Substitution of Maximal
+/// Subparts" (chapter 3), WHATWG's UTF-8 decoder, and ICU do; returns the
+/// number of code points written. `dst` must hold `src.len` of them.
+pub fn utf8ToUtf32Replacing(src: []const u8, dst: []u32) usize {
+    var i: usize = 0;
+    var o: usize = 0;
+    while (i < src.len) {
+        const c = decodeUtf8(src, i);
+        if (c.err == .none) {
+            dst[o] = c.cp;
+            i += c.len;
+        } else {
+            dst[o] = 0xFFFD;
+            i += maximalSubpart(src[i..]);
+        }
+        o += 1;
+    }
+    return o;
+}
+
+/// The length of the maximal subpart at the start of `s`, which does not
+/// begin a well-formed character: its lead and the bytes after it that
+/// Table 3-7 allows there, or one byte if the lead begins no character.
+fn maximalSubpart(s: []const u8) usize {
+    // Each row: the sequence length, then the range of each byte after the
+    // lead.
+    const row: struct { usize, [3][2]u8 } = switch (s[0]) {
+        0xC2...0xDF => .{ 2, .{ .{ 0x80, 0xBF }, undefined, undefined } },
+        0xE0 => .{ 3, .{ .{ 0xA0, 0xBF }, .{ 0x80, 0xBF }, undefined } },
+        0xE1...0xEC, 0xEE, 0xEF => .{ 3, .{ .{ 0x80, 0xBF }, .{ 0x80, 0xBF }, undefined } },
+        0xED => .{ 3, .{ .{ 0x80, 0x9F }, .{ 0x80, 0xBF }, undefined } },
+        0xF0 => .{ 4, .{ .{ 0x90, 0xBF }, .{ 0x80, 0xBF }, .{ 0x80, 0xBF } } },
+        0xF1...0xF3 => .{ 4, .{ .{ 0x80, 0xBF }, .{ 0x80, 0xBF }, .{ 0x80, 0xBF } } },
+        0xF4 => .{ 4, .{ .{ 0x80, 0x8F }, .{ 0x80, 0xBF }, .{ 0x80, 0xBF } } },
+        else => return 1,
+    };
+    const len, const ranges = row;
+    var n: usize = 1;
+    while (n < len and n < s.len and s[n] >= ranges[n - 1][0] and s[n] <= ranges[n - 1][1]) n += 1;
+    return n;
+}
+
 /// Converts UTF-8 holding only U+0000-U+00FF to Latin-1, classifying errors
 /// as simdutf does: a two-byte character above U+00FF, and any three- or
 /// four-byte lead, is `too_large` at its first byte, before its continuation
@@ -589,6 +632,53 @@ test "checked conversions name the first error, where it starts, and what came b
     try testing.expectEqual(ConvertResult.fail(.too_large, 1, 2), utf32ToUtf8(&bad32, &out8));
     try testing.expectEqual(ConvertResult.fail(.surrogate, 0, 0), utf32ToUtf16(.big, bad32[2..], &out16));
     try testing.expectEqual(ConvertResult.fail(.too_large, 1, 1), utf32ToLatin1(&.{ 0xFF, 0x100 }, &out8));
+}
+
+test "the replacing conversion writes U+FFFD for each maximal subpart" {
+    const x = 0xFFFD;
+    const cases = [_]struct { []const u8, []const u32 }{
+        // Unicode's example for Table 3-8 (section 3.9.6).
+        .{ "\x61\xF1\x80\x80\xE1\x80\xC2\x62\x80\x63\x80\xBF\x64", &.{ 'a', x, x, x, 'b', x, 'c', x, x, 'd' } },
+        // Tables 3-8 to 3-11: non-shortest forms, surrogates, other
+        // ill-formed sequences, and truncated ones.
+        .{ "\xC0\xAF\xE0\x80\xBF\xF0\x81\x82A", &.{ x, x, x, x, x, x, x, x, 'A' } },
+        .{ "\xED\xA0\x80\xED\xBF\xBF\xED\xAFA", &.{ x, x, x, x, x, x, x, x, 'A' } },
+        .{ "\xF4\x91\x92\x93\xFFA\x80\xBFB", &.{ x, x, x, x, x, 'A', x, x, 'B' } },
+        .{ "\xE1\x80\xE2\xF0\x91\x92\xF1\xBFA", &.{ x, x, x, x, 'A' } },
+        // Truncated at the end, and well-formed at each end of the range.
+        .{ "\xF4\x8F\xBF", &.{x} },
+        .{ "\xF4\x8F\xBF\xBF\xEF\xBF\xBF\xC2\x80", &.{ 0x10FFFF, 0xFFFF, 0x80 } },
+        .{ "", &.{} },
+    };
+    for (cases) |case| {
+        const src, const want = case;
+        var got: [16]u32 = undefined;
+        const n = utf8ToUtf32Replacing(src, &got);
+        try testing.expectEqualSlices(u32, want, got[0..n]);
+    }
+}
+
+test "the replacing conversion matches std.unicode.fmtUtf8 on random bytes" {
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const r = prng.random();
+    // Bytes from the lead and continuation ranges and their edges, so most
+    // sequences come close to being well-formed.
+    const pool = [_]u8{
+        0x41, 0x7F, 0x80, 0x8F, 0x90, 0x9F, 0xA0, 0xBF, 0xC0, 0xC1, 0xC2, 0xDF,
+        0xE0, 0xE1, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF3, 0xF4, 0xF5, 0xFF,
+    };
+    var src: [24]u8 = undefined;
+    var got: [24]u32 = undefined;
+    var text: [24 * 3]u8 = undefined;
+    for (0..200_000) |_| {
+        const s = src[0..r.uintAtMost(usize, src.len)];
+        for (s) |*b| b.* = pool[r.uintLessThan(usize, pool.len)];
+        const n = utf8ToUtf32Replacing(s, &got);
+        const want = try std.fmt.bufPrint(&text, "{f}", .{std.unicode.fmtUtf8(s)});
+        var it = std.unicode.Utf8View.initUnchecked(want).iterator();
+        for (got[0..n]) |cp| try testing.expectEqual(cp, it.nextCodepoint() orelse return error.TooLong);
+        try testing.expectEqual(null, it.nextCodepoint());
+    }
 }
 
 test "checked conversions stop at the first character that does not fit" {

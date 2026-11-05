@@ -10,7 +10,9 @@
 //! first character that does not fit; a buffer sized by the matching
 //! `length` function always fits. The valid form (`validUtf8ToUtf16le`)
 //! assumes well-formed input and a buffer the `length` function sized, and
-//! returns the number of code units written.
+//! returns the number of code units written. UTF-8 to UTF-32 has a third,
+//! `utf8ToUtf32Replacing`, which writes U+FFFD for each maximal subpart of
+//! an ill-formed sequence and goes on.
 //! Results equal those of `scalar_convert.zig` on every input.
 //!
 //! UTF-16LE and UTF-16BE name the byte order of the code units in memory, as
@@ -58,19 +60,34 @@ pub fn utf8ToUtf16le(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf16leKernel, .{ src, dst });
 }
 fn utf8ToUtf16leKernel(src: []const u8, dst: []u16) ConvertResult {
-    return utf8ToUnits(u16, .little, true, src, dst);
+    return utf8ToUnits(u16, .little, .checked, src, dst);
 }
 pub fn utf8ToUtf16be(src: []const u8, dst: []u16) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf16beKernel, .{ src, dst });
 }
 fn utf8ToUtf16beKernel(src: []const u8, dst: []u16) ConvertResult {
-    return utf8ToUnits(u16, .big, true, src, dst);
+    return utf8ToUnits(u16, .big, .checked, src, dst);
 }
 pub fn utf8ToUtf32(src: []const u8, dst: []u32) ConvertResult {
     return dispatch.call(@src(), utf8ToUtf32Kernel, .{ src, dst });
 }
 fn utf8ToUtf32Kernel(src: []const u8, dst: []u32) ConvertResult {
-    return utf8ToUnits(u32, native, true, src, dst);
+    return utf8ToUnits(u32, native, .checked, src, dst);
+}
+/// Converts UTF-8 to UTF-32 in one pass that never stops: each maximal
+/// subpart of an ill-formed sequence becomes one U+FFFD, as Unicode's
+/// "U+FFFD Substitution of Maximal Subparts" (chapter 3), WHATWG's UTF-8
+/// decoder, and ICU have it. A maximal subpart is a lead and the bytes
+/// after it that could still continue it, or one byte that begins no
+/// character, so `"a\xF1\x80\x80\xE1\x80\xC2b"` becomes a, three U+FFFD,
+/// and b. Returns the number of code points written; `dst` must hold at
+/// least `src.len`, since no byte makes more than one.
+pub fn utf8ToUtf32Replacing(src: []const u8, dst: []u32) usize {
+    return dispatch.call(@src(), utf8ToUtf32ReplacingKernel, .{ src, dst });
+}
+fn utf8ToUtf32ReplacingKernel(src: []const u8, dst: []u32) usize {
+    std.debug.assert(dst.len >= src.len);
+    return utf8ToUnits(u32, native, .replacing, src, dst).count;
 }
 pub fn utf8ToLatin1(src: []const u8, dst: []u8) ConvertResult {
     return dispatch.call(@src(), utf8ToLatin1Kernel, .{ src, dst });
@@ -82,19 +99,19 @@ pub fn validUtf8ToUtf16le(src: []const u8, dst: []u16) usize {
     return dispatch.call(@src(), validUtf8ToUtf16leKernel, .{ src, dst });
 }
 fn validUtf8ToUtf16leKernel(src: []const u8, dst: []u16) usize {
-    return utf8ToUnits(u16, .little, false, src, dst).count;
+    return utf8ToUnits(u16, .little, .valid, src, dst).count;
 }
 pub fn validUtf8ToUtf16be(src: []const u8, dst: []u16) usize {
     return dispatch.call(@src(), validUtf8ToUtf16beKernel, .{ src, dst });
 }
 fn validUtf8ToUtf16beKernel(src: []const u8, dst: []u16) usize {
-    return utf8ToUnits(u16, .big, false, src, dst).count;
+    return utf8ToUnits(u16, .big, .valid, src, dst).count;
 }
 pub fn validUtf8ToUtf32(src: []const u8, dst: []u32) usize {
     return dispatch.call(@src(), validUtf8ToUtf32Kernel, .{ src, dst });
 }
 fn validUtf8ToUtf32Kernel(src: []const u8, dst: []u32) usize {
-    return utf8ToUnits(u32, native, false, src, dst).count;
+    return utf8ToUnits(u32, native, .valid, src, dst).count;
 }
 pub fn validUtf8ToLatin1(src: []const u8, dst: []u8) usize {
     return dispatch.call(@src(), validUtf8ToLatin1Kernel, .{ src, dst });
@@ -720,6 +737,23 @@ inline fn utf8Invalid(comptime n: usize, cur: @Vector(n, u8)) bool {
 /// `utf8Invalid`, for `cur` with no byte from 0xF0 when not `four`: no
 /// fourth byte to require, which saves three operations a register.
 inline fn utf8InvalidOf(comptime n: usize, comptime four: bool, cur: @Vector(n, u8)) bool {
+    const errors = utf8ErrorsOf(n, four, cur);
+    if (neon) return anySet(fold(errors));
+    return @reduce(.Or, errors) != 0;
+}
+
+/// `utf8Invalid`'s work: nonzero at each byte where an error shows. That
+/// is the second byte of a pair that cannot occur (a continuation after
+/// ASCII, a lead not followed by one, an overlong, surrogate, or too-large
+/// second byte, a third continuation in a row) and each byte a three- or
+/// four-byte lead needs to be a continuation and is not.
+inline fn utf8Errors(comptime n: usize, cur: @Vector(n, u8)) @Vector(n, u8) {
+    return utf8ErrorsOf(n, true, cur);
+}
+
+/// `utf8Errors`, without the fourth-byte test when not `four`, as
+/// `utf8InvalidOf`.
+inline fn utf8ErrorsOf(comptime n: usize, comptime four: bool, cur: @Vector(n, u8)) @Vector(n, u8) {
     const V = @Vector(n, u8);
     const zero = splat(V, 0);
     const first = simd.lookup16(byte1_high, cur >> splat(V, 4)) & simd.lookup16(byte1_low, cur & splat(V, 0x0F));
@@ -728,8 +762,7 @@ inline fn utf8InvalidOf(comptime n: usize, comptime four: bool, cur: @Vector(n, 
     const third = @select(u8, cur >= splat(V, 0xE0), splat(V, 0x80), zero);
     const fourth = @select(u8, cur >= splat(V, 0xF0), splat(V, 0x80), zero);
     const must23 = if (four) simd.prev(2, third, zero) | simd.prev(3, fourth, zero) else simd.prev(2, third, zero);
-    if (neon) return anySet(fold(special ^ must23));
-    return @reduce(.Or, special ^ must23) != 0;
+    return special ^ must23;
 }
 
 /// Bit i set where byte i is not a continuation byte.
@@ -950,11 +983,12 @@ inline fn utf8BlockEnd(src: []const u8) ?usize {
 fn utf8ToUnitsAvx512(
     comptime T: type,
     comptime e: Endian,
-    comptime checked: bool,
+    comptime mode: Utf8Mode,
     src: []const u8,
     dst: []T,
 ) struct { usize, usize } {
     @setEvalBranchQuota(10_000);
+    const checked = mode != .valid;
     const V = V64;
     const W = @Vector(32, u16);
     const zero = splat(V, 0);
@@ -991,9 +1025,36 @@ fn utf8ToUnitsAvx512(
         // A shorter block is zero-padded, so it ends at a boundary (its
         // validation finds a character cut off); a whole one ends at its
         // last whole character.
-        if (rem >= 64) take = utf8BlockEnd(src[p..]) orelse break;
-        if (checked and utf8Invalid(64, block)) break;
         const leads = leadMask(64, block);
+        // Where replacing ends past the block's characters, from `p`: 0
+        // when the block is valid. Inlined in the loop: a call in it makes
+        // LLVM spill the loop's constants, as `scalarStep` says.
+        var stop: usize = 0;
+        if (mode == .replacing) {
+            const errors = simd.bitmask(utf8Errors(64, block) != zero);
+            if (errors != 0) {
+                const at, const start = utf8FirstError(leads, errors);
+                take = start;
+                stop = at + 1;
+                // ASCII before the error, as in text with stray bytes: the
+                // block widened, of which the units past `start` are
+                // written again.
+                if (simd.bitmask(block >= splat(V, 0x80)) & simd.lowBits(u64, start) == 0) {
+                    if (rem >= 64)
+                        store(T, e, dst, o, block)
+                    else if (start > 0)
+                        storeWidened(T, e, dst, o, block, start);
+                    p, o = @call(.always_inline, utf8ReplaceRun, .{ src, p + start, p + stop, dst, o + start });
+                    continue;
+                }
+            } else if (rem >= 64) {
+                // A valid block has a lead in its last four bytes.
+                take = utf8BlockEnd(src[p..]).?;
+            }
+        } else {
+            if (rem >= 64) take = utf8BlockEnd(src[p..]) orelse break;
+            if (checked and utf8Invalid(64, block)) break;
+        }
         // Bit i set where byte i ends a character.
         const ends = (leads >> 1 | @as(u64, 1) << 63) & simd.lowBits(u64, take);
         const m4 = simd.bitmask(block >= splat(V, 0xF0));
@@ -1070,6 +1131,9 @@ fn utf8ToUnitsAvx512(
         }
         p += take;
         o += count;
+        if (mode == .replacing and stop != 0) {
+            p, o = @call(.always_inline, utf8ReplaceRun, .{ src, p, p - take + stop, dst, o });
+        }
     }
     return .{ p, o };
 }
@@ -1577,13 +1641,14 @@ inline fn utf8FourApple(
 inline fn utf8BlocksApple(
     comptime T: type,
     comptime e: Endian,
-    comptime checked: bool,
+    comptime mode: Utf8Mode,
     src: []const u8,
     dst: []T,
 ) struct {
     usize,
     usize,
 } {
+    const checked = mode != .valid;
     var p: usize = 0;
     var o: usize = 0;
     while (src.len - p >= 64 and dst.len - o >= 64) {
@@ -1608,14 +1673,21 @@ inline fn utf8BlocksApple(
         // 21 three-byte ones, as Chinese or Japanese without ASCII, which
         // the next block goes on from (from the lead in byte 63).
         if (leads == 0x1111_1111_1111_1111) {
-            if (!utf8FourApple(T, e, checked, block, dst, &o)) break;
+            if (!utf8FourApple(T, e, checked, block, dst, &o)) {
+                if (mode == .replacing and src.len - p >= 64 + 16 and dst.len - o >= 64 + 16 and
+                    utf8ReplaceHere(src, dst, &p, &o)) continue;
+                break;
+            }
             p += 64;
             continue;
         }
         const room = src.len - p >= 64 + 16 and dst.len - o >= 64 + 16;
         if (room and leads == 0x9249_2492_4924_9249) {
             const run = utf8ThreeRun(checked, src[p..], 0, 21);
-            if (checked and anySet(run.bad)) break;
+            if (checked and anySet(run.bad)) {
+                if (mode == .replacing and utf8ReplaceHere(src, dst, &p, &o)) continue;
+                break;
+            }
             inline for (run.cps, 0..) |cp, g| store(T, e, dst, o + 8 * g, cp);
             p += 63;
             o += 21;
@@ -1628,7 +1700,10 @@ inline fn utf8BlocksApple(
         // block's load then waits on, where a count from the
         // block's lane mask would make it wait on the block's
         // vector work (21 three-byte characters a block, 0.64x).
-        const take = utf8BlockEnd(src[p..]) orelse break;
+        const take = utf8BlockEnd(src[p..]) orelse {
+            if (mode == .replacing and room and utf8ReplaceHere(src, dst, &p, &o)) continue;
+            break;
+        };
         // The last 64 to 79 bytes still decode as a block, where windows
         // took longer, but not as runs, which read past it, and only
         // with room for the eight units `utf8DecodeBlock` writes past
@@ -1637,7 +1712,10 @@ inline fn utf8BlocksApple(
         const whole: u64 = if (take == 64) ~@as(u64, 0) else (@as(u64, 1) << @intCast(take)) - 1;
         if (!room and dst.len - o < (if (T == u32) @popCount(leads & whole) else take) + 8) break;
         if (room) if (utf8AsciiThree(T, e, checked, src[p..], leads, take, dst, &o)) |n| {
-            if (n == 0) break;
+            if (n == 0) {
+                if (mode == .replacing and utf8ReplaceHere(src, dst, &p, &o)) continue;
+                break;
+            }
             p += n;
             continue;
         };
@@ -1646,7 +1724,10 @@ inline fn utf8BlocksApple(
         // windows.
         const ends = (leads >> 1 | @as(u64, 1) << 63) & whole;
         const four = anyTrue(u8, block >= splat(@Vector(64, u8), 0xF0));
-        if (checked and if (four) utf8Invalid(64, block) else utf8InvalidOf(64, false, block)) break;
+        if (checked and if (four) utf8Invalid(64, block) else utf8InvalidOf(64, false, block)) {
+            if (mode == .replacing and room and utf8ReplaceHere(src, dst, &p, &o)) continue;
+            break;
+        }
         if (four)
             utf8DecodeBlock(T, e, true, block, ends, dst, &o)
         else
@@ -1656,14 +1737,136 @@ inline fn utf8BlocksApple(
     return .{ p, o };
 }
 
+/// What a UTF-8 decoder does with ill-formed input: nothing, as it assumes
+/// there is none (`valid`); stop at the first and report it (`checked`); or
+/// write U+FFFD for each maximal subpart and go on (`replacing`, UTF-32
+/// only).
+const Utf8Mode = enum { valid, checked, replacing };
+
+// Replacing ill-formed UTF-8. Blocks decode as in `.checked` mode until
+// one fails validation; then its characters before the first error decode
+// as a block, the bytes from there until past the byte that shows the
+// error decode one by one, U+FFFD for each maximal subpart, and the next
+// block starts where they end. The first error of a block shows at or
+// after the lead of its ill-formed sequence and before the lead after it
+// (`utf8Errors`), and everything before that lead is valid, so the block
+// decodes up to the last lead before the error, and the scalar code
+// replaces from there.
+
+/// From a block's lead mask and the mask of bytes where its errors show:
+/// the first of those bytes, and the last lead before it (0 if there is
+/// none), where the scalar code starts.
+inline fn utf8FirstError(leads: u64, errors: u64) struct { usize, usize } {
+    const at: usize = @ctz(errors);
+    const before = leads & simd.lowBits(u64, at);
+    return .{ at, if (before == 0) 0 else 63 - @as(usize, @clz(before)) };
+}
+
+/// The code point of the character at `src[i]` and its length, or U+FFFD
+/// and the length of the maximal subpart there if it is ill-formed: the
+/// lead and the bytes after it that Table 3-7 allows, or one byte for a
+/// byte that begins no character.
+inline fn decodeReplacing(src: []const u8, i: usize) struct { u32, usize } {
+    const lead: u32 = src[i];
+    if (lead < 0x80) return .{ lead, 1 };
+    // A continuation byte, the lead of an overlong two-byte form, or a
+    // byte above any lead.
+    if (lead < 0xC2 or lead > 0xF4) return .{ 0xFFFD, 1 };
+    const rem = src.len - i;
+    const b1: u32 = if (rem > 1) src[i + 1] else 0;
+    if (lead < 0xE0) {
+        if (b1 & 0xC0 != 0x80) return .{ 0xFFFD, 1 };
+        return .{ (lead & 0x1F) << 6 | (b1 & 0x3F), 2 };
+    }
+    // The second byte's range is narrower after E0 (overlong), ED
+    // (surrogates), F0 (overlong), and F4 (above U+10FFFF).
+    const lo: u32 = if (lead == 0xE0) 0xA0 else if (lead == 0xF0) 0x90 else 0x80;
+    const hi: u32 = if (lead == 0xED) 0x9F else if (lead == 0xF4) 0x8F else 0xBF;
+    if (b1 < lo or b1 > hi) return .{ 0xFFFD, 1 };
+    const b2: u32 = if (rem > 2) src[i + 2] else 0;
+    if (b2 & 0xC0 != 0x80) return .{ 0xFFFD, 2 };
+    if (lead < 0xF0) return .{ (lead & 0x0F) << 12 | (b1 & 0x3F) << 6 | (b2 & 0x3F), 3 };
+    const b3: u32 = if (rem > 3) src[i + 3] else 0;
+    if (b3 & 0xC0 != 0x80) return .{ 0xFFFD, 3 };
+    return .{ (lead & 0x07) << 18 | (b1 & 0x3F) << 12 | (b2 & 0x3F) << 6 | (b3 & 0x3F), 4 };
+}
+
+/// Decodes the characters of `src` that start at `i` and before `stop` (or
+/// the end) into `dst[o..]`, with U+FFFD for each maximal subpart, and
+/// returns where it stopped in each: in `src` at most three bytes past
+/// `stop`, after the last character's last byte.
+fn utf8ReplaceRun(src: []const u8, i: usize, stop: usize, dst: []u32, o: usize) struct { usize, usize } {
+    const end = @min(stop, src.len);
+    var p = i;
+    var n = o;
+    while (p < end) {
+        const cp, const len = decodeReplacing(src, p);
+        dst[n] = cp;
+        n += 1;
+        p += len;
+    }
+    return .{ p, n };
+}
+
+/// Without AVX-512: while the 64-byte block at `src[p..]` is not valid
+/// UTF-8 and 80 bytes are left, replaces its first error: decodes the
+/// characters before it as a block, then the rest one by one until past
+/// the byte that shows it, and goes on from there. Returns where it
+/// stopped in `src` and `dst`, `p` and `o` if the first block is valid.
+/// Needs 80 bytes of `src` and `dst` from `p` and `o`, since
+/// `utf8DecodeBlock` writes past its output. The block loops call it out
+/// of line (`utf8ReplaceHere`), and it stays for the next block, which in
+/// text with dense errors fails too: going back to the block loop for it
+/// made ASCII with 5% of its sequences ill-formed take 1.5x as long on
+/// Apple cores. Decoding the block 16 bytes at a time instead, each window
+/// that fails one character at a time, ran text of every length with 1-5%
+/// ill-formed at 0.55-0.65x on AVX2, for the branches the scalar code
+/// mispredicts.
+fn utf8ReplaceBlocks(src: []const u8, dst: []u32, p: usize, o: usize) struct { usize, usize } {
+    const V = @Vector(64, u8);
+    var i = p;
+    var n = o;
+    while (src.len - i >= 64 + 16) {
+        const block = simd.load(u8, src[i..]);
+        const errors = simd.bitmask(utf8Errors(64, block) != splat(V, 0));
+        if (errors == 0) break;
+        const leads = leadMask(64, block);
+        const at, const start = utf8FirstError(leads, errors);
+        if (simd.bitmask(block >= splat(V, 0x80)) & simd.lowBits(u64, start) == 0) {
+            // ASCII before the error, 16 bytes at a time.
+            var k: usize = 0;
+            while (k < start) : (k += 16) storeWide(u32, native, dst, n + k, simd.load16(src[i + k ..]));
+            n += start;
+        } else {
+            const ends = leads >> 1 & simd.lowBits(u64, start);
+            if (anyTrue(u8, block >= splat(V, 0xF0)))
+                utf8DecodeBlock(u32, native, true, block, ends, dst, &n)
+            else
+                utf8DecodeBlock(u32, native, false, block, ends, dst, &n);
+        }
+        i, n = @call(.always_inline, utf8ReplaceRun, .{ src, i + start, i + at + 1, dst, n });
+    }
+    return .{ i, n };
+}
+
+/// For the block loops, at a block that is not valid with 80 bytes left:
+/// `utf8ReplaceBlocks` out of line, and whether it got anywhere.
+inline fn utf8ReplaceHere(src: []const u8, dst: anytype, p: *usize, o: *usize) bool {
+    const q = p.*;
+    p.*, o.* = @call(.never_inline, utf8ReplaceBlocks, .{ src, dst, p.*, o.* });
+    return p.* != q;
+}
+
 fn utf8ToUnitsLong(
     comptime T: type,
     comptime e: Endian,
-    comptime checked: bool,
+    comptime mode: Utf8Mode,
     src: []const u8,
     dst: []T,
 ) ConvertResult {
-    const p, const o = utf8ToUnitsAvx512(T, e, checked, src, dst);
+    const checked = mode != .valid;
+    const p, const o = utf8ToUnitsAvx512(T, e, mode, src, dst);
+    if (mode == .replacing) return .ok(utf8ReplaceRun(src, p, src.len, dst, o)[1]);
     if (T == u16) {
         if (checked) return tail(scalar.utf8ToUtf16(e, src[p..], dst[o..]), p, o);
         return .ok(o + scalar.validUtf8ToUtf16(e, src[p..], dst[o..]));
@@ -1672,7 +1875,9 @@ fn utf8ToUnitsLong(
     return .ok(o + scalar.validUtf8ToUtf32(src[p..], dst[o..]));
 }
 
-fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src: []const u8, dst: []T) ConvertResult {
+fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime mode: Utf8Mode, src: []const u8, dst: []T) ConvertResult {
+    const checked = mode != .valid;
+    const replace = mode == .replacing;
     const run = struct {
         fn f(s: []const u8, d: []T) ConvertResult {
             if (T == u16) {
@@ -1693,14 +1898,14 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
                 return .ok(src.len);
             }
         }
-        return longPath(true, utf8ToUnitsLong, .{ T, e, checked }, src, dst);
+        return longPath(true, utf8ToUnitsLong, .{ T, e, mode }, src, dst);
     }
     var p: usize = 0;
     var o: usize = 0;
     var steps: Steps = .{};
     if (use_simd) while (true) {
         if (apple) {
-            if (src.len >= 64 and dst.len >= 64) p, o = utf8BlocksApple(T, e, checked, src, dst);
+            if (src.len >= 64 and dst.len >= 64) p, o = utf8BlocksApple(T, e, mode, src, dst);
         } else
         // A block writes at most one code unit per byte, and a window's last
         // store reaches at most eight past its output, and loads 16 bytes
@@ -1726,7 +1931,10 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
                 break;
             }
             if (src.len - p < 64 + 16 or dst.len - o < 64 + 16) break;
-            if (checked and utf8Invalid(64, block)) break;
+            if (checked and utf8Invalid(64, block)) {
+                if (replace and utf8ReplaceHere(src, dst, &p, &o)) continue;
+                break;
+            }
             const leads = leadMask(64, block);
             if (neon) {
                 // Runs of one length first, before the block's end is
@@ -1796,12 +2004,25 @@ fn utf8ToUnits(comptime T: type, comptime e: Endian, comptime checked: bool, src
             if (!fast_shuffle) {
                 break;
             }
-            if (checked and utf8Invalid(16, w)) break;
+            if (checked and utf8Invalid(16, w)) {
+                if (!replace) break;
+                // Fewer than 80 bytes are left: the window one by one,
+                // inlined, since a call here spilled the loop's constants
+                // on entry (16 ASCII bytes on Apple cores 1.6x).
+                p, o = @call(.always_inline, utf8ReplaceRun, .{ src, p, p + 16, dst, o });
+                continue;
+            }
             p += utf8Window(T, e, w, leadMask(16, w) >> 1, dst, &o);
         }
         if (fast_shuffle or !(src.len - p >= 16 and dst.len - o >= 16)) break;
+        if (replace) {
+            p, o = @call(.never_inline, utf8ReplaceRun, .{ src, p, p + steps.next(p), dst, o });
+            steps.end = p;
+            continue;
+        }
         if (scalarStep(run, src, utf8Boundary(src, p, p + steps.next(p)), dst, &p, &o, &steps)) |r| return r;
     };
+    if (replace) return .ok(utf8ReplaceRun(src, p, src.len, dst, o)[1]);
     return tail(run(src[p..], dst[o..]), p, o);
 }
 
@@ -3942,6 +4163,24 @@ fn expectErrorsMatch(comptime from: Format, text: *Text, patterns: []const []con
     };
 }
 
+const utf8_patterns = [_][]const u8{
+    "\x80", "\xbf", // too long
+    "\xf8",         "\xff", // header bits
+    "\xc0\x80",     "\xc1\xbf",
+    "\xe0\x80\x80", "\xe0\x9f\xbf",
+    "\xf0\x80\x80\x80", "\xf0\x8f\xbf\xbf", // overlong
+    "\xed\xa0\x80",     "\xed\xbf\xbf", // surrogate
+    "\xf4\x90\x80\x80", "\xf5\x80\x80\x80",
+    "\xf7\xbf\xbf\xbf", // too large
+    "\xc2A",
+    "\xe2\x82A",
+    "\xf0\x9fA",
+    "\xf0\x9f\x98", // too short
+    "\xc3\xa9",
+    "\xc4\x80",
+    "\xe2\x82\xac", "\xf0\x9f\x98\x80", // valid, and too large for Latin-1
+};
+
 test "every error kind at every position matches the scalar reference" {
     try dispatch.forEachLevel(errorCases, .{});
 }
@@ -3951,23 +4190,6 @@ fn errorCases() !void {
     const r = prng.random();
     var text: Text = .{};
     var cps: [200]u32 = undefined;
-    const utf8_patterns = [_][]const u8{
-        "\x80", "\xbf", // too long
-        "\xf8",         "\xff", // header bits
-        "\xc0\x80",     "\xc1\xbf",
-        "\xe0\x80\x80", "\xe0\x9f\xbf",
-        "\xf0\x80\x80\x80", "\xf0\x8f\xbf\xbf", // overlong
-        "\xed\xa0\x80",     "\xed\xbf\xbf", // surrogate
-        "\xf4\x90\x80\x80", "\xf5\x80\x80\x80",
-        "\xf7\xbf\xbf\xbf", // too large
-        "\xc2A",
-        "\xe2\x82A",
-        "\xf0\x9fA",
-        "\xf0\x9f\x98", // too short
-        "\xc3\xa9",
-        "\xc4\x80",
-        "\xe2\x82\xac", "\xf0\x9f\x98\x80", // valid, and too large for Latin-1
-    };
     const utf16_patterns = [_][]const u16{
         &.{0xD800}, &.{0xDBFF}, &.{0xDC00}, &.{0xDFFF}, &.{ 0xDC00, 0xD800 }, &.{ 0xD83D, 0xDE00 },
         &.{0x00E9}, &.{0x0100}, &.{0xFFFF},
@@ -4008,7 +4230,108 @@ fn windowEndCases() !void {
         inline for (.{ Format.utf16le, Format.utf16be, Format.utf32 }) |to| {
             try expectSame(.utf8, to, true, &src, needed(.utf8, to, &src));
         }
+        try expectReplacing(&src);
     };
+}
+
+/// Expects `utf8ToUtf32Replacing` to write what the scalar reference does,
+/// into an output of exactly `src.len` units, and nothing past it.
+fn expectReplacing(src: []const u8) !void {
+    var want: [4096]u32 = undefined;
+    var got: [4096 + 64]u32 = undefined;
+    @memset(&got, 0xAAAA_AAAA);
+    const n = scalar.utf8ToUtf32Replacing(src, &want);
+    const m = utf8ToUtf32Replacing(src, got[0..src.len]);
+    errdefer std.debug.print("replacing {d} bytes, want {d} code points, got {d}: {x}\n", .{ src.len, n, m, src });
+    try testing.expectEqualSlices(u32, want[0..n], got[0..m]);
+    for (got[src.len..]) |u| try testing.expectEqual(0xAAAA_AAAA, u);
+}
+
+test "the replacing conversion matches the scalar reference with errors at every position" {
+    try dispatch.forEachLevel(replacingCases, .{});
+}
+
+fn replacingCases() !void {
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const r = prng.random();
+    var text: Text = .{};
+    var cps: [200]u32 = undefined;
+    var buf: [4096]u8 = undefined;
+    // Beyond the error kinds: valid beginnings cut short by what follows,
+    // second bytes just out of range, bytes that begin nothing, a run of
+    // continuations, and Unicode's example for Table 3-8.
+    const patterns = utf8_patterns ++ [_][]const u8{
+        "\xe0\xa0", "\xe1\x80", "\xed\x9f",             "\xf0\x90\x80",             "\xf4\x8f\xbf", "\xf1\x80",
+        "\xe0\x80", "\xed\xa0", "\xf0\x8f",             "\xf4\x90",                 "\xc0",         "\xc1",
+        "\xf5",     "\xfe",     "\x80\x80\x80\x80\x80", "\xf1\x80\x80\xe1\x80\xc2",
+    };
+    for ([_]Mix{ .ascii, .latin1, .cjk_text, .emoji, .astral, .mixed }) |mix| {
+        for (&cps) |*cp| cp.* = randomCodePoint(r, mix);
+        text.set(&cps);
+        const clean = text.get(.utf8);
+        const src = buf[0..clean.len];
+        for (0..src.len) |i| for (patterns) |pattern| {
+            @memcpy(src, clean);
+            corrupt(u8, src, i, pattern);
+            try expectReplacing(src);
+        };
+        // Cut at every length, so each kind of character is truncated at
+        // the end, in and across blocks.
+        for (0..clean.len + 1) |n| try expectReplacing(clean[0..n]);
+    }
+    // Errors from one in two bytes to one in 256, so blocks hold several,
+    // some next to each other, some across block boundaries.
+    const bad = [_]u8{ 0x80, 0x8F, 0x90, 0x9F, 0xA0, 0xBF, 0xC0, 0xC1, 0xC2, 0xE0, 0xED, 0xF0, 0xF4, 0xF5, 0xFF };
+    for (0..2000) |k| {
+        const mix: Mix = if (k % 2 == 0) .ascii else .mixed;
+        for (&cps) |*cp| cp.* = randomCodePoint(r, mix);
+        text.set(&cps);
+        const clean = text.get(.utf8);
+        const src = buf[0..r.uintAtMost(usize, clean.len)];
+        @memcpy(src, clean[0..src.len]);
+        const density = @as(usize, 2) << @intCast(k % 8);
+        for (src) |*b| {
+            if (r.uintLessThan(usize, density) == 0) b.* = bad[r.uintLessThan(usize, bad.len)];
+        }
+        try expectReplacing(src);
+    }
+}
+
+test "inputs past a million bytes with errors replace as the scalar reference does" {
+    try dispatch.forEachLevel(largeReplacingCases, .{});
+}
+
+fn largeReplacingCases() !void {
+    const n = 1 << 20 | 35;
+    const a = testing.allocator;
+    var prng: std.Random.DefaultPrng = .init(testing.random_seed);
+    const r = prng.random();
+    const src = try a.alloc(u8, n);
+    defer a.free(src);
+    const want = try a.alloc(u32, n);
+    defer a.free(want);
+    const got = try a.alloc(u32, n);
+    defer a.free(got);
+    for ([_]Mix{ .ascii, .mixed }) |mix| {
+        var i: usize = 0;
+        while (i < n) {
+            var bytes: [4]u8 = undefined;
+            const len = std.unicode.utf8Encode(@intCast(randomCodePoint(r, mix)), &bytes) catch unreachable;
+            const k = @min(len, n - i);
+            @memcpy(src[i..][0..k], bytes[0..k]);
+            i += k;
+        }
+        // One error every 1-2000 bytes.
+        i = 0;
+        while (true) {
+            i += r.intRangeAtMost(usize, 1, 2000);
+            if (i >= n) break;
+            src[i] = 0xFF;
+        }
+        const w = scalar.utf8ToUtf32Replacing(src, want);
+        try testing.expectEqual(w, utf8ToUtf32Replacing(src, got));
+        try testing.expectEqualSlices(u32, want[0..w], got[0..w]);
+    }
 }
 
 test "inputs past a million units match the scalar reference" {

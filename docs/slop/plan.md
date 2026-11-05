@@ -20,6 +20,10 @@ memory, as simdutf's `char16_t` functions do. UTF-32 is `[]const u32`.
   written, which on failure holds the input before the error, as simdutf's
   `full_result` does) and a valid form (`validUtf8ToUtf16le(src, dst)
 usize`: assumes valid input, fastest).
+  UTF-8 to UTF-32 also has a replacing form
+  (`utf8ToUtf32Replacing(src, dst) usize`: U+FFFD for each maximal subpart,
+  as WHATWG and ICU do, in one call; `dst` holds `src.len`), for Ghostty's
+  terminal input decoder.
 - `length`: the output size each conversion needs (`utf16FromUtf8(src)`, and so
   on) and `countUtf8`/`countUtf16le`/`countUtf16be` for code points.
 - `base64`: `encode(dst, src, options) usize`, `encodedLen(n, options)`,
