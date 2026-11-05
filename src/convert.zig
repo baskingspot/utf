@@ -1085,6 +1085,52 @@ const compress_words = blk: {
     break :blk shuffles;
 };
 
+// UTF-8 to UTF-32 on Apple cores: each block's code points as three byte
+// vectors (bits 0-7, 8-15, and 16-20), each 8-byte group's lanes that end a
+// character gathered from them into 32-bit lanes by two `tbl`s with indexes
+// from a table, by the group's mask of ends, where 16-bit lanes packed by
+// one `tbl` took another for the top bits and four widening shifts
+// (docs/slop/results/apple-utf32-20261105.md). Each table has a half for
+// the low and the high eight bytes of a register.
+
+/// For a block without four-byte characters: lanes from the registers of
+/// the two low bytes, `tbl` from both.
+const compress_units: [2][256][32]u8 align(64) = blk: {
+    @setEvalBranchQuota(200_000);
+    var shuffles: [2][256][32]u8 = undefined;
+    for (&shuffles, 0..) |*half, h| for (half, 0..) |*sh, mask| {
+        sh.* = @splat(0x80);
+        var o: usize = 0;
+        for (0..8) |k| {
+            if (mask >> k & 1 == 0) continue;
+            sh[4 * o] = 8 * h + k;
+            sh[4 * o + 1] = 16 + 8 * h + k;
+            o += 1;
+        }
+    };
+    break :blk shuffles;
+};
+
+/// For a block with four-byte characters: lanes from the group's two low
+/// bytes, zipped into one register, and the register of top bytes, which
+/// `tbl` takes as two where a `tbl` of three registers was 4% slower.
+const compress_pairs: [2][256][32]u8 align(64) = blk: {
+    @setEvalBranchQuota(200_000);
+    var shuffles: [2][256][32]u8 = undefined;
+    for (&shuffles, 0..) |*half, h| for (half, 0..) |*sh, mask| {
+        sh.* = @splat(0x80);
+        var o: usize = 0;
+        for (0..8) |k| {
+            if (mask >> k & 1 == 0) continue;
+            sh[4 * o] = k;
+            sh[4 * o + 1] = 8 + k;
+            sh[4 * o + 2] = 16 + 8 * h + k;
+            o += 1;
+        }
+    };
+    break :blk shuffles;
+};
+
 /// Decodes the characters of a 64-byte block, where bit i of `ends` marks
 /// byte i as the last of one, and stores them as UTF-16 in byte order `e`
 /// or as UTF-32. As in the AVX-512 kernel, each byte gets the 16-bit value
@@ -1125,6 +1171,39 @@ inline fn utf8DecodeBlock(
     if (four and T == u16) s2 &= ~fourth;
     const lo = s | s1 << splat(V, 6);
     const hi = s1 >> splat(V, 2) | s2 << splat(V, 4);
+    if (apple and T == u32) {
+        // Bits 16 to 20, as `tops` below.
+        const top = if (four)
+            (simd.prev(2, s, zero) >> splat(V, 4) | simd.prev(3, s, zero) << splat(V, 2)) & fourth
+        else
+            zero;
+        const b0 = simd.split(V16, lo);
+        const b1 = simd.split(V16, hi);
+        const b2 = simd.split(V16, top);
+        const counts: @Vector(8, u8) = @popCount(@as(@Vector(8, u8), @bitCast(ends)));
+        const sums = @as(u64, @bitCast(counts)) *% 0x0101_0101_0101_0101;
+        const start = o.*;
+        inline for (0..8) |g| {
+            const at = start + if (g == 0) 0 else @as(usize, @as(u8, @truncate(sums >> 8 * (g - 1))));
+            const m: u8 = @truncate(ends >> 8 * g);
+            const idx: *const [2]V16 = @ptrCast(if (four) &compress_pairs[g % 2][m] else &compress_units[g % 2][m]);
+            // Unused without four-byte characters: zipped there, these
+            // pairs took LLVM a lane move per byte.
+            const pair = @shuffle(u8, b0[g / 2], b1[g / 2], if (g % 2 == 0)
+                [16]i32{ 0, 1, 2, 3, 4, 5, 6, 7, -1, -2, -3, -4, -5, -6, -7, -8 }
+            else
+                [16]i32{ 8, 9, 10, 11, 12, 13, 14, 15, -9, -10, -11, -12, -13, -14, -15, -16 });
+            inline for (idx, 0..) |k, h| {
+                const w = if (four)
+                    @"llvm.aarch64.neon.tbl2.v16i8"(pair, b2[g / 2], k)
+                else
+                    @"llvm.aarch64.neon.tbl2.v16i8"(b0[g / 2], b1[g / 2], k);
+                dst[at + 4 * h ..][0..4].* = @as(@Vector(4, u32), @bitCast(w));
+            }
+        }
+        o.* = start + @as(usize, sums >> 56);
+        return;
+    }
     var words: @Vector(64, u16) = @bitCast(@shuffle(u8, lo, hi, interleave));
     var mend = ends;
     var tops: [64]u16 = undefined;
