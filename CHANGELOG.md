@@ -8,6 +8,7 @@ All notable changes to utf are recorded here. The format follows
 ### Fixed
 
 - Under Zig 0.17, `convert.utf8ToUtf32` and `validUtf8ToUtf32` were 7–11× slower on text with four-byte characters (emoji) on aarch64 and on x86-64 without AVX-512 VBMI, UTF-8 to UTF-32 and UTF-16 up to 2× slower on other non-ASCII text on aarch64, and `base64.decode` with whitespace up to 1.6× slower on x86-64. Zig 0.16 builds were not affected.
+- On Apple Silicon (an `apple_*` CPU, which Zig builds for on aarch64 macOS by default), `convert.utf8ToUtf16le`, `utf8ToUtf16be`, and `utf8ToUtf32` could miss an ill-formed sequence that followed eight or more three-byte characters, such as a 0xF5 byte or a lead byte followed by ASCII, and report the input as valid or an error further on. They now report it where simdutf does.
 
 ## [0.2.2] - 2026-11-05
 

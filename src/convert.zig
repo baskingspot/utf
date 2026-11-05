@@ -1326,7 +1326,10 @@ inline fn utf8AsciiThree(
             o.* = start;
             return 0;
         }
-        pos += utf8Window(T, e, in, m, dst, o);
+        // Without the last byte's end: `utf8Invalid` checks no byte against
+        // the one after the window, so a lead there that ends a character,
+        // which is too short, would decode as one.
+        pos += utf8Window(T, e, in, m & 0x7FFF, dst, o);
     }
     if (checked and anySet(bad)) {
         o.* = start;
@@ -3832,6 +3835,25 @@ fn errorCases() !void {
         }
         try expectErrorsMatch(.utf16be, &text, &be);
     }
+}
+
+test "an error in the last byte of a window after three-byte characters matches the scalar reference" {
+    try dispatch.forEachLevel(windowEndCases, .{});
+}
+
+/// Eight three-byte characters, then ASCII with one bad byte: on Apple
+/// cores the block decodes in windows after the run, checked one by one,
+/// and a window's last byte is the one whose check needs the byte after it.
+fn windowEndCases() !void {
+    var src: [24 + 80]u8 = undefined;
+    for (0..8) |i| src[3 * i ..][0..3].* = "\xe4\xb8\xad".*;
+    for ([_]u8{ 0x80, 0xC3, 0xE1, 0xF0, 0xF5, 0xFF }) |bad| for (24..24 + 32) |at| {
+        @memset(src[24..], 'a');
+        src[at] = bad;
+        inline for (.{ Format.utf16le, Format.utf16be, Format.utf32 }) |to| {
+            try expectSame(.utf8, to, true, &src, needed(.utf8, to, &src));
+        }
+    };
 }
 
 test "inputs past a million units match the scalar reference" {
