@@ -583,6 +583,10 @@ bool){...})`) is materialized as an integer, and the NEON path took it
   measured. `main`, on Zig 0.16, has all but the Zig 0.17 workaround: CJK
   1.01-1.08 from 4 KiB (0.74-0.79), emoji 1.43-1.63 (0.92-1.06), base64
   1.04-1.97 (0.71-0.95); ASCII calls of 1-8 bytes 0.75-0.95 ns slower.
+  `main` took Zig 0.17 without the three array-cast workarounds of
+  `zig-0.17`, so v0.1.0-v0.2.2 under Zig 0.17 ran emoji at 0.14 of simdutf
+  on an M4 Pro and 10x slower on x86-64 without VBMI; they landed after
+  v0.2.2 ([zig017-port-20261105.md](results/zig017-port-20261105.md)).
 
 In-place base64 decode ([base64-in-place-20261101.md](results/base64-in-place-20261101.md)):
 
