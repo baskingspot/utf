@@ -453,6 +453,17 @@
       "line": 203
     },
     {
+      "name": "utf8ToUtf32Replacing",
+      "fqn": "scalar_convert.utf8ToUtf32Replacing",
+      "kind": "function",
+      "depth": 1,
+      "parent": "scalar_convert",
+      "signature": "pub fn utf8ToUtf32Replacing(src: []const u8, dst: []u32) usize",
+      "docs": "Converts UTF-8 to UTF-32, writing U+FFFD for each maximal subpart of an\nill-formed sequence, as Unicode's \"U+FFFD Substitution of Maximal\nSubparts\" (chapter 3), WHATWG's UTF-8 decoder, and ICU do; returns the\nnumber of code points written. `dst` must hold `src.len` of them.\n",
+      "file": "src/scalar_convert.zig",
+      "line": 219
+    },
+    {
       "name": "utf8ToLatin1",
       "fqn": "scalar_convert.utf8ToLatin1",
       "kind": "function",
@@ -461,7 +472,7 @@
       "signature": "pub fn utf8ToLatin1(src: []const u8, dst: []u8) ConvertResult",
       "docs": "Converts UTF-8 holding only U+0000-U+00FF to Latin-1, classifying errors\nas simdutf does: a two-byte character above U+00FF, and any three- or\nfour-byte lead, is `too_large` at its first byte, before its continuation\nbytes are looked at.\n",
       "file": "src/scalar_convert.zig",
-      "line": 219
+      "line": 262
     },
     {
       "name": "validUtf8ToLatin1",
@@ -472,7 +483,7 @@
       "signature": "pub fn validUtf8ToLatin1(src: []const u8, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 249
+      "line": 292
     },
     {
       "name": "utf16ToUtf8",
@@ -483,7 +494,7 @@
       "signature": "pub fn utf16ToUtf8(comptime e: Endian, src: []const u16, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 268
+      "line": 311
     },
     {
       "name": "validUtf16ToUtf8",
@@ -494,7 +505,7 @@
       "signature": "pub fn validUtf16ToUtf8(comptime e: Endian, src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 281
+      "line": 324
     },
     {
       "name": "utf16ToUtf32",
@@ -505,7 +516,7 @@
       "signature": "pub fn utf16ToUtf32(comptime e: Endian, src: []const u16, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 292
+      "line": 335
     },
     {
       "name": "validUtf16ToUtf32",
@@ -516,7 +527,7 @@
       "signature": "pub fn validUtf16ToUtf32(comptime e: Endian, src: []const u16, dst: []u32) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 306
+      "line": 349
     },
     {
       "name": "utf16ToLatin1",
@@ -527,7 +538,7 @@
       "signature": "pub fn utf16ToLatin1(comptime e: Endian, src: []const u16, dst: []u8) ConvertResult",
       "docs": "Every code unit above 0xFF, surrogates included, is `too_large` at its\nindex, as simdutf reports it.\n",
       "file": "src/scalar_convert.zig",
-      "line": 320
+      "line": 363
     },
     {
       "name": "validUtf16ToLatin1",
@@ -538,7 +549,7 @@
       "signature": "pub fn validUtf16ToLatin1(comptime e: Endian, src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 330
+      "line": 373
     },
     {
       "name": "utf16ToUtf16Swapped",
@@ -549,7 +560,7 @@
       "signature": "pub fn utf16ToUtf16Swapped(comptime e: Endian, src: []const u16, dst: []u16) ConvertResult",
       "docs": "Converts UTF-16 in byte order `e` to the other byte order, failing on an\nunpaired surrogate as `utf16ToUtf8` does.\n",
       "file": "src/scalar_convert.zig",
-      "line": 337
+      "line": 380
     },
     {
       "name": "validUtf16ToUtf16Swapped",
@@ -560,7 +571,7 @@
       "signature": "pub fn validUtf16ToUtf16Swapped(src: []const u16, dst: []u16) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 349
+      "line": 392
     },
     {
       "name": "utf32ToUtf8",
@@ -571,7 +582,7 @@
       "signature": "pub fn utf32ToUtf8(src: []const u32, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 356
+      "line": 399
     },
     {
       "name": "validUtf32ToUtf8",
@@ -582,7 +593,7 @@
       "signature": "pub fn validUtf32ToUtf8(src: []const u32, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 367
+      "line": 410
     },
     {
       "name": "utf32ToUtf16",
@@ -593,7 +604,7 @@
       "signature": "pub fn utf32ToUtf16(comptime e: Endian, src: []const u32, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 373
+      "line": 416
     },
     {
       "name": "validUtf32ToUtf16",
@@ -604,7 +615,7 @@
       "signature": "pub fn validUtf32ToUtf16(comptime e: Endian, src: []const u32, dst: []u16) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 384
+      "line": 427
     },
     {
       "name": "utf32ToLatin1",
@@ -615,7 +626,7 @@
       "signature": "pub fn utf32ToLatin1(src: []const u32, dst: []u8) ConvertResult",
       "docs": "Every code point above 0xFF is `too_large` at its index.\n",
       "file": "src/scalar_convert.zig",
-      "line": 391
+      "line": 434
     },
     {
       "name": "validUtf32ToLatin1",
@@ -626,7 +637,7 @@
       "signature": "pub fn validUtf32ToLatin1(src: []const u32, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 400
+      "line": 443
     },
     {
       "name": "latin1ToUtf8",
@@ -637,7 +648,7 @@
       "signature": "pub fn latin1ToUtf8(src: []const u8, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 408
+      "line": 451
     },
     {
       "name": "validLatin1ToUtf8",
@@ -648,7 +659,7 @@
       "signature": "pub fn validLatin1ToUtf8(src: []const u8, dst: []u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 417
+      "line": 460
     },
     {
       "name": "latin1ToUtf16",
@@ -659,7 +670,7 @@
       "signature": "pub fn latin1ToUtf16(comptime e: Endian, src: []const u8, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 423
+      "line": 466
     },
     {
       "name": "validLatin1ToUtf16",
@@ -670,7 +681,7 @@
       "signature": "pub fn validLatin1ToUtf16(comptime e: Endian, src: []const u8, dst: []u16) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 430
+      "line": 473
     },
     {
       "name": "latin1ToUtf32",
@@ -681,7 +692,7 @@
       "signature": "pub fn latin1ToUtf32(src: []const u8, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 435
+      "line": 478
     },
     {
       "name": "validLatin1ToUtf32",
@@ -692,7 +703,7 @@
       "signature": "pub fn validLatin1ToUtf32(src: []const u8, dst: []u32) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 442
+      "line": 485
     },
     {
       "name": "countUtf8",
@@ -703,7 +714,7 @@
       "signature": "pub fn countUtf8(src: []const u8) usize",
       "docs": "Code points in UTF-8: the bytes that are not continuation bytes.\n",
       "file": "src/scalar_convert.zig",
-      "line": 451
+      "line": 494
     },
     {
       "name": "countUtf16",
@@ -714,7 +725,7 @@
       "signature": "pub fn countUtf16(comptime e: Endian, src: []const u16) usize",
       "docs": "Code points in UTF-16: the code units that are not low surrogates.\n",
       "file": "src/scalar_convert.zig",
-      "line": 458
+      "line": 501
     },
     {
       "name": "utf16FromUtf8",
@@ -725,7 +736,7 @@
       "signature": "pub fn utf16FromUtf8(src: []const u8) usize",
       "docs": "UTF-16 code units for UTF-8: one per character, two per four-byte one.\n",
       "file": "src/scalar_convert.zig",
-      "line": 465
+      "line": 508
     },
     {
       "name": "utf8FromUtf16",
@@ -736,7 +747,7 @@
       "signature": "pub fn utf8FromUtf16(comptime e: Endian, src: []const u16) usize",
       "docs": "UTF-8 bytes for UTF-16: every surrogate counts two, so a pair counts\nfour. On unpaired surrogates simdutf disagrees with itself (its SIMD\nblocks count two, its scalar tail three); this is the per-unit rule.\n",
       "file": "src/scalar_convert.zig",
-      "line": 474
+      "line": 517
     },
     {
       "name": "utf8FromUtf32",
@@ -747,7 +758,7 @@
       "signature": "pub fn utf8FromUtf32(src: []const u32) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 483
+      "line": 526
     },
     {
       "name": "utf16FromUtf32",
@@ -758,7 +769,7 @@
       "signature": "pub fn utf16FromUtf32(src: []const u32) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 489
+      "line": 532
     },
     {
       "name": "utf8FromLatin1",
@@ -769,7 +780,7 @@
       "signature": "pub fn utf8FromLatin1(src: []const u8) usize",
       "docs": "",
       "file": "src/scalar_convert.zig",
-      "line": 495
+      "line": 538
     },
     {
       "name": "convert",
@@ -778,7 +789,7 @@
       "depth": 0,
       "parent": null,
       "signature": "pub const convert = @import(\"convert.zig\")",
-      "docs": "Transcoding between UTF-8, UTF-16LE, UTF-16BE, UTF-32, and Latin-1, with\nSIMD. Callers own every buffer; nothing allocates.\n\nEach conversion has two forms. The checked form (`utf8ToUtf16le`)\nvalidates as it converts and returns a `ConvertResult`: on success the\nnumber of code units written, on failure simdutf's error kind and the\nindex in the input of the first ill-formed character, and either way the\ncode units written, which on failure hold the input before the error.\nWhen the output runs out it fails with `output_buffer_too_small` at the\nfirst character that does not fit; a buffer sized by the matching\n`length` function always fits. The valid form (`validUtf8ToUtf16le`)\nassumes well-formed input and a buffer the `length` function sized, and\nreturns the number of code units written.\nResults equal those of `scalar_convert.zig` on every input.\n\nUTF-16LE and UTF-16BE name the byte order of the code units in memory, as\nsimdutf's `char16_t` functions do; UTF-32 is native.\n\nThe kernels follow Lemire and Muła, \"Transcoding Billions of Unicode\nCharacters per Second with SIMD Instructions\" (2022), and on AVX-512 with\nVBMI2 Clausecker and Lemire, \"Transcoding Unicode Characters with AVX-512\nInstructions\" (2023). UTF-8 is decoded a 64-byte block at a time: each\nbyte gets the value of a character ending there, and the values that end\ncharacters are packed by shuffle tables keyed by the end-of-character mask\n(by lane compression on AVX-512), with 12-byte windows for the tail.\nUTF-16 and UTF-32 are encoded by expanding code points into lanes and\npacking them, with ASCII and two-byte fast paths. UTF-8 is validated in\nthe same pass with Keiser and Lemire's three-lookup check. Every table is\nbuilt at comptime.\n",
+      "docs": "Transcoding between UTF-8, UTF-16LE, UTF-16BE, UTF-32, and Latin-1, with\nSIMD. Callers own every buffer; nothing allocates.\n\nEach conversion has two forms. The checked form (`utf8ToUtf16le`)\nvalidates as it converts and returns a `ConvertResult`: on success the\nnumber of code units written, on failure simdutf's error kind and the\nindex in the input of the first ill-formed character, and either way the\ncode units written, which on failure hold the input before the error.\nWhen the output runs out it fails with `output_buffer_too_small` at the\nfirst character that does not fit; a buffer sized by the matching\n`length` function always fits. The valid form (`validUtf8ToUtf16le`)\nassumes well-formed input and a buffer the `length` function sized, and\nreturns the number of code units written. UTF-8 to UTF-32 has a third,\n`utf8ToUtf32Replacing`, which writes U+FFFD for each maximal subpart of\nan ill-formed sequence and goes on.\nResults equal those of `scalar_convert.zig` on every input.\n\nUTF-16LE and UTF-16BE name the byte order of the code units in memory, as\nsimdutf's `char16_t` functions do; UTF-32 is native.\n\nThe kernels follow Lemire and Muła, \"Transcoding Billions of Unicode\nCharacters per Second with SIMD Instructions\" (2022), and on AVX-512 with\nVBMI2 Clausecker and Lemire, \"Transcoding Unicode Characters with AVX-512\nInstructions\" (2023). UTF-8 is decoded a 64-byte block at a time: each\nbyte gets the value of a character ending there, and the values that end\ncharacters are packed by shuffle tables keyed by the end-of-character mask\n(by lane compression on AVX-512), with 12-byte windows for the tail.\nUTF-16 and UTF-32 are encoded by expanding code points into lanes and\npacking them, with ASCII and two-byte fast paths. UTF-8 is validated in\nthe same pass with Keiser and Lemire's three-lookup check. Every table is\nbuilt at comptime.\n",
       "file": "src/root.zig",
       "line": 12
     },
@@ -791,7 +802,7 @@
       "signature": "pub fn utf8ToUtf16le(src: []const u8, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 57
+      "line": 59
     },
     {
       "name": "utf8ToUtf16be",
@@ -802,7 +813,7 @@
       "signature": "pub fn utf8ToUtf16be(src: []const u8, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 63
+      "line": 65
     },
     {
       "name": "utf8ToUtf32",
@@ -813,7 +824,18 @@
       "signature": "pub fn utf8ToUtf32(src: []const u8, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 69
+      "line": 71
+    },
+    {
+      "name": "utf8ToUtf32Replacing",
+      "fqn": "convert.utf8ToUtf32Replacing",
+      "kind": "function",
+      "depth": 1,
+      "parent": "convert",
+      "signature": "pub fn utf8ToUtf32Replacing(src: []const u8, dst: []u32) usize",
+      "docs": "Converts UTF-8 to UTF-32 in one pass that never stops: each maximal\nsubpart of an ill-formed sequence becomes one U+FFFD, as Unicode's\n\"U+FFFD Substitution of Maximal Subparts\" (chapter 3), WHATWG's UTF-8\ndecoder, and ICU have it. A maximal subpart is a lead and the bytes\nafter it that could still continue it, or one byte that begins no\ncharacter, so `\"a\\xF1\\x80\\x80\\xE1\\x80\\xC2b\"` becomes a, three U+FFFD,\nand b. Returns the number of code points written; `dst` must hold at\nleast `src.len`, since no byte makes more than one.\n",
+      "file": "src/convert.zig",
+      "line": 85
     },
     {
       "name": "utf8ToLatin1",
@@ -824,7 +846,7 @@
       "signature": "pub fn utf8ToLatin1(src: []const u8, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 75
+      "line": 92
     },
     {
       "name": "validUtf8ToUtf16le",
@@ -835,7 +857,7 @@
       "signature": "pub fn validUtf8ToUtf16le(src: []const u8, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 81
+      "line": 98
     },
     {
       "name": "validUtf8ToUtf16be",
@@ -846,7 +868,7 @@
       "signature": "pub fn validUtf8ToUtf16be(src: []const u8, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 87
+      "line": 104
     },
     {
       "name": "validUtf8ToUtf32",
@@ -857,7 +879,7 @@
       "signature": "pub fn validUtf8ToUtf32(src: []const u8, dst: []u32) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 93
+      "line": 110
     },
     {
       "name": "validUtf8ToLatin1",
@@ -868,7 +890,7 @@
       "signature": "pub fn validUtf8ToLatin1(src: []const u8, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 99
+      "line": 116
     },
     {
       "name": "utf16leToUtf8",
@@ -879,7 +901,7 @@
       "signature": "pub fn utf16leToUtf8(src: []const u16, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 108
+      "line": 125
     },
     {
       "name": "utf16beToUtf8",
@@ -890,7 +912,7 @@
       "signature": "pub fn utf16beToUtf8(src: []const u16, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 114
+      "line": 131
     },
     {
       "name": "utf16leToUtf32",
@@ -901,7 +923,7 @@
       "signature": "pub fn utf16leToUtf32(src: []const u16, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 120
+      "line": 137
     },
     {
       "name": "utf16beToUtf32",
@@ -912,7 +934,7 @@
       "signature": "pub fn utf16beToUtf32(src: []const u16, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 126
+      "line": 143
     },
     {
       "name": "utf16leToLatin1",
@@ -923,7 +945,7 @@
       "signature": "pub fn utf16leToLatin1(src: []const u16, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 132
+      "line": 149
     },
     {
       "name": "utf16beToLatin1",
@@ -934,7 +956,7 @@
       "signature": "pub fn utf16beToLatin1(src: []const u16, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 138
+      "line": 155
     },
     {
       "name": "utf16leToUtf16be",
@@ -945,7 +967,7 @@
       "signature": "pub fn utf16leToUtf16be(src: []const u16, dst: []u16) ConvertResult",
       "docs": "Swaps the byte order, failing on an unpaired surrogate.\n",
       "file": "src/convert.zig",
-      "line": 145
+      "line": 162
     },
     {
       "name": "utf16beToUtf16le",
@@ -956,7 +978,7 @@
       "signature": "pub fn utf16beToUtf16le(src: []const u16, dst: []u16) ConvertResult",
       "docs": "Swaps the byte order, failing on an unpaired surrogate.\n",
       "file": "src/convert.zig",
-      "line": 152
+      "line": 169
     },
     {
       "name": "validUtf16leToUtf8",
@@ -967,7 +989,7 @@
       "signature": "pub fn validUtf16leToUtf8(src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 158
+      "line": 175
     },
     {
       "name": "validUtf16beToUtf8",
@@ -978,7 +1000,7 @@
       "signature": "pub fn validUtf16beToUtf8(src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 164
+      "line": 181
     },
     {
       "name": "validUtf16leToUtf32",
@@ -989,7 +1011,7 @@
       "signature": "pub fn validUtf16leToUtf32(src: []const u16, dst: []u32) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 170
+      "line": 187
     },
     {
       "name": "validUtf16beToUtf32",
@@ -1000,7 +1022,7 @@
       "signature": "pub fn validUtf16beToUtf32(src: []const u16, dst: []u32) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 176
+      "line": 193
     },
     {
       "name": "validUtf16leToLatin1",
@@ -1011,7 +1033,7 @@
       "signature": "pub fn validUtf16leToLatin1(src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 182
+      "line": 199
     },
     {
       "name": "validUtf16beToLatin1",
@@ -1022,7 +1044,7 @@
       "signature": "pub fn validUtf16beToLatin1(src: []const u16, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 188
+      "line": 205
     },
     {
       "name": "validUtf16leToUtf16be",
@@ -1033,7 +1055,7 @@
       "signature": "pub fn validUtf16leToUtf16be(src: []const u16, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 194
+      "line": 211
     },
     {
       "name": "validUtf16beToUtf16le",
@@ -1044,7 +1066,7 @@
       "signature": "pub fn validUtf16beToUtf16le(src: []const u16, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 200
+      "line": 217
     },
     {
       "name": "utf32ToUtf8",
@@ -1055,7 +1077,7 @@
       "signature": "pub fn utf32ToUtf8(src: []const u32, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 209
+      "line": 226
     },
     {
       "name": "utf32ToUtf16le",
@@ -1066,7 +1088,7 @@
       "signature": "pub fn utf32ToUtf16le(src: []const u32, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 215
+      "line": 232
     },
     {
       "name": "utf32ToUtf16be",
@@ -1077,7 +1099,7 @@
       "signature": "pub fn utf32ToUtf16be(src: []const u32, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 221
+      "line": 238
     },
     {
       "name": "utf32ToLatin1",
@@ -1088,7 +1110,7 @@
       "signature": "pub fn utf32ToLatin1(src: []const u32, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 227
+      "line": 244
     },
     {
       "name": "validUtf32ToUtf8",
@@ -1099,7 +1121,7 @@
       "signature": "pub fn validUtf32ToUtf8(src: []const u32, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 233
+      "line": 250
     },
     {
       "name": "validUtf32ToUtf16le",
@@ -1110,7 +1132,7 @@
       "signature": "pub fn validUtf32ToUtf16le(src: []const u32, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 239
+      "line": 256
     },
     {
       "name": "validUtf32ToUtf16be",
@@ -1121,7 +1143,7 @@
       "signature": "pub fn validUtf32ToUtf16be(src: []const u32, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 245
+      "line": 262
     },
     {
       "name": "validUtf32ToLatin1",
@@ -1132,7 +1154,7 @@
       "signature": "pub fn validUtf32ToLatin1(src: []const u32, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 251
+      "line": 268
     },
     {
       "name": "latin1ToUtf8",
@@ -1143,7 +1165,7 @@
       "signature": "pub fn latin1ToUtf8(src: []const u8, dst: []u8) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 261
+      "line": 278
     },
     {
       "name": "latin1ToUtf16le",
@@ -1154,7 +1176,7 @@
       "signature": "pub fn latin1ToUtf16le(src: []const u8, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 267
+      "line": 284
     },
     {
       "name": "latin1ToUtf16be",
@@ -1165,7 +1187,7 @@
       "signature": "pub fn latin1ToUtf16be(src: []const u8, dst: []u16) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 273
+      "line": 290
     },
     {
       "name": "latin1ToUtf32",
@@ -1176,7 +1198,7 @@
       "signature": "pub fn latin1ToUtf32(src: []const u8, dst: []u32) ConvertResult",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 279
+      "line": 296
     },
     {
       "name": "validLatin1ToUtf8",
@@ -1187,7 +1209,7 @@
       "signature": "pub fn validLatin1ToUtf8(src: []const u8, dst: []u8) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 285
+      "line": 302
     },
     {
       "name": "validLatin1ToUtf16le",
@@ -1198,7 +1220,7 @@
       "signature": "pub fn validLatin1ToUtf16le(src: []const u8, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 291
+      "line": 308
     },
     {
       "name": "validLatin1ToUtf16be",
@@ -1209,7 +1231,7 @@
       "signature": "pub fn validLatin1ToUtf16be(src: []const u8, dst: []u16) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 297
+      "line": 314
     },
     {
       "name": "validLatin1ToUtf32",
@@ -1220,7 +1242,7 @@
       "signature": "pub fn validLatin1ToUtf32(src: []const u8, dst: []u32) usize",
       "docs": "",
       "file": "src/convert.zig",
-      "line": 303
+      "line": 320
     },
     {
       "name": "bmpToUtf8",
@@ -1231,7 +1253,7 @@
       "signature": "pub fn bmpToUtf8(src: []const u16, dst: []u8) BmpResult",
       "docs": "Converts `src`, UTF-16 in the machine's byte order with no surrogates,\nto UTF-8 at the start of `dst`: as many characters as fit whole, all of\nthem when `dst` has three bytes for each code unit, or the\n`length.utf8FromUtf16le` of `src` (`utf8FromUtf16be` on a big-endian\nmachine). A surrogate, which the caller must not pass, comes out as the\nthree bytes it would take as a code point, which are not UTF-8.\n",
       "file": "src/convert.zig",
-      "line": 322
+      "line": 339
     },
     {
       "name": "utf8ToBmp",
@@ -1242,7 +1264,7 @@
       "signature": "pub fn utf8ToBmp(src: []const u8, dst: []u16) BmpResult",
       "docs": "Converts UTF-8 at the start of `src` to UTF-16 in the machine's byte\norder at the start of `dst` while each character is ASCII or a\nwell-formed two- or three-byte sequence, so every unit it writes is a\ncharacter below U+10000 and not a surrogate. Stops at the first\nfour-byte sequence, at the first ill-formed one (a sequence the input\ncuts off included), and where `dst` is full; `read` is where the caller\ngoes on, with its own decoding for what stopped it.\n",
       "file": "src/convert.zig",
-      "line": 333
+      "line": 350
     },
     {
       "name": "length",
