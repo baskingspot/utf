@@ -24,6 +24,7 @@ const compat = @import("compat.zig");
 const builtin = @import("builtin");
 const simd = @import("simd.zig");
 const root = @import("root.zig");
+const bmp = @import("bmp.zig");
 const Isa = simd.Isa;
 const Tier = simd.Tier;
 const above = simd.dispatchAbove;
@@ -31,8 +32,9 @@ const x86 = std.Target.x86;
 
 const options = @import("dispatch_options");
 /// `off`: no dispatch, `simd.isa` only. `main`: the build consumers call,
-/// which dispatches. `kernel`: one tier's object, which exports.
-const role = std.meta.stringToEnum(enum { off, main, kernel }, @tagName(options.role)).?;
+/// which dispatches. `kernel`: one tier's object, which exports. `tables`:
+/// the object that defines the tables the tiers share (`shared`).
+const role = std.meta.stringToEnum(enum { off, main, kernel, tables }, @tagName(options.role)).?;
 /// Whether this build is a tier's object, whose kernels are each an entry
 /// of their own, called out of line. There a kernel puts its long path out
 /// of line too, so that the registers its loops save cost short calls
@@ -64,6 +66,8 @@ pub inline fn call(
         // from the narrower stores that wrote it, 5-10 ns a call
         // (docs/slop/results/dispatch-wave3-20261031.md).
         .off => return fromWords(Return(f), toResult(@call(.always_inline, f, args))),
+        // The tables object calls nothing.
+        .tables => unreachable,
         .kernel => {
             comptime @export(&Entry(f).entry, .{ .name = symbol(src, simd.isa), .visibility = .hidden });
             return @call(.always_inline, f, args);
@@ -299,16 +303,20 @@ inline fn scalarFromWord(comptime T: type, w: usize) T {
 }
 
 /// `value`, a table the kernels of more than one tier read, once in a
-/// program: in a dispatching build the main object exports it as `name`
-/// under this build's prefix, and the tier objects link to that copy,
-/// where the SSE and AVX2 objects had one each. The main object exports it
-/// when its kernel names it, so each kernel whose tier versions read a
-/// table names it (`_ = table`) whatever its own ISA reads. The tier
-/// objects' references are weak: unoptimized builds keep every tier
-/// kernel, the calls' unreached ones too, and those reference tables the
-/// main object never exported. `value` holds no vectors, which 0.17 does
-/// not export, and is 16-byte aligned for the kernels' loads. Elsewhere it
-/// is `value`.
+/// program. In a dispatching build the main object exports it as `name`
+/// under this build's prefix when its kernels read it, and the tier objects
+/// link to that copy, where the SSE and AVX2 objects had one each. The
+/// tables object (build.zig) exports every such table too, weakly: the tier
+/// objects keep every kernel, and so every reference, until the linker
+/// drops the unreached ones, and unoptimized builds drop none, so without
+/// that copy a program that reads none of the tables leaves them undefined,
+/// which Zig's Mach-O linker rejects. Each copy there has a section of its
+/// own, which the linker drops when the main object's copy wins or no
+/// kernel reads it. On COFF, where lld-link takes a weak symbol and a
+/// definition for duplicates, the tables object's copy is the only one and
+/// every reference is a plain one. `value` holds no vectors, which 0.17
+/// does not export, and is 16-byte aligned for the kernels' loads.
+/// Elsewhere it is `value`.
 pub fn shared(comptime name: []const u8, comptime value: anytype) *align(16) const @TypeOf(value) {
     const T = @TypeOf(value);
     const S = struct {
@@ -316,10 +324,17 @@ pub fn shared(comptime name: []const u8, comptime value: anytype) *align(16) con
     };
     if (role == .off) return &S.v;
     const global = options.prefix ++ "_" ++ name;
-    const weak: std.builtin.ExternOptions = .{ .name = global, .linkage = .weak, .visibility = .hidden };
-    if (role == .kernel) return @extern(?*align(16) const T, weak).?;
-    @export(&S.v, .{ .name = global, .visibility = .hidden });
-    return &S.v;
+    const coff = builtin.target.ofmt == .coff;
+    if (role == .tables) {
+        @export(&S.v, .{ .name = global, .linkage = if (coff) .strong else .weak, .visibility = .hidden });
+        return &S.v;
+    }
+    if (coff) return @extern(*align(16) const T, .{ .name = global, .visibility = .hidden });
+    if (role == .main) {
+        @export(&S.v, .{ .name = global, .visibility = .hidden });
+        return &S.v;
+    }
+    return @extern(?*align(16) const T, .{ .name = global, .linkage = .weak, .visibility = .hidden }).?;
 }
 
 /// For a kernel's own out-of-line parts, as for `call`: `pack` turns a
@@ -456,6 +471,7 @@ comptime {
             referenceAll(root);
             _ = &kernelIsa;
         },
+        .tables => _ = bmp.shared_tables,
     }
 }
 

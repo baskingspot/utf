@@ -104,6 +104,10 @@ const quads: extern struct { shuffles: [256][16]u8, lens: [256]u8 } = blk: {
 };
 const pack_quads = dispatch.shared("bmp_pack_quads", quads);
 
+/// The tables above that `dispatch.shared` exports, which a dispatching
+/// build's tables object names (dispatch.zig).
+pub const shared_tables = .{ pack_narrow, pack_units, pack_quads };
+
 /// Packs `words`, two bytes for each of `16 * n` code points below U+0800,
 /// where bit `i` of `a` is set for each that is ASCII, to `d` with the byte
 /// shuffle, eight code points at a time, and returns the bytes written.
@@ -128,11 +132,6 @@ const pack_room = 4 * block;
 /// fit whole: 32 code points at a time while they are all below U+0800,
 /// else 16, then one at a time.
 pub fn bmpToUtf8(src: []const u16, dst: []u8) BmpResult {
-    // For the tier objects' shuffles, whatever this build's `pack`.
-    comptime {
-        _ = pack_narrow;
-        _ = pack_quads;
-    }
     const N = @Vector(2 * block, u16);
     var i: usize = 0;
     var o: usize = 0;
@@ -450,10 +449,6 @@ inline fn carryAt(src: []const u8, at: usize) u32 {
 /// whose units as fit are copied out: one loop for all of it, so the body
 /// is there once.
 pub fn utf8ToBmp(src: []const u8, dst: []u16) BmpResult {
-    // For the tier objects' shuffles, whatever this build's `pack`.
-    comptime {
-        _ = pack_units;
-    }
     const B = @Vector(window, u8);
     var r: usize = 0;
     var w: usize = 0;

@@ -56,7 +56,7 @@ pub fn build(b: *std.Build) void {
     check_step.dependOn(&example_tests.step);
 }
 
-const Role = enum { off, main, kernel };
+const Role = enum { off, main, kernel, tables };
 
 /// Whether a build for `target` picks its kernels at runtime by default: for
 /// a generic x86-64 CPU, the baseline or an x86-64 level, as builds for
@@ -96,6 +96,29 @@ fn addDispatch(
         .name = "utf-pools",
         .root_module = b.createModule(.{ .root_source_file = b.path("build/pools.zig"), .target = b.graph.host }),
     }) else null;
+    if (tiers.len > 0) {
+        // The tables the tiers share (`dispatch.shared`), defined in an
+        // object of their own, a section each, so that a kernel's code is
+        // the same as when it reads a table from elsewhere and the linker
+        // drops a table no kernel reads.
+        const tables_options = b.addOptions();
+        tables_options.addOption(Role, "role", .tables);
+        tables_options.addOption([]const u8, "prefix", prefix);
+        tables_options.addOption(bool, "pin", false);
+        const tables = b.addObject(.{
+            .name = "utf-tables",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/dispatch.zig"),
+                .target = target,
+                .optimize = optimize,
+                .pic = true,
+                .imports = &.{.{ .name = "dispatch_options", .module = tables_options.createModule() }},
+            }),
+            .use_llvm = true,
+        });
+        tables.link_data_sections = true;
+        mod.addObject(tables);
+    }
     for (tiers) |t| {
         var query = target.query;
         query.cpu_model = .{ .explicit = t.model };
