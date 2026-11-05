@@ -5,6 +5,8 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-05
+
 ### Fixed
 
 - Builds that pick kernels at run time failed to link for x86-64 macOS in Debug with Zig's own linker, as in a cross build from Linux, when the program called neither `convert.bmpToUtf8` nor `convert.utf8ToBmp` ("undefined symbol: _utf_…_bmp_pack_narrow"), and for `x86_64-windows-msvc` in every mode ("duplicate symbol: utf_…_bmp_pack_narrow"). They now link.
