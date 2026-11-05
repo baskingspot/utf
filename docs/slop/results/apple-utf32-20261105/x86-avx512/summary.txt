@@ -1,0 +1,4 @@
+utf/arm, geomean          rows  utf GB/s  simdutf     base      std     rust       go     ±   <1    ~   slowest vs simdutf
+Utf8ToUtf16le               15      9.23     1.32     1.00     5.60     3.68    18.58    3%    0    4   1.01 [0.93, 1.06] arabic
+Utf8ToUtf32                 15      7.48     1.54     1.00        -        -    10.95    1%    0    3   0.99 [0.92, 1.01] ascii-65536
+all                         30      8.31     1.42     1.00     5.60     3.68    14.26          0    7

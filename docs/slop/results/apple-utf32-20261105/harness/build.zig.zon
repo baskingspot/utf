@@ -1,0 +1,12 @@
+.{
+    .name = .utf_ghostty_ab,
+    .version = "0.0.0",
+    .fingerprint = 0xdbb4c3327c448c50,
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .utf_base = .{ .path = "../base" },
+        .utf_new = .{ .path = "../../../../.." },
+        .utf_alt = .{ .path = "../alt" },
+    },
+    .paths = .{""},
+}

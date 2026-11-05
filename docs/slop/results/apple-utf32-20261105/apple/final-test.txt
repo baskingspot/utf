@@ -1,0 +1,2 @@
+utf8 decode: 300000 random inputs, 0 mismatches
+base64 decode: 300000 random inputs, 0 mismatches

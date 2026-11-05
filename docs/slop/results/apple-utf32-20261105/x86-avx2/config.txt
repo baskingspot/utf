@@ -1,0 +1,5 @@
+utf: ReleaseFast, cpu x86_64_v3, dispatch false, d32ca8e
+base: 82f0d93 (82f0d93), built as utf
+std: ReleaseFast, cpu x86_64_v3; rust: target-cpu=x86-64-v3, run-time detection none; go: GOAMD64=v3
+buffers: input 0 bytes past a page, output 2048; 50 ms a sample, 10 rounds
+bench-simdutf: simdutf 9.2.1, kernel haswell

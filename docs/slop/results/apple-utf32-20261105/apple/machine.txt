@@ -1,0 +1,5 @@
+Apple M4 Pro (Virtual)
+ProductName:		macOS
+ProductVersion:		27.2
+BuildVersion:		26B123
+0.17.0
