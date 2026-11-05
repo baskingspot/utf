@@ -5,6 +5,8 @@ All notable changes to utf are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-11-05
+
 ### Added
 
 - `convert.utf8ToUtf32Replacing(src, dst) usize`, which converts UTF-8 to UTF-32 in one call and writes U+FFFD for each maximal subpart of an ill-formed sequence, as Unicode, WHATWG, and ICU substitute, where a caller looped over `convert.utf8ToUtf32` and skipped each error itself. It returns the code points written; `dst` must hold `src.len`. It has the same SIMD kernels as `utf8ToUtf32`, picked at run time in generic x86-64 builds.

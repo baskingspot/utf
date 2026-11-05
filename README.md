@@ -47,7 +47,7 @@ Not implemented:
 ## Install
 
 ```sh
-zig fetch --save https://baskingspot.dev/utf/v0.2.3.tar.gz
+zig fetch --save https://baskingspot.dev/utf/v0.2.4.tar.gz
 ```
 
 Add the module in `build.zig`:
