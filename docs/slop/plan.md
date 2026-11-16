@@ -19,7 +19,7 @@ memory, as simdutf's `char16_t` functions do. UTF-32 is `[]const u32`.
   it converts, and reports the error kind and position, and the output
   written, which on failure holds the input before the error, as simdutf's
   `full_result` does) and a valid form (`validUtf8ToUtf16le(src, dst)
-usize`: assumes valid input, fastest).
+  usize`: assumes valid input, fastest).
   UTF-8 to UTF-32 also has a replacing form
   (`utf8ToUtf32Replacing(src, dst) usize`: U+FFFD for each maximal subpart,
   as WHATWG and ICU do, in one call; `dst` holds `src.len`), for Ghostty's
@@ -236,9 +236,9 @@ Wave 1, in parallel:
   nixpkgs), Rust (`simdutf8`, `base64-simd`), Go (`unicode/utf8`,
   `encoding/base64`), and Zig's std; the corpus (simdutf's benchmark texts
   across scripts, fetched and pinned by hash, plus generated sizes); `just
-bench-compare`; and an oracle tool that runs inputs through simdutf so tests
+  bench-compare`; and an oracle tool that runs inputs through simdutf so tests
   and fuzzers can compare error kinds and positions. Landed: `just
-bench-compare`, `just oracle`, and the layout and contract in
+  bench-compare`, `just oracle`, and the layout and contract in
   [harness.md](harness.md).
 
 Wave 2: the measured decisions above, AVX-512 paths where wave 1 did AVX2,
@@ -247,7 +247,7 @@ and a performance pass against simdutf on every operation and corpus.
 - **Harness**: `bench/`. Landed: rows for all 66 operations simdutf shares
   with the package (`bench/ops.tsv`, read by every arm), MIME base64,
   `optimize`, `cpu`, `dispatch`, and `kernel` variables for `just
-bench-compare`, and a per-operation geomean summary. The baseline
+  bench-compare`, and a per-operation geomean summary. The baseline
   ([baseline-20261031.md](results/baseline-20261031.md)) is the gap list:
   0.81 of simdutf's `icelake` overall and 1.15 of `haswell`. Largest gaps
   against `icelake`: UTF-8 to Latin-1 on Latin-1 text (0.11–0.19), Latin-1
@@ -257,7 +257,7 @@ bench-compare`, and a per-operation geomean summary. The baseline
   Latin-1 (0.45–0.52), 16-byte Latin-1 and UTF-16-to-Latin-1 (0.44–0.50),
   and MIME base64 (0.77). Wave 3: the Zig arms build `Out` from scalars
   ([harness-wave3-20261031.md](results/harness-wave3-20261031.md)), and `just
-oracle` compares every public function with simdutf: validation of every
+  oracle` compares every public function with simdutf: validation of every
   form with errors, every checked and valid conversion, every length
   function, and every base64 mode (no mismatches).
 - **Base64**: `src/base64.zig` and `src/scalar_base64.zig`. Landed: the
@@ -526,7 +526,7 @@ aarch64 ([neon-20261101.md](results/neon-20261101.md)):
 - **`simd.bitmask`** builds NEON masks of 32 and 64 lanes with `addp`
   (UTF-8 to UTF-16 1.07, 1.11-1.14 on non-ASCII text). Build a mask from
   one compare: a bool vector joined from two (`@bitCast([2]@Vector(16,
-bool){...})`) is materialized as an integer, and the NEON path took it
+  bool){...})`) is materialized as an integer, and the NEON path took it
   apart lane by lane (UTF-16 to UTF-8 on Korean 0.45 until split).
 - **Base64** ([neon-base64-20261101.md](results/neon-base64-20261101.md)):
   NEON encodes with `ld3`, a four-register `tbl`, and `st4`, and decodes
